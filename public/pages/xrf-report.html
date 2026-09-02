@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>التقرير الجيوكيميائي التفسيري</title>
+<style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        direction: rtl;
+        background-color: #f4f4f9;
+        color: #333;
+        padding: 20px;
+    }
+    .sample-container {
+        background-color: #fff;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        margin-bottom: 25px;
+        overflow: hidden; /* To contain the table's corners */
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    th, td {
+        padding: 12px;
+        text-align: right;
+        border-bottom: 1px solid #eee;
+    }
+    thead th {
+        background-color: #333;
+        color: #fff;
+        text-align: center;
+    }
+    .sample-id-header {
+        background-color: #4CAF50; /* Green for sample ID */
+        color: white;
+        font-size: 1.5em;
+        padding: 15px;
+        text-align: center;
+    }
+    .interpretation-col {
+        width: 60%; /* Give more space for the explanation */
+        text-align: left;
+        padding-left: 20px;
+    }
+    .highlight-gold { background-color: rgba(255, 215, 0, 0.2); } /* Gold */
+    .highlight-copper { background-color: rgba(184, 115, 51, 0.2); } /* Copper */
+    .highlight-alteration { background-color: rgba(255, 69, 0, 0.2); } /* Alteration (Potassium) */
+    .highlight-mafic { background-color: rgba(46, 139, 87, 0.2); } /* Mafic (Magnesium) */
+    .highlight-iron { background-color: rgba(210, 105, 30, 0.2); } /* Iron */
+</style>
+</head>
+<body>
+
+    <h1>التقرير الجيوكيميائي التفسيري للعينات</h1>
+
+    <!-- Sample 20 -->
+    <div class="sample-container">
+        <div class="sample-id-header">عينة رقم: 20</div>
+        <table>
+            <thead><tr><th>العنصر</th><th>القيمة</th><th class="interpretation-col">التفسير الجيولوجي</th></tr></thead>
+            <tbody>
+                <tr class="highlight-gold"><td>Au (ذهب)</td><td>5.1 ppm</td><td class="interpretation-col"><strong>درجة ذهب عالية جداً.</strong> هذه العينة تمثل هدفاً اقتصادياً مباشراً ومهماً للغاية.</td></tr>
+                <tr class="highlight-copper"><td>Cu (نحاس)</td><td>3075 ppm</td><td class="interpretation-col"><strong>تركيز نحاس ممتاز.</strong> وجود الذهب مع النحاس يشير إلى تمعدن حراري مائي قوي.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Sample 44 -->
+    <div class="sample-container">
+        <div class="sample-id-header">عينة رقم: 44</div>
+        <table>
+            <thead><tr><th>العنصر</th><th>القيمة</th><th class="interpretation-col">التفسير الجيولوجي</th></tr></thead>
+            <tbody>
+                <tr class="highlight-gold"><td>Au (ذهب)</td><td>2.2 ppm</td><td class="interpretation-col"><strong>درجة ذهب جيدة جداً.</strong> قيمة اقتصادية واعدة.</td></tr>
+                <tr><td>SiO₂</td><td>50.95%</td><td class="interpretation-col">صخر متوسط إلى قاعدي (مافي).</td></tr>
+                <tr class="highlight-alteration"><td>K₂O</td><td>0.41%</td><td class="interpretation-col">تغير بوتاسي ضعيف.</td></tr>
+                <tr><td>Fe₂O₃</td><td>12.81%</td><td class="interpretation-col">نسبة حديد مرتفعة، قد تشير إلى وجود كبريتيدات حديد (مثل البيريت) مع الذهب.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Sample 45 -->
+    <div class="sample-container">
+        <div class="sample-id-header">عينة رقم: 45</div>
+        <table>
+            <thead><tr><th>العنصر</th><th>القيمة</th><th class="interpretation-col">التفسير الجيولوجي</th></tr></thead>
+            <tbody>
+                <tr><td>SiO₂</td><td>71.97%</td><td class="interpretation-col">صخر حمضي (فلسي)، مثل الجرانيت أو الريوليت.</td></tr>
+                <tr class="highlight-alteration"><td>K₂O</td><td>9.21%</td><td class="interpretation-col"><strong>تغير بوتاسي قوي جداً.</strong> مؤشر ممتاز على مرور سوائل حرارية مائية، مما يجعل هذه المنطقة هدفاً رئيسياً للبحث عن رواسب سماقية (Porphyry).</td></tr>
+                <tr><td>Na₂O</td><td>2.20%</td><td class="interpretation-col">صوديوم منخفض مقارنة بالبوتاسيوم، مما يؤكد هيمنة التغير البوتاسي.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Sample 76 -->
+    <div class="sample-container">
+        <div class="sample-id-header">عينة رقم: 76</div>
+        <table>
+            <thead><tr><th>العنصر</th><th>القيمة</th><th class="interpretation-col">التفسير الجيولوجي</th></tr></thead>
+            <tbody>
+                <tr class="highlight-copper"><td>Cu (نحاس)</td><td>4750 ppm</td><td class="interpretation-col"><strong>تركيز نحاس مرتفع جداً (حوالي 0.5%).</strong> هذه العينة مهمة جداً اقتصادياً.</td></tr>
+                <tr><td>Ag (فضة)</td><td>7.96 ppm</td><td class="interpretation-col">قيمة فضة جيدة، مما يزيد من القيمة الاقتصادية للتمعدن.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Sample 89 -->
+    <div class="sample-container">
+        <div class="sample-id-header">عينة رقم: 89</div>
+        <table>
+            <thead><tr><th>العنصر</th><th>القيمة</th><th class="interpretation-col">التفسير الجيولوجي</th></tr></thead>
+            <tbody>
+                <tr class="highlight-mafic"><td>MgO</td><td>30.50%</td><td class="interpretation-col"><strong>نسبة مغنيسيوم عالية جداً.</strong> هذا يشير بقوة إلى أن الصخر هو **صخر فوق مافي** (Ultramafic)، مثل السربنتينيت أو الدونايت.</td></tr>
+                <tr><td>SiO₂</td><td>63.91%</td><td class="interpretation-col">نسبة سيليكا مرتفعة بشكل غير متوقع لصخر فوق مافي، مما يدل على **تغير سيليسي قوي (Silicification)**. قد يكون هذا الصخر هو "تلك-كربونات" متغير.</td></tr>
+                <tr><td>Lol</td><td>3.29%</td><td class="interpretation-col">قيمة `Lol` مرتفعة تؤكد وجود معادن مائية (مثل التلك والسربنتين) في الصخر.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Sample 97 -->
+    <div class="sample-container">
+        <div class="sample-id-header">عينة رقم: 97</div>
+        <table>
+            <thead><tr><th>العنصر</th><th>القيمة</th><th class="interpretation-col">التفسير الجيولوجي</th></tr></thead>
+            <tbody>
+                <tr class="highlight-iron"><td>Fe₂O₃</td><td>9.09%</td><td class="interpretation-col">نسبة حديد مرتفعة.</td></tr>
+                <tr class="highlight-mafic"><td>MgO</td><td>20.37%</td><td class="interpretation-col">نسبة مغنيسيوم مرتفعة. هذه عينة لصخر مافي غني بالحديد والمغنيسيوم.</td></tr>
+                <tr><td>SiO₂</td><td>55.63%</td><td class="interpretation-col">صخر متوسط إلى قاعدي.</td></tr>
+                <tr><td>MnO</td><td>0.55%</td><td class="interpretation-col">أعلى قيمة منجنيز في هذه المجموعة، ولكنها لا تزال غير اقتصادية.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+</body>
+</html>

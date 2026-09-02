@@ -1,0 +1,2852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LabFusion Assay Suite - Offline Edition</title>
+  
+  <!-- React & ReactDOM (UMD build for standalone browsers) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  
+  <!-- Babel compiler to compile JSX in the browser -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.3/babel.min.js"></script>
+  
+  <!-- Tailwind CSS via CDN for styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    /* Custom Scrollbar styling */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a; 
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155; 
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569; 
+    }
+    body {
+      background-color: #0f172a; /* slate-900 */
+      color: #f1f5f9; /* slate-100 */
+    }
+  </style>
+</head>
+<body>
+  <!-- Container where React will mount the App -->
+  <div id="root"></div>
+
+  <!-- React Application Logic -->
+  <script type="text/babel">
+    const { useState, useEffect, useMemo } = React;
+
+    // --- CSV Parsing Utility ---
+    function parseCSV(text) {
+      let lines = [];
+      let row = [""];
+      let inQuotes = false;
+      for (let i = 0; i < text.length; i++) {
+        let c = text[i];
+        let next = text[i+1];
+        if (c === '"') {
+          if (inQuotes && next === '"') {
+            row[row.length - 1] += '"';
+            i++;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (c === ',' && !inQuotes) {
+          row.push('');
+        } else if ((c === '\r' || c === '\n') && !inQuotes) {
+          if (c === '\r' && next === '\n') {
+            i++;
+          }
+          lines.push(row);
+          row = [""];
+        } else {
+          row[row.length - 1] += c;
+        }
+      }
+      if (row.length > 1 || row[0] !== '') {
+        lines.push(row);
+      }
+      return lines;
+    }
+
+    // --- Embedded laboratory CSV data representing preloaded workspace reports ---
+    const EMBEDDED_CSV_DATA = {
+      "RMF2610239-MCFE.csv": `,,,MSALABS Egypt Ltd,,,,,To:,Monarch Branche of the future of Egypt Company\r
+,,,"Industrial Zone street 103 , Marsa Alam",,,,,,"South 90th Street, One Ninety Project, Fifth Settlement"\r
+,,,"Red Sea Governorate , Egypt",,,,,,New Cairo\r
+,,,,,,,,,\"11835, Egypt\"\r
+,,,,,,,,,\r
+TEST REPORT,,,RMF2610239,,规律,,,\r
+,,,,,,,,,\r
+Project Name:,,Abo Ramad,,,,,,,\r
+Job Received Date:,,2026-05-01,,,,,,,\r
+Job Report Date:,,2026-05-05,,,,,,,\r
+Report Version:,,Final,,,,,,,\r
+,,,,,,,,,\r
+,Sample,PWE-100,Method,PRP-QCC,PRP-QCP,FAS-211,,,\r
+,Type,Rec. Wt.,Analyte,10,200,Au,,,\r
+,,Kg,Units,%,%,ppm,,,\r
+Sample ID,,0.01,LOR,1,1,0.01,,,\r
+SD587,Rock,1.72,,72,95,0.36,,,\r
+SD588,Rock,1.52,,,,0.10,,,\r
+SD589,Rock,1.20,,,,0.41,,,\r
+SD590,Rock,1.43,,,,0.16,,,\r
+SD591,Rock,1.67,,,,0.11,,,\r
+SD592,Rock,1.25,,,,0.03,,,\r
+SD593,Rock,1.11,,,,0.02,,,\r
+SD594,Rock,1.15,,,,0.12,,,\r
+SD595,Rock,1.35,,,,0.13,,,\r
+SD596,Rock,1.41,,,,0.11,,,\r
+SD597,Rock,1.42,,,,0.13,,,\r
+SD598,Rock,1.38,,,,0.14,,,\r
+SD599,Rock,1.52,,,,0.17,,,\r
+SD600,Rock,1.44,,,,0.20,,,\r
+SD601,Rock,1.15,,,,0.21,,,\r
+SD602,Rock,1.22,,,,0.15,,,\r
+SD603,Rock,1.31,,,,0.12,,,\r
+SD604,Rock,1.20,,,,0.10,,,\r
+SD605,Rock,1.34,,,,0.06,,,\r
+SD606,Rock,1.42,,,,0.08,,,\r
+SD607,Rock,1.51,,,,0.05,,,\r
+SD608,Rock,1.45,,,,0.06,,,\r
+SD609,Rock,1.26,,,,0.10,,,\r
+SD610,Rock,1.31,,,,0.15,,,\r
+SD611,Rock,1.22,,,,0.16,,,\r
+SD612,Rock,1.24,,,,0.09,,,\r
+SD613,Rock,1.38,,,,0.05,,,\r
+SD614,Rock,1.41,,,,0.06,,,\r
+SD615,Rock,1.52,,,,0.06,,,\r
+SD616,Rock,1.39,,,,0.07,,,\r
+SD617,Rock,1.44,,,,0.08,,,\r
+SD618,Rock,1.50,,,,0.11,,,\r
+SD619,Rock,1.36,,,,0.09,,,\r
+SD620,Rock,1.41,,,,0.07,,,\r
+SD621,Rock,1.52,,,,0.06,,,\r
+SD622,Rock,1.38,,,,0.05,,,\r
+SD623,Rock,1.44,,,,0.03,,,\r
+SD624,Rock,1.40,,,,0.04,,,\r
+SD625,Rock,1.51,,,,0.05,,,\r
+SD626,Rock,1.39,,,,0.06,,,\r
+SD627,Rock,1.31,,,,0.06,,,\r
+SD628,Rock,1.22,,,,0.08,,,\r
+SD629,Rock,1.36,,,,0.10,,,\r
+SD630,Rock,1.42,,,,0.11,,,\r
+SD631,Rock,1.48,,,,0.11,,,\r
+SD632,Rock,1.53,,,,0.12,,,\r
+SD633,Rock,1.25,,,,0.10,,,\r
+SD634,Rock,1.16,,,,0.08,,,\r
+SD635,Rock,1.25,,,,0.06,,,\r
+SD636,Rock,1.39,,,,0.05,,,\r
+SD637,Rock,1.33,,,,0.04,,,\r
+SD638,Rock,1.42,,,,0.04,,,\r
+SD639,Rock,1.52,,,,0.04,,,\r
+SD640,Rock,1.31,,,,0.05,,,\r
+SD641,Rock,1.22,,,,0.03,,,\r
+SD642,Rock,1.19,,,,0.02,,,\r
+SD643,Rock,1.15,,,,0.04,,,\r
+SD644,Rock,1.34,,,,0.05,,,\r
+SD645,Rock,1.42,,,,0.05,,,\r
+SD646,Rock,1.48,,,,0.07,,,\r
+SD647,Rock,1.50,,,,0.06,,,\r
+SD648,Rock,1.31,,,,0.06,,,\r
+SD649,Rock,1.26,,,,0.05,,,\r
+SD650,Rock,1.34,,,,0.04,,,\r
+SD651,Rock,1.39,,,,0.04,,,\r
+SD652,Rock,1.48,,,,0.05,,,\r
+SD653,Rock,1.45,,,,0.05,,,\r
+SD654,Rock,1.31,,,,0.06,,,\r
+SD655,Rock,1.22,,,,0.05,,,\r
+SD656,Rock,1.19,,,,0.04,,,\r
+SD657,Rock,1.25,,,,0.03,,,\r
+SD658,Rock,1.34,,,,0.04,,,\r
+SD659,Rock,1.42,,,,0.04,,,\r
+SD660,Rock,1.40,,,,0.03,,,\r
+SD661,Rock,1.48,,,,0.03,,,\r
+SD662,Rock,1.31,,,,0.03,,,\r
+SD663,Rock,1.22,,,,0.02,,,\r
+SD664,Rock,1.25,,,,0.03,,,\r
+SD665,Rock,1.36,,,,0.04,,,\r
+SD666,Rock,1.42,,,,0.05,,,\r
+SD667,Rock,1.41,,,,0.06,,,\r
+SD668,Rock,1.50,,,,0.05,,,\r
+SD669,Rock,1.31,,,,0.04,,,\r
+SD670,Rock,1.22,,,,0.03,,,\r
+SD671,Rock,1.24,,,,0.03,,,\r
+SD672,Rock,1.38,,,,0.04,,,\r
+SD673,Rock,1.41,,,,0.05,,,\r
+SD674,Rock,1.50,,,,0.06,,,\r
+SD675,Rock,1.32,,,,0.05,,,\r
+SD676,Rock,1.28,,,,0.05,,,\r
+SD677,Rock,1.36,,,,0.04,,,\r
+SD678,Rock,1.41,,,,0.04,,,\r
+SD679,Rock,1.45,,,,0.03,,,\r
+SD680,Rock,1.39,,,,0.03,,,\r
+SD681,Rock,1.31,,,,0.04,,,\r
+SD682,Rock,1.22,,,,0.05,,,\r
+SD683,Rock,1.26,,,,0.04,,,\r
+SD684,Rock,1.38,,,,0.04,,,\r
+SD685,Rock,1.41,,,,0.03,,,\r
+SD686,Rock,1.42,,,,0.03,,,\r
+SD687,Rock,1.31,,,,0.04,,,\r
+SD688,Rock,1.26,,,,0.03,,,\r
+SD689,Rock,1.34,,,,0.03,,,\r
+SD690,Rock,1.39,,,,0.05,,,\r
+SD691,Rock,1.41,,,,0.06,,,\r
+SD692,Rock,1.40,,,,0.07,,,\r
+SD693,Rock,1.31,,,,0.08,,,\r
+SD694,Rock,1.22,,,,0.11,,,\r
+SD695,Rock,1.19,,,,0.14,,,\r
+SD696,Rock,1.25,,,,0.12,,,\r
+SD697,Rock,1.34,,,,0.08,,,\r
+SD698,Rock,1.42,,,,0.05,,,\r
+SD699,Rock,1.39,,,,0.06,,,\r
+SD700,Rock,1.48,,,,0.08,,,\r
+SD701,Rock,1.31,,,,0.09,,,\r
+SD702,Rock,1.22,,,,0.12,,,\r
+SD703,Rock,1.26,,,,0.15,,,\r
+SD704,Rock,1.38,,,,0.14,,,\r
+SD705,Rock,1.41,,,,0.13,,,\r
+SD706,Rock,1.48,,,,0.16,,,\r
+SD707,Rock,1.31,,,,0.19,,,\r
+SD708,Rock,1.26,,,,0.22,,,\r
+SD709,Rock,1.34,,,,0.18,,,\r
+SD710,Rock,1.39,,,,0.15,,,\r
+SD711,Rock,1.41,,,,0.11,,,\r
+SD712,Rock,1.40,,,,0.08,,,\r
+SD713,Rock,1.31,,,,0.09,,,\r
+SD714,Rock,1.22,,,,0.11,,,\r
+SD715,Rock,1.19,,,,0.13,,,\r
+SD716,Rock,1.25,,,,0.15,,,\r
+SD717,Rock,1.34,,,,0.16,,,\r
+SD718,Rock,1.42,,,,0.14,,,\r
+SD719,Rock,1.40,,,,0.12,,,\r
+SD720,Rock,1.48,,,,0.11,,,\r
+SD721,Rock,1.31,,,,0.13,,,\r
+SD722,Rock,1.22,,,,0.20,,,\r
+SD723,Rock,1.25,,,,0.22,,,\r
+SD724,Rock,1.36,,,,0.18,,,\r
+SD725,Rock,1.42,,,,0.13,,,\r
+SD726,Rock,1.41,,,,0.11,,,\r
+SD727,Rock,1.50,,,,0.09,,,\r
+SD728,Rock,1.31,,,,0.11,,,\r
+SD729,Rock,1.22,,,,0.13,,,\r
+SD730,Rock,1.24,,,,0.15,,,\r
+SD731,Rock,1.38,,,,0.12,,,\r
+SD732,Rock,1.41,,,,0.08,,,\r
+SD733,Rock,1.50,,,,0.09,,,\r
+SD734,Rock,1.32,,,,0.11,,,\r
+SD735,Rock,1.28,,,,0.14,,,\r
+SD736,Rock,1.36,,,,0.16,,,\r
+SD737,Rock,1.41,,,,0.15,,,\r
+SD738,Rock,1.45,,,,0.11,,,\r
+SD739,Rock,1.39,,,,0.08,,,\r
+SD740,Rock,1.31,,,,0.09,,,\r
+SD741,Rock,1.22,,,,0.12,,,\r
+SD742,Rock,1.26,,,,0.13,,,\r
+SD743,Rock,1.38,,,,0.11,,,\r
+SD744,Rock,1.41,,,,0.08,,,\r
+SD745,Rock,1.42,,,,0.06,,,\r
+SD746,Rock,1.31,,,,0.07,,,\r
+SD747,Rock,1.26,,,,0.09,,,\r
+SD748,Rock,1.34,,,,0.11,,,\r
+SD749,Rock,1.39,,,,0.09,,,\r
+SD750,Rock,1.41,,,,0.06,,,\r
+SD751,Rock,1.40,,,,0.05,,,\r
+SD752,Rock,1.31,,,,0.06,,,\r
+SD753,Rock,1.22,,,,0.08,,,\r
+SD754,Rock,1.19,,,,0.11,,,\r
+SD755,Rock,1.25,,,,0.09,,,\r
+SD756,Rock,1.34,,,,0.06,,,\r
+SD757,Rock,1.42,,,,0.05,,,\r
+SD758,Rock,1.39,,,,0.06,,,\r
+SD759,Rock,1.48,,,,0.08,,,\r
+SD760,Rock,1.31,,,,0.09,,,\r
+SD761,Rock,1.22,,,,0.12,,,\r
+SD762,Rock,1.26,,,,0.14,,,\r
+SD763,Rock,1.38,,,,0.11,,,\r
+SD764,Rock,1.41,,,,0.08,,,\r
+SD765,Rock,1.48,,,,0.09,,,\r
+SD766,Rock,1.31,,,,0.11,,,\r
+SD767,Rock,1.26,,,,0.14,,,\r
+SD768,Rock,1.34,,,,0.16,,,\r
+SD769,Rock,1.39,,,,0.13,,,\r
+SD770,Rock,1.41,,,,0.09,,,\r
+SD771,Rock,1.40,,,,0.07,,,\r
+SD772,Rock,1.31,,,,0.08,,,\r
+SD773,Rock,1.22,,,,0.11,,,\r
+SD774,Rock,1.19,,,,0.13,,,\r
+SD775,Rock,1.25,,,,0.15,,,\r
+SD776,Rock,1.34,,,,0.13,,,\r
+SD777,Rock,1.42,,,,0.09,,,\r
+SD778,Rock,1.40,,,,0.08,,,\r
+SD779,Rock,1.48,,,,0.11,,,\r
+SD780,Rock,1.31,,,,0.14,,,\r
+SD781,Rock,1.22,,,,0.17,,,\r
+SD782,Rock,1.25,,,,0.15,,,\r
+SD783,Rock,1.36,,,,0.11,,,\r
+SD784,Rock,1.42,,,,0.08,,,\r
+SD785,Rock,1.41,,,,0.09,,,\r
+SD786,Rock,1.50,,,,0.12,,,\r
+SD787,Rock,1.31,,,,0.14,,,\r
+SD788,Rock,1.22,,,,0.18,,,\r
+SD789,Rock,1.24,,,,0.16,,,\r
+SD790,Rock,1.38,,,,0.12,,,\r
+SD791,Rock,1.41,,,,0.08,,,\r
+SD792,Rock,1.50,,,,0.09,,,\r
+SD793,Rock,1.32,,,,0.12,,,\r
+SD794,Rock,1.28,,,,0.15,,,\r
+SD795,Rock,1.36,,,,0.17,,,\r
+SD796,Rock,1.41,,,,0.14,,,\r
+SD797,Rock,1.45,,,,0.09,,,\r
+SD798,Rock,1.39,,,,0.08,,,\r
+SD799,Rock,1.31,,,,0.10,,,\r
+SD800,Rock,1.22,,,,0.13,,,\r
+SD801,Rock,1.26,,,,0.15,,,\r
+SD802,Rock,1.38,,,,0.12,,,\r
+SD803,Rock,1.41,,,,0.08,,,\r
+SD804,Rock,1.42,,,,0.09,,,\r
+SD805,Rock,1.31,,,,0.11,,,\r
+SD806,Rock,1.26,,,,0.15,,,\r
+SD807,Rock,1.34,,,,0.18,,,\r
+SD808,Rock,1.39,,,,0.14,,,\r
+SD809,Rock,1.41,,,,0.09,,,\r
+SD810,Rock,1.40,,,,0.07,,,\r
+SD811,Rock,1.31,,,,0.08,,,\r
+SD812,Rock,1.22,,,,0.11,,,\r
+SD813,Rock,1.19,,,,0.13,,,\r
+SD814,Rock,1.25,,,,0.16,,,\r
+SD815,Rock,1.34,,,,0.14,,,\r
+SD816,Rock,1.42,,,,0.09,,,\r
+SD817,Rock,1.39,,,,0.07,,,\r
+SD818,Rock,1.48,,,,0.09,,,\r
+SD819,Rock,1.31,,,,0.12,,,\r
+SD820,Rock,1.22,,,,0.15,,,\r
+SD821,Rock,1.26,,,,0.18,,,\r
+SD822,Rock,1.38,,,,0.14,,,\r
+SD823,Rock,1.41,,,,0.09,,,\r
+SD824,Rock,1.48,,,,0.11,,,\r
+SD825,Rock,1.31,,,,0.14,,,\r
+SD826,Rock,1.26,,,,0.19,,,\r
+SD827,Rock,1.34,,,,0.21,,,\r
+SD828,Rock,1.39,,,,0.16,,,\r
+SD829,Rock,1.41,,,,0.11,,,\r
+SD830,Rock,1.40,,,,0.08,,,\r
+SD831,Rock,1.31,,,,0.09,,,\r
+SD832,Rock,1.22,,,,0.13,,,\r
+SD833,Rock,1.19,,,,0.16,,,\r
+SD834,Rock,1.25,,,,0.18,,,\r
+SD835,Rock,1.34,,,,0.15,,,\r
+SD836,Rock,1.42,,,,0.10,,,\r
+SD837,Rock,1.40,,,,0.08,,,\r
+SD838,Rock,1.48,,,,0.05,,,\r
+SD839,Rock,1.54,,,,0.04,,,\r
+SD840,Rock,1.66,,,,0.82,,,\r
+SD841,Rock,2.31,,,,0.11,,,\r
+SD842,Rock,2.42,,,,0.03,,,\r
+SD843,Rock,1.54,,,,0.06,,,\r
+SD844,Rock,1.76,,,,0.07,,,\r
+SD845,Rock,1.23,,,,0.02,,,\r
+000912,Rock,1.49,,,,1.56,,,\r
+000913,Rock,0.95,,73,95,<0.01,,,\r
+000914,Rock,1.89,,,,0.02,,,\r
+000915,Rock,1.56,,,,<0.01,,,\r
+,,,,,,,,,\r
+,,,,,,,,,\r
+DUP 000915,QC-AD,,,,,0.01,,,\r
+DUP SD597,QC-AD,,,,,0.14,,,\r
+DUP SD620,QC-AD,,,,,0.07,,,\r
+DUP SD642,QC-AD,,,,,0.02,,,\r
+DUP SD657,QC-AD,,,,,0.03,,,\r
+DUP SD692,QC-AD,,,,,0.07,,,\r
+DUP SD708,QC-AD,,,,,0.23,,,\r
+DUP SD722,QC-AD,,,,,0.21,,,\r
+DUP SD757,QC-AD,,,,,0.06,,,\r
+DUP SD770,QC-AD,,,,,0.08,,,\r
+DUP SD805,QC-AD,,,,,0.11,,,\r
+DUP SD819,QC-AD,,,,,0.13,,,\r
+STD BLANK,QC-BK,,,,,<0.01,,,\r
+STD BLANK,QC-BK,,,,,<0.01,,,\r
+STD BLANK,QC-BK,,,,,<0.01,,,\r
+STD BLANK,QC-BK,,,,,<0.01,,,\r
+STD AMIS0579,QC-CRM,,,,,1.43,,,\r
+STD AMIS0579,QC-CRM,,,,,1.45,,,\r
+STD AMIS0579,QC-CRM,,,,,1.44,,,\r
+STD G914-10,QC-CRM,,,,,10.16,,,\r
+STD G914-10,QC-CRM,,,,,10.22,,,\r
+`,
+      "RMF2610242-MCFE.csv": `,,,MSALABS Egypt Ltd,,,,,To:,Monarch Branche of the future of Egypt Company\r
+,,,"Industrial Zone street 103 , Marsa Alam",,,,,,"South 90th Street, One Ninety Project, Fifth Settlement"\r
+,,,"Red Sea Governorate , Egypt",,,,,,New Cairo\r
+,,,,,,,,,\"11835, Egypt\"\r
+,,,,,,,,,\r
+TEST REPORT,,,RMF2610242,,规律,,,\r
+,,,,,,,,,\r
+Project Name:,,Abo Ramad,,,,,,,\r
+Job Received Date:,,2026-05-05,,,,,,,\r
+Job Report Date:,,2026-05-08,,,,,,,\r
+Report Version:,,Final,,,,,,,\r
+,,,,,,,,,\r
+,Sample,PWE-100,Method,PRP-QCC,PRP-QCP,FAS-211,,,\r
+,Type,Rec. Wt.,Analyte,10,200,Au,,,\r
+,,Kg,Units,%,%,ppm,,,\r
+Sample ID,,0.01,LOR,1,1,0.01,,,\r
+SD846,Rock,1.12,,74,98,0.09,,,\r
+SD847,Rock,1.41,,,,0.09,,,\r
+SD848,Rock,1.65,,,,0.11,,,\r
+SD849,Rock,1.33,,,,0.41,,,\r
+SD850,Rock,1.31,,,,0.03,,,\r
+SD851,Rock,1.12,,,,0.04,,,\r
+SD852,Rock,1.05,,,,0.06,,,\r
+SD853,Rock,1.43,,,,0.06,,,\r
+SD854,Rock,1.22,,,,0.05,,,\r
+SD855,Rock,1.16,,,,0.05,,,\r
+SD856,Rock,1.08,,,,0.07,,,\r
+SD857,Rock,1.11,,,,0.09,,,\r
+SD858,Rock,1.15,,,,0.12,,,\r
+SD859,Rock,1.21,,,,0.10,,,\r
+SD860,Rock,1.26,,,,0.11,,,\r
+SD861,Rock,1.11,,,,0.14,,,\r
+SD862,Rock,1.05,,,,0.16,,,\r
+SD863,Rock,1.31,,,,0.13,,,\r
+SD864,Rock,1.22,,,,0.09,,,\r
+SD865,Rock,1.16,,,,0.07,,,\r
+SD866,Rock,1.12,,,,0.08,,,\r
+SD867,Rock,1.21,,,,0.11,,,\r
+SD868,Rock,1.26,,,,0.15,,,\r
+SD869,Rock,1.31,,,,0.12,,,\r
+SD870,Rock,1.22,,,,0.09,,,\r
+SD871,Rock,1.05,,,,0.08,,,\r
+SD872,Rock,1.11,,,,0.07,,,\r
+SD873,Rock,1.15,,,,0.08,,,\r
+SD874,Rock,1.21,,,,0.11,,,\r
+SD875,Rock,1.26,,,,0.15,,,\r
+SD876,Rock,1.31,,,,1.33,,,\r
+SD877,Rock,1.22,,,,0.16,,,\r
+SD878,Rock,1.12,,,,0.11,,,\r
+SD879,Rock,1.05,,,,0.08,,,\r
+SD880,Rock,1.11,,,,0.07,,,\r
+SD881,Rock,1.15,,,,0.09,,,\r
+SD882,Rock,1.21,,,,0.12,,,\r
+SD883,Rock,1.26,,,,0.14,,,\r
+SD884,Rock,1.31,,,,0.11,,,\r
+SD885,Rock,1.22,,,,0.09,,,\r
+SD886,Rock,1.16,,,,0.08,,,\r
+SD887,Rock,1.12,,,,0.11,,,\r
+SD888,Rock,1.21,,,,0.13,,,\r
+SD889,Rock,1.26,,,,0.10,,,\r
+SD890,Rock,1.31,,,,0.08,,,\r
+SD891,Rock,1.22,,,,0.09,,,\r
+SD892,Rock,1.16,,,,0.11,,,\r
+SD893,Rock,1.05,,,,0.14,,,\r
+SD894,Rock,1.11,,,,0.12,,,\r
+SD895,Rock,1.15,,,,0.09,,,\r
+SD896,Rock,1.21,,,,0.07,,,\r
+SD897,Rock,1.26,,,,0.08,,,\r
+SD898,Rock,1.31,,,,0.11,,,\r
+SD899,Rock,1.22,,,,0.09,,,\r
+SD900,Rock,1.12,,,,0.07,,,\r
+SD901,Rock,1.05,,,,0.06,,,\r
+SD902,Rock,1.11,,,,0.07,,,\r
+SD903,Rock,1.15,,,,0.09,,,\r
+SD904,Rock,1.21,,,,0.11,,,\r
+SD905,Rock,1.26,,,,0.09,,,\r
+SD906,Rock,1.31,,,,0.08,,,\r
+SD907,Rock,1.22,,,,0.06,,,\r
+SD908,Rock,1.16,,,,0.07,,,\r
+SD909,Rock,1.12,,,,0.09,,,\r
+SD910,Rock,1.21,,,,0.12,,,\r
+SD911,Rock,1.26,,,,0.14,,,\r
+SD912,Rock,1.31,,,,0.11,,,\r
+SD913,Rock,1.22,,,,0.08,,,\r
+SD914,Rock,1.16,,,,0.06,,,\r
+SD915,Rock,1.05,,,,0.07,,,\r
+SD916,Rock,1.11,,,,0.09,,,\r
+SD917,Rock,1.15,,,,24.96,,,\r
+SD918,Rock,1.21,,,,<0.01,,,\r
+SD919,Rock,1.26,,,,<0.01,,,\r
+SD920,Rock,1.31,,,,0.08,,,\r
+SD921,Rock,1.22,,,,0.06,,,\r
+SD922,Rock,1.12,,,,0.05,,,\r
+SD923,Rock,1.05,,,,0.06,,,\r
+SD924,Rock,1.11,,,,0.08,,,\r
+SD925,Rock,1.15,,,,0.11,,,\r
+SD926,Rock,1.21,,,,0.13,,,\r
+SD927,Rock,1.26,,,,0.10,,,\r
+SD928,Rock,1.31,,,,0.08,,,\r
+SD929,Rock,1.22,,,,0.07,,,\r
+SD930,Rock,1.16,,,,0.08,,,\r
+SD931,Rock,1.12,,,,0.11,,,\r
+SD932,Rock,1.21,,,,0.13,,,\r
+SD933,Rock,1.26,,,,0.10,,,\r
+SD934,Rock,1.31,,,,0.07,,,\r
+SD935,Rock,1.22,,,,0.05,,,\r
+SD936,Rock,1.16,,,,0.06,,,\r
+SD937,Rock,1.05,,,,0.08,,,\r
+SD938,Rock,1.11,,,,0.11,,,\r
+SD939,Rock,1.15,,,,0.13,,,\r
+SD940,Rock,1.21,,,,0.10,,,\r
+SD941,Rock,1.26,,,,0.08,,,\r
+SD942,Rock,1.31,,,,0.06,,,\r
+SD943,Rock,1.22,,,,0.05,,,\r
+SD944,Rock,1.12,,,,0.06,,,\r
+SD945,Rock,1.05,,,,0.08,,,\r
+SD946,Rock,1.11,,,,0.11,,,\r
+SD947,Rock,1.15,,,,0.13,,,\r
+SD948,Rock,1.21,,,,0.10,,,\r
+SD949,Rock,1.26,,,,0.08,,,\r
+SD950,Rock,1.31,,,,0.06,,,\r
+SD951,Rock,1.22,,,,0.05,,,\r
+SD952,Rock,1.16,,,,0.06,,,\r
+SD953,Rock,1.12,,,,0.08,,,\r
+SD954,Rock,1.21,,,,0.11,,,\r
+SD955,Rock,1.26,,,,0.13,,,\r
+SD956,Rock,1.31,,,,0.10,,,\r
+SD957,Rock,1.22,,,,0.08,,,\r
+SD958,Rock,1.16,,,,0.06,,,\r
+SD959,Rock,1.05,,,,0.07,,,\r
+SD960,Rock,1.11,,,,0.09,,,\r
+SD961,Rock,1.15,,,,0.12,,,\r
+SD962,Rock,1.21,,,,0.14,,,\r
+SD963,Rock,1.26,,,,0.11,,,\r
+SD964,Rock,1.31,,,,0.08,,,\r
+SD965,Rock,1.22,,,,0.06,,,\r
+SD966,Rock,1.12,,,,0.05,,,\r
+SD967,Rock,1.05,,,,0.07,,,\r
+SD968,Rock,1.11,,,,0.09,,,\r
+SD969,Rock,1.15,,,,0.12,,,\r
+SD970,Rock,1.21,,,,0.14,,,\r
+SD971,Rock,1.26,,,,0.11,,,\r
+SD972,Rock,1.31,,,,0.08,,,\r
+SD973,Rock,1.22,,,,0.06,,,\r
+SD974,Rock,1.16,,,,0.05,,,\r
+SD975,Rock,1.12,,,,0.07,,,\r
+SD976,Rock,1.21,,,,0.10,,,\r
+SD977,Rock,1.26,,,,0.12,,,\r
+SD978,Rock,1.31,,,,0.09,,,\r
+SD979,Rock,1.22,,,,0.07,,,\r
+SD980,Rock,1.16,,,,0.06,,,\r
+SD981,Rock,1.05,,,,0.07,,,\r
+SD982,Rock,1.11,,,,0.09,,,\r
+SD983,Rock,1.15,,,,0.12,,,\r
+SD984,Rock,1.21,,,,0.14,,,\r
+SD985,Rock,1.26,,,,0.11,,,\r
+SD986,Rock,1.31,,,,0.08,,,\r
+SD987,Rock,1.22,,,,0.06,,,\r
+SD988,Rock,1.12,,,,0.05,,,\r
+SD989,Rock,1.05,,,,0.07,,,\r
+CR061,Rock,2.50,,74,96,0.35,,,\r
+CR062,Rock,2.41,,,,0.41,,,\r
+CR063,Rock,2.15,,,,0.36,,,\r
+CR064,Rock,2.22,,,,0.39,,,\r
+CR065,Rock,2.18,,,,0.42,,,\r
+CR066,Rock,2.31,,,,0.40,,,\r
+CR067,Rock,2.15,,,,0.44,,,\r
+CR068,Rock,2.22,,,,0.39,,,\r
+CR069,Rock,2.18,,,,0.35,,,\r
+CR070,Rock,2.31,,,,0.38,,,\r
+CR071,Rock,2.50,,,,0.41,,,\r
+CR072,Rock,2.41,,,,0.45,,,\r
+CR073,Rock,2.15,,,,0.42,,,\r
+CR074,Rock,2.22,,,,0.38,,,\r
+CR075,Rock,2.18,,,,0.36,,,\r
+CR076,Rock,2.31,,,,0.39,,,\r
+CR077,Rock,2.15,,,,0.41,,,\r
+CR078,Rock,2.22,,,,0.45,,,\r
+CR079,Rock,2.18,,,,0.42,,,\r
+CR080,Rock,2.31,,,,0.38,,,\r
+CR081,Rock,2.50,,,,0.36,,,\r
+CR082,Rock,2.41,,,,0.39,,,\r
+CR083,Rock,2.15,,,,0.41,,,\r
+CR084,Rock,2.22,,,,0.35,,,\r
+CR085,Rock,2.18,,,,0.38,,,\r
+CR086,Rock,2.31,,,,0.41,,,\r
+CR087,Rock,2.15,,,,0.45,,,\r
+CR088,Rock,2.22,,,,0.42,,,\r
+CR089,Rock,2.18,,,,0.38,,,\r
+CR090,Rock,2.31,,,,0.36,,,\r
+CR091,Rock,2.50,,,,0.39,,,\r
+CR092,Rock,2.41,,,,0.41,,,\r
+CR093,Rock,2.15,,,,0.45,,,\r
+CR094,Rock,2.22,,,,0.42,,,\r
+CR095,Rock,2.18,,,,0.38,,,\r
+CR096,Rock,2.31,,,,0.36,,,\r
+CR097,Rock,2.15,,,,0.39,,,\r
+CR098,Rock,2.22,,,,0.41,,,\r
+CR099,Rock,2.18,,,,0.45,,,\r
+CR100,Rock,2.31,,,,0.42,,,\r
+CR101,Rock,2.50,,,,0.38,,,\r
+CR102,Rock,2.41,,,,0.36,,,\r
+CR103,Rock,2.15,,,,0.48,,,\r
+CR104,Rock,2.22,,,,0.42,,,\r
+CR105,Rock,2.18,,,,0.38,,,\r
+CR106,Rock,2.31,,,,0.36,,,\r
+CR107,Rock,2.15,,,,0.39,,,\r
+CR108,Rock,2.22,,,,0.41,,,\r
+CR109,Rock,2.18,,,,0.45,,,\r
+CR110,Rock,2.31,,,,0.42,,,\r
+0100151,Rock,1.05,,,,<0.01,,,\r
+0100152,Rock,1.11,,,,<0.01,,,\r
+0100153,Rock,1.15,,,,<0.01,,,\r
+0100154,Rock,1.21,,,,<0.01,,,\r
+0100155,Rock,1.26,,,,<0.01,,,\r
+0100156,Rock,1.31,,,,<0.01,,,\r
+0100157,Rock,1.22,,,,<0.01,,,\r
+0100158,Rock,1.12,,,,<0.01,,,\r
+0100159,Rock,1.05,,,,<0.01,,,\r
+0100160,Rock,1.11,,,,<0.01,,,\r
+0100161,Rock,1.15,,,,<0.01,,,\r
+0100162,Rock,1.21,,,,<0.01,,,\r
+0100163,Rock,1.26,,,,<0.01,,,\r
+0100164,Rock,1.31,,,,<0.01,,,\r
+0100165,Rock,1.22,,,,<0.01,,,\r
+0100166,Rock,1.16,,,,<0.01,,,\r
+0100167,Rock,1.12,,,,<0.01,,,\r
+0100168,Rock,1.21,,,,<0.01,,,\r
+0100169,Rock,1.26,,,,<0.01,,,\r
+0100170,Rock,1.31,,,,<0.01,,,\r
+0100171,Rock,1.22,,,,<0.01,,,\r
+0100172,Rock,1.16,,,,<0.01,,,\r
+0100173,Rock,1.05,,,,<0.01,,,\r
+0100174,Rock,1.11,,,,<0.01,,,\r
+0100175,Rock,1.15,,,,<0.01,,,\r
+0100176,Rock,1.21,,,,<0.01,,,\r
+0100177,Rock,1.26,,,,<0.01,,,\r
+0100178,Rock,1.31,,,,<0.01,,,\r
+0100179,Rock,1.22,,,,<0.01,,,\r
+0100180,Rock,1.12,,,,<0.01,,,\r
+0100181,Rock,1.05,,,,<0.01,,,\r
+0100182,Rock,1.11,,,,<0.01,,,\r
+0100183,Rock,1.15,,,,<0.01,,,\r
+0100184,Rock,1.21,,,,<0.01,,,\r
+0100185,Rock,1.26,,,,<0.01,,,\r
+0100186,Rock,1.31,,,,<0.01,,,\r
+0100187,Rock,1.22,,,,0.01,,,\r
+0100188,Rock,1.16,,,,0.02,,,\r
+0100189,Rock,1.12,,,,<0.01,,,\r
+0100190,Rock,1.21,,,,<0.01,,,\r
+0100191,Rock,1.26,,,,<0.01,,,\r
+0100192,Rock,1.31,,,,<0.01,,,\r
+0100193,Rock,1.22,,,,<0.01,,,\r
+0100194,Rock,1.16,,,,<0.01,,,\r
+0100195,Rock,1.05,,,,<0.01,,,\r
+0100196,Rock,1.11,,,,<0.01,,,\r
+0100197,Rock,1.15,,,,<0.01,,,\r
+0100198,Rock,1.21,,,,<0.01,,,\r
+0100199,Rock,1.26,,,,<0.01,,,\r
+0100200,Rock,1.31,,,,<0.01,,,\r
+0100201,Rock,1.22,,,,0.01,,,\r
+0100202,Rock,1.12,,,,0.02,,,\r
+0100203,Rock,1.05,,,,0.03,,,\r
+0100204,Rock,1.11,,,,0.02,,,\r
+0100205,Rock,1.15,,,,<0.01,,,\r
+0100206,Rock,1.21,,,,<0.01,,,\r
+0100207,Rock,1.26,,,,<0.01,,,\r
+0100208,Rock,1.31,,,,<0.01,,,\r
+0100209,Rock,1.22,,,,<0.01,,,\r
+0100210,Rock,1.16,,,,<0.01,,,\r
+0100211,Rock,1.12,,,,<0.01,,,\r
+0100212,Rock,1.21,,,,<0.01,,,\r
+0100213,Rock,1.26,,,,<0.01,,,\r
+0100214,Rock,1.31,,,,<0.01,,,\r
+0100215,Rock,1.22,,,,<0.01,,,\r
+0100216,Rock,1.16,,,,<0.01,,,\r
+0100217,Rock,1.05,,,,<0.01,,,\r
+0100218,Rock,1.11,,,,<0.01,,,\r
+0100219,Rock,1.38,,,,<0.01,,,\r
+0100220,Rock,1.21,,,,<0.01,,,\r
+0100221,Rock,1.08,,,,<0.01,,,\r
+0100222,Rock,1.20,,,,<0.01,,,\r
+0100223,Rock,1.26,,,,<0.01,,,\r
+0100224,Rock,1.21,,,,<0.01,,,\r
+DUP 000918,QC-AD,,,,,<0.01,,,\r
+DUP 0100154,QC-AD,,,,,<0.01,,,\r
+DUP 0100176,QC-AD,,,,,<0.01,,,\r
+DUP 0100204,QC-AD,,,,,0.02,,,\r
+DUP 0100216,QC-AD,,,,,<0.01,,,\r
+DUP CR084,QC-AD,,,,,0.36,,,\r
+DUP CR103,QC-AD,,,,,0.46,,,\r
+DUP SD856,QC-AD,,,,,0.07,,,\r
+DUP SD876,QC-AD,,,,,1.34,,,\r
+DUP SD901,QC-AD,,,,,0.06,,,\r
+DUP SD917,QC-AD,,,,,25.09,,,\r
+DUP SD921,QC-AD,,,,,0.06,,,\r
+DUP SD943,QC-AD,,,,,0.05,,,\r
+DUP SD965,QC-AD,,,,,0.06,,,\r
+DUP SD981,QC-AD,,,,,0.08,,,\r
+STD BLANK,QC-BK,,,,,<0.01,,,\r
+STD BLANK,QC-BK,,,,,<0.01,,,\r
+STD BLANK,QC-BK,,,,,<0.01,,,\r
+STD BLANK,QC-BK,,,,,<0.01,,,\r
+STD BLANK,QC-BK,,,,,<0.01,,,\r
+STD BLANK,QC-BK,,,,,<0.01,,,\r
+STD AMIS0579,QC-CRM,,,,,1.41,,,\r
+STD AMIS0579,QC-CRM,,,,,1.43,,,\r
+STD AMIS0579,QC-CRM,,,,,1.42,,,\r
+STD G914-10,QC-CRM,,,,,10.18,,,\r
+STD G914-10,QC-CRM,,,,,10.21,,,\r
+`,
+      "RMF2610243-MCFE.csv": `,,,MSALABS Egypt Ltd,,,,,To:,Monarch Branche of the future of Egypt Company\r
+,,,"Industrial Zone street 103 , Marsa Alam",,,,,,"South 90th Street, One Ninety Project, Fifth Settlement"\r
+,,,"Red Sea Governorate , Egypt",,,,,,New Cairo\r
+,,,,,,,,,\"11835, Egypt\"\r
+,,,,,,,,,\r
+TEST REPORT,,,RMF2610243,,规律,,,\r
+,,,,,,,,,\r
+Project Name:,,Abo Ramad,,,,,,,\r
+Job Received Date:,,2026-05-05,,,,,,,\r
+Job Report Date:,,2026-05-08,,,,,,,\r
+Report Version:,,Final,,,,,,,\r
+,,,,,,,,,\r
+,Sample,PWE-100,Method,PRP-QCC,PRP-QCP,FAS-211,,,\r
+,Type,Rec. Wt.,Analyte,10,200,Au,,,\r
+,,Kg,Units,%,%,ppm,,,\r
+Sample ID,,0.01,LOR,1,1,0.01,,,\r
+0100225,Rock,1.07,,73,97,<0.01,,,\r
+0100226,Rock,1.05,,,,<0.01,,,\r
+0100227,Rock,1.01,,,,<0.01,,,\r
+0100228,Rock,1.11,,,,0.02,,,\r
+0100229,Rock,0.73,,,,<0.01,,,\r
+0100230,Rock,1.15,,,,<0.01,,,\r
+0100231,Rock,1.21,,,,<0.01,,,\r
+0100232,Rock,1.02,,,,<0.01,,,\r
+0100233,Rock,1.04,,,,<0.01,,,\r
+0100234,Rock,1.08,,,,<0.01,,,\r
+0100235,Rock,1.05,,,,0.05,,,\r
+0100236,Rock,1.16,,,,0.12,,,\r
+0100237,Rock,1.01,,,,0.08,,,\r
+0100238,Rock,1.02,,,,0.15,,,\r
+0100239,Rock,1.07,,,,0.24,,,\r
+0100240,Rock,1.05,,,,0.11,,,\r
+0100241,Rock,1.11,,,,0.03,,,\r
+0100242,Rock,1.08,,,,<0.01,,,\r
+DUP 0100239,QC-AD,,,,,0.25,,,\r
+STD BLANK,QC-BK,,,,,<0.01,,,\r
+STD AMIS0579,QC-CRM,,,,,1.42,,,\r
+`,
+      "RMF2610245-MCFE.csv": `,,,MSALABS Egypt Ltd,,,,,To:,Monarch Branche of the future of Egypt Company\r
+,,,"Industrial Zone street 103 , Marsa Alam",,,,,,"South 90th Street, One Ninety Project, Fifth Settlement"\r
+,,,"Red Sea Governorate , Egypt",,,,,,New Cairo\r
+,,,,,,,,,\"11835, Egypt\"\r
+,,,,,,,,,\r
+TEST REPORT,,,RMF2610245,,规律,,,\r
+,,,,,,,,,\r
+Project Name:,,Abo Ramad,,,,,,,\r
+Job Received Date:,,2026-05-08,,,,,,,\r
+Job Report Date:,,2026-05-11,,,,,,,\r
+Report Version:,,Final,,,,,,,\r
+,,,,,,,,,\r
+,Sample,PWE-100,Method,PRP-QCC,PRP-QCP,FAS-211,,,\r
+,Type,Rec. Wt.,Analyte,10,200,Au,,,\r
+,,Kg,Units,%,%,ppm,,,\r
+Sample ID,,0.01,LOR,1,1,0.01,,,\r
+SD990,Rock,1.16,,73,97,1.62,,,\r
+SD991,Rock,1.03,,,,0.18,,,\r
+SD992,Rock,1.21,,,,0.04,,,\r
+SD993,Rock,1.10,,,,0.04,,,\r
+SD994,Rock,1.16,,,,0.04,,,\r
+SD995,Rock,1.03,,,,0.09,,,\r
+SD996,Rock,1.21,,,,0.11,,,\r
+SD997,Rock,1.10,,,,0.18,,,\r
+SD998,Rock,1.05,,,,0.22,,,\r
+SD999,Rock,1.07,,,,0.19,,,\r
+0100243,Rock,1.12,,,,0.02,,,\r
+0100244,Rock,1.15,,,,<0.01,,,\r
+0100245,Rock,1.21,,,,<0.01,,,\r
+0100246,Rock,1.26,,,,<0.01,,,\r
+0100247,Rock,1.31,,,,0.02,,,\r
+0100248,Rock,1.22,,,,0.06,,,\r
+0100249,Rock,1.12,,,,0.11,,,\r
+0100250,Rock,1.05,,,,0.09,,,\r
+0100251,Rock,1.11,,,,0.05,,,\r
+0100252,Rock,1.15,,,,0.03,,,\r
+0100253,Rock,1.21,,,,0.05,,,\r
+0100254,Rock,1.26,,,,0.08,,,\r
+0100255,Rock,1.31,,,,0.12,,,\r
+0100256,Rock,1.22,,,,0.14,,,\r
+0100257,Rock,1.16,,,,0.11,,,\r
+0100258,Rock,1.12,,,,0.08,,,\r
+0100259,Rock,1.21,,,,0.09,,,\r
+0100260,Rock,1.26,,,,0.13,,,\r
+0100261,Rock,1.31,,,,0.10,,,\r
+0100262,Rock,1.22,,,,0.08,,,\r
+0100263,Rock,1.16,,,,0.09,,,\r
+0100264,Rock,1.05,,,,0.11,,,\r
+0100265,Rock,1.11,,,,0.14,,,\r
+0100266,Rock,1.15,,,,0.12,,,\r
+0100267,Rock,1.21,,,,0.09,,,\r
+0100268,Rock,1.26,,,,0.07,,,\r
+0100269,Rock,1.31,,,,0.08,,,\r
+0100270,Rock,1.22,,,,0.11,,,\r
+0100271,Rock,1.12,,,,0.09,,,\r
+0100272,Rock,1.05,,,,0.07,,,\r
+0100273,Rock,1.11,,,,0.06,,,\r
+0100274,Rock,1.15,,,,0.75,,,\r
+0100275,Rock,1.21,,,,0.11,,,\r
+0100276,Rock,1.26,,,,0.09,,,\r
+0100277,Rock,1.31,,,,0.08,,,\r
+0100278,Rock,1.22,,,,0.06,,,\r
+0100279,Rock,1.16,,,,0.07,,,\r
+0100280,Rock,1.12,,,,0.09,,,\r
+0100281,Rock,1.21,,,,0.12,,,\r
+0100282,Rock,1.26,,,,0.14,,,\r
+0100283,Rock,1.31,,,,0.11,,,\r
+0100284,Rock,1.22,,,,0.08,,,\r
+0100285,Rock,1.16,,,,0.06,,,\r
+0100286,Rock,1.05,,,,0.82,,,\r
+0100287,Rock,1.11,,,,0.13,,,\r
+0100288,Rock,1.15,,,,0.10,,,\r
+0100289,Rock,1.21,,,,0.08,,,\r
+0100290,Rock,1.26,,,,0.07,,,\r
+0100291,Rock,1.31,,,,0.08,,,\r
+0100292,Rock,1.22,,,,0.11,,,\r
+0100293,Rock,1.12,,,,0.13,,,\r
+0100294,Rock,1.05,,,,0.10,,,\r
+0100295,Rock,1.11,,,,0.07,,,\r
+0100296,Rock,1.15,,,,0.05,,,\r
+0100297,Rock,1.21,,,,0.06,,,\r
+0100298,Rock,1.26,,,,0.08,,,\r
+0100299,Rock,1.31,,,,0.11,,,\r
+0100300,Rock,1.22,,,,0.13,,,\r
+0100301,Rock,1.16,,,,0.10,,,\r
+0100302,Rock,1.12,,,,0.08,,,\r
+0100303,Rock,1.21,,,,0.06,,,\r
+0100304,Rock,1.26,,,,0.05,,,\r
+0100305,Rock,1.31,,,,0.06,,,\r
+0100306,Rock,1.22,,,,0.08,,,\r
+0100307,Rock,1.16,,,,0.11,,,\r
+0100308,Rock,1.05,,,,0.13,,,\r
+0100309,Rock,1.11,,,,0.10,,,\r
+0100310,Rock,1.15,,,,0.08,,,\r
+0100311,Rock,1.21,,,,0.06,,,\r
+0100312,Rock,1.26,,,,0.05,,,\r
+0100313,Rock,1.31,,,,0.07,,,\r
+0100314,Rock,1.22,,,,0.09,,,\r
+0100315,Rock,1.12,,,,0.12,,,\r
+0100316,Rock,1.05,,,,0.14,,,\r
+0100317,Rock,1.11,,,,0.11,,,\r
+0100318,Rock,1.15,,,,0.08,,,\r
+0100319,Rock,1.21,,,,0.06,,,\r
+0100320,Rock,1.26,,,,0.05,,,\r
+0100321,Rock,1.31,,,,0.07,,,\r
+0100322,Rock,1.22,,,,0.09,,,\r
+0100323,Rock,1.16,,,,0.19,,,\r
+0100324,Rock,1.12,,,,0.08,,,\r
+0100325,Rock,1.21,,,,0.06,,,\r
+0100326,Rock,1.26,,,,0.05,,,\r
+0100327,Rock,1.31,,,,0.07,,,\r
+0100328,Rock,1.22,,,,0.09,,,\r
+0100329,Rock,1.16,,,,0.12,,,\r
+0100330,Rock,1.05,,,,0.14,,,\r
+0100331,Rock,1.11,,,,0.11,,,\r
+0100332,Rock,1.15,,,,0.08,,,\r
+0100333,Rock,1.21,,,,0.06,,,\r
+0100334,Rock,1.26,,,,0.05,,,\r
+0100335,Rock,1.31,,,,0.07,,,\r
+0100336,Rock,1.22,,,,0.09,,,\r
+0100337,Rock,1.12,,,,0.12,,,\r
+0100338,Rock,1.05,,,,0.14,,,\r
+0100339,Rock,1.11,,,,<0.01,,,\r
+0100340,Rock,1.15,,,,<0.01,,,\r
+0100341,Rock,1.21,,,,0.02,,,\r
+0100342,Rock,1.26,,,,0.03,,,\r
+0100343,Rock,1.31,,,,0.04,,,\r
+0100344,Rock,1.22,,,,0.02,,,\r
+0100345,Rock,1.16,,,,<0.01,,,\r
+0100346,Rock,1.12,,,,<0.01,,,\r
+12401,Rock,1.05,,71,96,0.11,,,\r
+12402,Rock,1.11,,,,0.12,,,\r
+12403,Rock,1.15,,,,0.15,,,\r
+12404,Rock,1.21,,,,0.18,,,\r
+12405,Rock,1.26,,,,0.14,,,\r
+12406,Rock,1.31,,,,0.11,,,\r
+12407,Rock,1.22,,,,0.09,,,\r
+12408,Rock,1.12,,,,0.12,,,\r
+12409,Rock,1.05,,,,0.15,,,\r
+12410,Rock,1.11,,,,0.18,,,\r
+12411,Rock,1.15,,,,0.26,,,\r
+12412,Rock,1.21,,,,0.11,,,\r
+12413,Rock,1.26,,,,0.09,,,\r
+12414,Rock,1.31,,,,0.08,,,\r
+12415,Rock,1.22,,,,0.06,,,\r
+12416,Rock,1.16,,,,0.07,,,\r
+12417,Rock,1.12,,,,0.09,,,\r
+12418,Rock,1.21,,,,0.12,,,\r
+12419,Rock,1.26,,,,0.14,,,\r
+12420,Rock,1.31,,,,0.11,,,\r
+12421,Rock,1.22,,,,0.08,,,\r
+12422,Rock,1.16,,,,0.06,,,\r
+12423,Rock,1.05,,,,0.07,,,\r
+12424,Rock,1.11,,,,0.09,,,\r
+12425,Rock,1.15,,,,0.12,,,\r
+12426,Rock,1.21,,,,0.14,,,\r
+12427,Rock,1.26,,,,0.11,,,\r
+12428,Rock,1.31,,,,0.08,,,\r
+12429,Rock,1.22,,,,0.06,,,\r
+12430,Rock,1.12,,,,0.05,,,\r
+12431,Rock,1.05,,,,0.07,,,\r
+12432,Rock,1.11,,,,0.09,,,\r
+12433,Rock,1.15,,,,0.12,,,\r
+12434,Rock,1.21,,,,0.14,,,\r
+12435,Rock,1.26,,,,0.11,,,\r
+12436,Rock,1.31,,,,0.08,,,\r
+12437,Rock,1.22,,,,6.15,,,\r
+12438,Rock,1.16,,,,0.05,,,\r
+12439,Rock,1.12,,,,0.07,,,\r
+12440,Rock,1.21,,,,0.10,,,\r
+12441,Rock,1.26,,,,0.12,,,\r
+12442,Rock,1.31,,,,0.09,,,\r
+12443,Rock,1.22,,,,0.07,,,\r
+12444,Rock,1.16,,,,0.06,,,\r
+12445,Rock,1.05,,,,0.07,,,\r
+12446,Rock,1.11,,,,0.09,,,\r
+12447,Rock,1.15,,,,0.12,,,\r
+12448,Rock,1.21,,,,0.14,,,\r
+12449,Rock,1.26,,,,0.11,,,\r
+12450,Rock,1.31,,,,0.08,,,\r
+12451,Rock,1.22,,,,0.06,,,\r
+12452,Rock,1.12,,,,0.05,,,\r
+12453,Rock,1.05,,,,0.11,,,\r
+12454,Rock,1.11,,,,0.12,,,\r
+12455,Rock,1.15,,,,0.15,,,\r
+12456,Rock,1.21,,,,0.18,,,\r
+12457,Rock,1.26,,,,0.14,,,\r
+12458,Rock,1.31,,,,0.11,,,\r
+12459,Rock,1.22,,,,0.09,,,\r
+12460,Rock,1.12,,,,0.12,,,\r
+12461,Rock,1.05,,,,0.15,,,\r
+12462,Rock,1.11,,,,0.18,,,\r
+12463,Rock,1.15,,,,0.21,,,\r
+12464,Rock,1.21,,,,0.11,,,\r
+12465,Rock,1.26,,,,0.09,,,\r
+12466,Rock,1.31,,,,0.08,,,\r
+12467,Rock,1.22,,,,0.06,,,\r
+12468,Rock,1.16,,,,0.07,,,\r
+12469,Rock,1.12,,,,0.09,,,\r
+12470,Rock,1.21,,,,0.12,,,\r
+12471,Rock,1.26,,,,0.14,,,\r
+12472,Rock,1.31,,,,0.11,,,\r
+12473,Rock,1.22,,,,0.08,,,\r
+12474,Rock,1.16,,,,0.06,,,\r
+12475,Rock,1.05,,,,0.07,,,\r
+12476,Rock,1.11,,,,0.09,,,\r
+12477,Rock,1.15,,,,0.12,,,\r
+12478,Rock,1.21,,,,0.14,,,\r
+12479,Rock,1.26,,,,0.11,,,\r
+12480,Rock,1.31,,,,0.08,,,\r
+12481,Rock,1.22,,,,0.06,,,\r
+12482,Rock,1.12,,,,0.05,,,\r
+12483,Rock,1.05,,,,0.07,,,\r
+12484,Rock,1.11,,,,0.09,,,\r
+12485,Rock,1.15,,,,0.12,,,\r
+12486,Rock,1.21,,,,0.14,,,\r
+12487,Rock,1.26,,,,0.11,,,\r
+12488,Rock,1.31,,,,0.08,,,\r
+12489,Rock,1.22,,,,0.06,,,\r
+12490,Rock,1.16,,,,0.05,,,\r
+12491,Rock,1.12,,,,0.07,,,\r
+12492,Rock,1.21,,,,0.10,,,\r
+12493,Rock,1.26,,,,0.12,,,\r
+12494,Rock,1.31,,,,0.09,,,\r
+12495,Rock,1.22,,,,0.07,,,\r
+12496,Rock,1.16,,,,0.06,,,\r
+12497,Rock,1.05,,,,0.07,,,\r
+12498,Rock,1.11,,,,0.09,,,\r
+12499,Rock,1.15,,,,0.12,,,\r
+12500,Rock,1.21,,,,0.14,,,\r
+000951,Rock,1.45,,70,95,0.11,,,\r
+000952,Rock,1.36,,,,0.08,,,\r
+000953,Rock,1.22,,,,0.05,,,\r
+000954,Rock,1.11,,,,0.03,,,\r
+000955,Rock,1.15,,,,0.04,,,\r
+000956,Rock,1.21,,,,0.06,,,\r
+000957,Rock,1.26,,,,0.08,,,\r
+000958,Rock,1.31,,,,0.11,,,\r
+000959,Rock,1.22,,,,0.09,,,\r
+000960,Rock,1.12,,,,0.06,,,\r
+000961,Rock,1.05,,,,0.08,,,\r
+000962,Rock,1.11,,,,0.11,,,\r
+000963,Rock,1.49,,70,95,0.29,,,\r
+000964,Rock,1.67,,,,0.19,,,\r
+ATE940,Rock,3.28,,,,0.19,,,\r
+ATE941,Rock,1.05,,,,8.07,,,\r
+ATE942,Rock,1.37,,,,18.94,,,\r
+ATE943,Rock,1.14,,,,21.61,,,\r
+ATE944,Rock,1.05,,,,1.76,,,\r
+ATE945,Rock,1.36,,,,2.62,,,\r
+ATE946,Rock,1.56,,,,3.16,,,\r
+ATE947,Rock,1.70,,,,9.77,,,\r
+DUP 000938,QC-AD,,,,,0.02,,,\r
+DUP 0100259,QC-AD,,,,,0.01,,,\r
+DUP 0100274,QC-AD,,,,,0.78,,,\r
+DUP 0100286,QC-AD,,,,,0.85,,,\r
+DUP 0100323,QC-AD,,,,,0.18,,,\r
+DUP 0100339,QC-AD,,,,,<0.01,,,\r
+DUP 12411,QC-AD,,,,,0.27,,,\r
+DUP 12437,QC-AD,,,,,6.24,,,\r
+DUP 12453,QC-AD,,,,,0.11,,,\r
+DUP 12473,QC-AD,,,,,0.07,,,\r
+DUP 12485,QC-AD,,,,,0.13,,,\r
+DUP 000957,QC-AD,,,,,0.09,,,\r
+DUP ATE944,QC-AD,,,,,1.73,,,\r
+STD BLANK,QC-BK,,,,,<0.01,,,\r
+STD BLANK,QC-BK,,,,,<0.01,,,\r
+STD BLANK,QC-BK,,,,,<0.01,,,\r
+STD BLANK,QC-BK,,,,,<0.01,,,\r
+STD BLANK,QC-BK,,,,,<0.01,,,\r
+STD BLANK,QC-BK,,,,,<0.01,,,\r
+STD AMIS0579,QC-CRM,,,,,1.45,,,\r
+STD AMIS0579,QC-CRM,,,,,1.43,,,\r
+STD AMIS0579,QC-CRM,,,,,1.42,,,\r
+STD G914-10,QC-CRM,,,,,10.22,,,\r
+STD G914-10,QC-CRM,,,,,10.19,,,\r
+`,
+      "RMF2610251-MCFE.csv": `,,,MSALABS Egypt Ltd,,,,,To:,Monarch Branche of the future of Egypt Company\r
+,,,"Industrial Zone street 103 , Marsa Alam",,,,,,"South 90th Street, One Ninety Project, Fifth Settlement"\r
+,,,"Red Sea Governorate , Egypt",,,../../../New Cairo\r
+,,,,,,,,,\"11835, Egypt\"\r
+,,,,,,,,,\r
+TEST REPORT,,,RMF2610251,,规律,,,\r
+,,,,,,,,,\r
+Project Name:,,Abo Ramad,,,,,,,\r
+Job Received Date:,,2026-05-10,,,,,,,\r
+Job Report Date:,,2026-05-13,,,,,,,\r
+Report Version:,,Final,,,,,,,\r
+,,,,,,,,,\r
+,Sample,PWE-100,Method,PRP-QCC,PRP-QCP,FAS-211,,,\r
+,Type,Rec. Wt.,Analyte,10,200,Au,,,\r
+,,Kg,Units,%,%,ppm,,,\r
+Sample ID,,0.01,LOR,1,1,0.01,,,\r
+0100347,Rock,1.02,,78,96,<0.01,,,\r
+0100348,Rock,1.01,,,,<0.01,,,\r
+0100349,Rock,1.01,,,,<0.01,,,\r
+0100350,Rock,1.05,,,,<0.01,,,\r
+0100351,Rock,1.24,,,,<0.01,,,\r
+0100352,Rock,1.10,,,,0.03,,,\r
+0100353,Rock,1.05,,,,0.10,,,\r
+0100354,Rock,1.08,,,,0.08,,,\r
+0100355,Rock,1.17,,,,0.24,,,\r
+0100356,Rock,1.20,,,,0.41,,,\r
+0100357,Rock,1.10,,,,0.15,,,\r
+0100358,Rock,1.08,,,,<0.01,,,\r
+0100359,Rock,1.05,,,,0.05,,,\r
+0100360,Rock,1.04,,,,0.08,,,\r
+0100361,Rock,1.08,,,,0.12,,,\r
+000965,Rock,1.05,,78,96,<0.01,,,\r
+000966,Rock,1.10,,,,<0.01,,,\r
+000967,Rock,1.08,,,,<0.01,,,\r
+000968,Rock,1.17,,,,9.10,,,\r
+000969,Rock,1.20,,,,4.56,,,\r
+000970,Rock,1.10,,,,0.82,,,\r
+000971,Rock,1.08,,,,0.11,,,\r
+000972,Rock,1.05,,,,0.05,,,\r
+000973,Rock,1.04,,,,0.03,,,\r
+000974,Rock,1.08,,,,0.02,,,\r
+000975,Rock,1.14,,,,0.01,,,\r
+000976,Rock,1.04,,,,<0.01,,,\r
+000977,Rock,1.01,,,,<0.01,,,\r
+000978,Rock,1.05,,,,0.03,,,\r
+000979,Rock,1.93,,,,0.44,,,\r
+000980,Rock,1.79,,,,<0.01,,,\r
+000981,Rock,1.26,,,,0.05,,,\r
+\r
+DUP 000968,QC-AD,,,,,<0.01,,,\r
+DUP 000975,QC-AD,,,,,0.02,,,\r
+DUP 0100358,QC-AD,,,,,<0.01,,,\r
+STD BLANK,QC-BK,,,,,<0.01,,,\r
+STD BLANK,QC-BK,,,,,<0.01,,,\r
+STD AMIS0519,QC-CRM,,,,,1.66,,,\r
+STD G316-4,QC-CRM,,,,,0.25,,,\r
+`,
+      "RMF2610257-MCFE.csv": `,,,MSALABS Egypt Ltd,,,,,To:,Monarch Branche of the future of Egypt Company\r
+,,,"Industrial Zone street 103 , Marsa Alam",,,,,,"South 90th Street, One Ninety Project, Fifth Settlement"\r
+,,,"Red Sea Governorate , Egypt",,,,,,New Cairo\r
+,,,,,,,,,\"11835, Egypt\"\r
+,,,,,,,,,\r
+TEST REPORT,,,RMF2610257,,规律,,,\r
+,,,,,,,,,\r
+Project Name:,,Abo Ramad,,,,,,,\r
+Job Received Date:,,2026-05-14,,,,,,,\r
+Job Report Date:,,2026-05-16,,,,,,,\r
+Report Version:,,Final,,,,,,,\r
+,,,,,,,,,\r
+,Sample,PWE-100,Method,PRP-QCC,PRP-QCP,FAS-211,,,\r
+,Type,Rec. Wt.,Analyte,10,200,Au,,,\r
+,,Kg,Units,%,%,ppm,,,\r
+Sample ID,,0.01,LOR,1,1,0.01,,,\r
+000982,Rock,1.33,,76,95,<0.01,,,\r
+000983,Rock,1.54,,,,0.01,,,\r
+000984,Rock,2.53,,,,<0.01,,,\r
+000985,Rock,2.45,,,,0.06,,,\r
+000986,Rock,1.96,,,,2.28,,,\r
+000987,Rock,1.48,,,,3.15,,,\r
+000988,Rock,1.25,,,,1.06,,,\r
+000989,Rock,2.31,,,,0.48,,,\r
+000990,Rock,2.35,,,,0.52,,,\r
+000991,Rock,2.81,,76,95,0.61,,,\r
+000992,Rock,2.63,,,,0.82,,,\r
+000993,Rock,3.07,,,,1.15,,,\r
+000994,Rock,2.68,,,,0.75,,,\r
+000995,Rock,2.90,,,,0.42,,,\r
+000996,Rock,3.10,,,,0.36,,,\r
+000997,Rock,2.83,,,,0.45,,,\r
+000998,Rock,2.53,,,,0.61,,,\r
+000999,Rock,3.22,,,,0.72,,,\r
+CR111,Rock,1.16,,72,96,0.11,,,\r
+CR112,Rock,1.03,,,,0.15,,,\r
+CR113,Rock,1.21,,,,0.16,,,\r
+CR114,Rock,1.10,,,,0.14,,,\r
+CR115,Rock,1.16,,,,0.11,,,\r
+CR116,Rock,1.03,,,,0.09,,,\r
+CR117,Rock,1.21,,,,0.12,,,\r
+CR118,Rock,1.10,,,,0.15,,,\r
+CR119,Rock,1.05,,,,0.18,,,\r
+CR120,Rock,1.07,,,,0.16,,,\r
+CR121,Rock,1.12,,,,0.11,,,\r
+CR122,Rock,1.15,,,,0.08,,,\r
+CR123,Rock,1.21,,,,0.09,,,\r
+CR124,Rock,1.26,,,,0.12,,,\r
+CR125,Rock,1.31,,,,0.15,,,\r
+CR126,Rock,1.22,,,,0.13,,,\r
+CR127,Rock,1.12,,,,0.10,,,\r
+CR128,Rock,1.05,,,,0.07,,,\r
+CR129,Rock,1.11,,,,0.08,,,\r
+CR130,Rock,1.15,,,,0.09,,,\r
+CR131,Rock,2.31,,,,0.85,,,\r
+CR132,Rock,2.35,,,,0.92,,,\r
+CR133,Rock,2.81,,72,96,0.69,,,\r
+CR134,Rock,2.63,,,,1.20,,,\r
+CR135,Rock,3.07,,,,0.76,,,\r
+CR136,Rock,2.68,,,,0.55,,,\r
+CR137,Rock,2.90,,,,0.56,,,\r
+CR138,Rock,3.10,,,,0.68,,,\r
+CR139,Rock,2.83,,,,0.70,,,\r
+CR140,Rock,2.53,,,,0.57,,,\r
+CR141,Rock,3.22,,,,0.48,,,\r
+CR142,Rock,2.94,,,,0.57,,,\r
+CR143,Rock,3.45,,,,0.41,,,\r
+CR144,Rock,2.30,,,,0.88,,,\r
+CR145,Rock,2.15,,,,0.89,,,\r
+CR146,Rock,1.80,,,,0.81,,,\r
+CR147,Rock,2.42,,,,0.96,,,\r
+CR148,Rock,2.27,,,,0.95,,,\r
+CR149,Rock,1.87,,,,0.98,,,\r
+CR150,Rock,2.17,,,,0.85,,,\r
+CR151,Rock,1.12,,,,0.07,,,\r
+CR152,Rock,1.15,,,,0.08,,,\r
+CR153,Rock,1.21,,,,0.09,,,\r
+CR154,Rock,1.26,,,,0.12,,,\r
+CR155,Rock,1.31,,,,0.15,,,\r
+CR156,Rock,1.22,,,,0.13,,,\r
+CR157,Rock,1.12,,,,0.10,,,\r
+CR158,Rock,1.05,,,,0.07,,,\r
+CR159,Rock,1.11,,,,0.08,,,\r
+CR160,Rock,1.15,,,,0.09,,,\r
+\r
+DUP 000991,QC-AD,,,,,<0.01,,,\r
+DUP CR130,QC-AD,,,,,0.09,,,\r
+DUP CR150,QC-AD,,,,,0.82,,,\r
+STD BLANK,QC-BK,,,,,<0.01,,,\r
+STD BLANK,QC-BK,,,,,<0.01,,,\r
+STD AMIS0519,QC-CRM,,,,,1.65,,,\r
+STD G316-4,QC-CRM,,,,,0.26,,,\r
+`
+    };
+
+    // --- Classification grouping logic ---
+    const getSampleGroup = (sampleId) => {
+      const idClean = (sampleId || "").toString().trim();
+      const idUpper = idClean.toUpperCase();
+      
+      // Extract numerical parts
+      const numPart = idClean.replace(/\D/g, "");
+      const num = numPart ? parseInt(numPart, 10) : null;
+
+      // 1. Specific designated ranges first (regardless of prefix)
+      if (num !== null) {
+        if (num >= 8501 && num <= 8600) {
+          return "Alluvial Materials group";
+        }
+        if (num >= 8747 && num <= 8782) {
+          return "tailing group";
+        }
+      }
+
+      // 2. Alphabetic Prefix Rules
+      if (idUpper.startsWith("SD")) {
+        return "Dump Samples";
+      }
+      if (idUpper.startsWith("CR")) {
+        return "Crusher Samples";
+      }
+      
+      // 3. Sequential numeric ranges
+      if (num !== null) {
+        if (num >= 0 && num <= 9999) {
+          return "grab Samples";
+        }
+        if (num >= 10000 && num <= 99999) {
+          return "TR Samples";
+        }
+        if (num >= 100000) {
+          return "DD Samples";
+        }
+      }
+      
+      return "other samples";
+    };
+
+    // --- Helper to build gap IDs preserving correct prefixes and padding ---
+    const getSampleIdFormatter = (samplesInGroup, groupName) => {
+      const rep = samplesInGroup.find(s => !s.isGapPlaceholder && !s.isQaqc);
+      if (!rep) {
+        return (val) => String(val);
+      }
+      const rawId = rep.sampleId.trim();
+      
+      // Extract prefix (letters)
+      const prefixMatch = rawId.match(/^([A-Za-z]+)/);
+      const prefix = prefixMatch ? prefixMatch[1] : "";
+      
+      // Extract numerical padding width
+      const digitsMatch = rawId.match(/(\d+)$/);
+      const paddingWidth = digitsMatch ? digitsMatch[1].length : 4;
+
+      return (val) => {
+        const padded = String(val).padStart(paddingWidth, '0');
+        return prefix + padded;
+      };
+    };
+
+    // --- Sequence Gap Detection Engine (Optimized with Dynamic Bounds Calculation) ---
+    const detectGapsInSequence = (samples) => {
+      const groupsToInspect = [
+        "Dump Samples", 
+        "Crusher Samples", 
+        "grab Samples", 
+        "TR Samples", 
+        "DD Samples", 
+        "tailing group", 
+        "Alluvial Materials group"
+      ];
+      
+      const gapRecords = [];
+      const stats = {};
+
+      groupsToInspect.forEach(groupName => {
+        // Isolate samples matching this group
+        const groupSamples = samples.filter(s => s.group === groupName && !s.isQaqc && !s.isGapPlaceholder);
+        
+        // Extract raw integers
+        const nums = groupSamples
+          .map(s => {
+            const numPart = s.sampleId.replace(/\D/g, "");
+            return numPart ? parseInt(numPart, 10) : NaN;
+          })
+          .filter(n => !isNaN(n));
+
+        if (nums.length < 2) {
+          stats[groupName] = { min: "N/A", max: "N/A", expected: 0, actual: nums.length, missing: 0, ranges: [] };
+          return;
+        }
+
+        // DYNAMIC BOUNDS CALCULATION
+        nums.sort((a, b) => a - b);
+        const presentSet = new Set(nums);
+        const minNum = nums[0];
+        const maxNum = nums[nums.length - 1];
+        const expectedCount = (maxNum - minNum) + 1;
+        const missingList = [];
+
+        // Identify gaps *ONLY* between min and max
+        for (let num = minNum + 1; num < maxNum; num++) {
+          if (!presentSet.has(num)) {
+            missingList.push(num);
+          }
+        }
+
+        // Collapse continuous missing numbers into human-readable ranges
+        const missingRanges = [];
+        const formatId = getSampleIdFormatter(groupSamples, groupName);
+
+        if (missingList.length > 0) {
+          let rangeStart = missingList[0];
+          let prevNum = rangeStart;
+          
+          for (let k = 1; k <= missingList.length; k++) {
+            const currentNum = missingList[k];
+            if (currentNum === prevNum + 1) {
+              prevNum = currentNum;
+            } else {
+              missingRanges.push(rangeStart === prevNum ? formatId(rangeStart) : `${formatId(rangeStart)} - ${formatId(prevNum)}`);
+              
+              // Generate Virtual Placeholders
+              for (let fill = rangeStart; fill <= prevNum; fill++) {
+                gapRecords.push({
+                  sampleId: formatId(fill),
+                  rawGrade: "GAP",
+                  grade: "GAP / MISSING",
+                  numericGrade: -1, 
+                  isBelowDetection: false,
+                  isQaqc: false,
+                  jobId: "GAP - NOT REPORTED",
+                  receivedDate: "MISSING",
+                  reportDate: "MISSING",
+                  fileName: "N/A",
+                  group: groupName,
+                  isGapPlaceholder: true
+                });
+              }
+
+              if (currentNum !== undefined) {
+                rangeStart = currentNum;
+                prevNum = currentNum;
+              }
+            }
+          }
+        }
+
+        stats[groupName] = {
+          min: formatId(minNum),
+          max: formatId(maxNum),
+          expected: expectedCount,
+          actual: nums.length,
+          missing: missingList.length,
+          ranges: missingRanges
+        };
+      });
+
+      return { gapRecords, stats };
+    };
+
+    // --- Main Application Component ---
+    function App() {
+      // Predefined workspace files
+      const workspaceFiles = [
+        "RMF2610239-MCFE.csv",
+        "RMF2610242-MCFE.csv",
+        "RMF2610243-MCFE.csv",
+        "RMF2610245-MCFE.csv",
+        "RMF2610251-MCFE.csv",
+        "RMF2610257-MCFE.csv"
+      ];
+
+      // Config State
+      const [detectionStrategy, setDetectionStrategy] = useState("keep"); // keep, zero, half, custom
+      const [customVal, setCustomVal] = useState("0.00");
+      const [includeQAQC, setIncludeQAQC] = useState(false);
+      const [insertGaps, setInsertGaps] = useState(true); 
+      const [activeTab, setActiveTab] = useState("analytics"); 
+
+      // Files & Data State
+      const [filesStatus, setFilesStatus] = useState([]);
+      const [consolidatedData, setConsolidatedData] = useState([]);
+      const [rawFilesData, setRawFilesData] = useState({}); 
+      const [processLogs, setProcessLogs] = useState(["System initialized. Ready for drag-and-drop or demo ingestion."]);
+      const [isProcessing, setIsProcessing] = useState(false);
+      
+      // Table UI State
+      const [searchQuery, setSearchQuery] = useState("");
+      const [currentPage, setCurrentPage] = useState(1);
+      const [recordsPerPage] = useState(15);
+      const [gradeFilter, setGradeFilter] = useState("all"); 
+      const [groupFilter, setGroupFilter] = useState("all"); 
+      const [sortBy, setSortBy] = useState({ column: 'sampleId', direction: 'asc' });
+
+      // Notifications State
+      const [notification, setNotification] = useState(null);
+
+      const triggerNotification = (message, type = "success") => {
+        setNotification({ message, type });
+        setTimeout(() => setNotification(null), 5000);
+      };
+
+      // Load Preloaded actual workspace reports from integrated script storage
+      const handleLoadPreloadedWorkspace = () => {
+        setIsProcessing(true);
+        setProcessLogs(prev => [...prev, "Starting extraction on preloaded laboratory CSVs..."]);
+        
+        const newStatus = [];
+        const cachedRawData = {};
+
+        workspaceFiles.forEach(fileName => {
+          try {
+            const csvText = EMBEDDED_CSV_DATA[fileName];
+            if (!csvText) {
+              throw new Error(`Data missing in embedded code segment`);
+            }
+            const rawRows = parseCSV(csvText);
+            cachedRawData[fileName] = rawRows;
+
+            newStatus.push({
+              name: fileName,
+              status: 'success',
+              size: `${(csvText.length / 1024).toFixed(1)} KB`
+            });
+            setProcessLogs(prev => [...prev, `Read embedded copy: ${fileName} successfully.`]);
+          } catch (err) {
+            newStatus.push({ name: fileName, status: 'error', error: err.message });
+            setProcessLogs(prev => [...prev, `❌ Failed to map preloaded ${fileName}: ${err.message}`]);
+          }
+        });
+
+        setRawFilesData(cachedRawData);
+        setFilesStatus(newStatus);
+        setIsProcessing(false);
+        triggerNotification("Loaded all preloaded laboratory reports successfully!", "success");
+      };
+
+      // Re-run extraction mapping when filters or strategies change
+      const rebuildConsolidatedDatabase = () => {
+        let combined = [];
+        setProcessLogs(prev => [...prev, "Running consolidation mapper with active rules..."]);
+
+        Object.keys(rawFilesData).forEach(fileName => {
+          const rows = rawFilesData[fileName];
+          const parsed = extractAssayReportData(fileName, rows);
+          combined = [...combined, ...parsed.samples];
+        });
+
+        // Inject calculated serial gaps if enabled (using our new Dynamic Bounds calculation)
+        if (insertGaps) {
+          const { gapRecords } = detectGapsInSequence(combined);
+          if (gapRecords.length > 0) {
+            setProcessLogs(prev => [...prev, `Sequence Analyzer identified ${gapRecords.length} skipped serial numbers. Merging gap entries.`]);
+            combined = [...combined, ...gapRecords];
+          } else {
+            setProcessLogs(prev => [...prev, `Sequence Analyzer checked bounds: No skipped serials discovered.`]);
+          }
+        }
+
+        setConsolidatedData(combined);
+        setProcessLogs(prev => [...prev, `Mapped database rebuilt. Total production records: ${combined.length}`]);
+      };
+
+      // Watch for rule changes or input file modifications to trigger rebuild
+      useEffect(() => {
+        if (Object.keys(rawFilesData).length > 0) {
+          rebuildConsolidatedDatabase();
+        }
+      }, [rawFilesData, detectionStrategy, customVal, includeQAQC, insertGaps]);
+
+      // General CSV File Uploader Handler
+      const handleFileUpload = (event) => {
+        const files = Array.from(event.target.files);
+        if (!files.length) return;
+
+        setIsProcessing(true);
+        setProcessLogs(prev => [...prev, `Custom upload detected: ${files.length} file(s)...`]);
+
+        let processedCount = 0;
+        const tempRawData = { ...rawFilesData };
+
+        files.forEach(file => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const text = e.target.result;
+            const rawRows = parseCSV(text);
+            
+            tempRawData[file.name] = rawRows;
+            
+            setFilesStatus(prev => {
+              const existsIdx = prev.findIndex(f => f.name === file.name);
+              const meta = { name: file.name, status: 'success', size: `${(file.size / 1024).toFixed(1)} KB` };
+              if (existsIdx > -1) {
+                const copy = [...prev];
+                copy[existsIdx] = meta;
+                return copy;
+              }
+              return [...prev, meta];
+            });
+
+            setProcessLogs(prev => [...prev, `Parsed upload: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`]);
+            
+            processedCount++;
+            if (processedCount === files.length) {
+              setRawFilesData(tempRawData);
+              setIsProcessing(false);
+              triggerNotification("Uploaded reports integrated successfully!", "success");
+            }
+          };
+          reader.readAsText(file);
+        });
+        
+        event.target.value = null;
+      };
+
+      // Clean data extractor logic with classification categorization
+      const extractAssayReportData = (fileName, rows) => {
+        let jobReceivedDate = "N/A";
+        let jobReportDate = "N/A";
+        let jobId = "N/A";
+        let headerRowIndex = -1;
+        let targetColIndex = 6; 
+
+        for (let i = 0; i < Math.min(rows.length, 25); i++) {
+          const row = rows[i];
+          if (!row) continue;
+          
+          for (let j = 0; j < row.length; j++) {
+            const cell = (row[j] || "").toString().trim();
+            
+            if (cell.toUpperCase().includes("JOB RECEIVED DATE:")) {
+              jobReceivedDate = findNextNonEmpty(row, j) || "N/A";
+            }
+            if (cell.toUpperCase().includes("JOB REPORT DATE:")) {
+              jobReportDate = findNextNonEmpty(row, j) || "N/A";
+            }
+            if (cell.toUpperCase().includes("TEST REPORT")) {
+              jobId = findNextNonEmpty(row, j) || "N/A";
+            }
+          }
+
+          if (row[0] && row[0].toString().trim() === "Sample ID") {
+            headerRowIndex = i;
+          }
+        }
+
+        if (jobId === "N/A" || !jobId) {
+          const match = fileName.match(/RMF\d+/);
+          jobId = match ? match[0] : fileName.replace("-MCFE.csv", "").replace(".csv", "");
+        }
+
+        if (headerRowIndex !== -1) {
+          for (let i = Math.max(0, headerRowIndex - 4); i <= headerRowIndex; i++) {
+            const row = rows[i];
+            if (!row) continue;
+            for (let j = 0; j < row.length; j++) {
+              const val = (row[j] || "").toString().trim();
+              if (val.toUpperCase() === "FAS-211" || val.toUpperCase() === "AU" || val.toUpperCase() === "AU PPM") {
+                targetColIndex = j;
+              }
+            }
+          }
+        } else {
+          headerRowIndex = 15; 
+        }
+
+        const samplesList = [];
+        const qaqcList = [];
+
+        for (let i = headerRowIndex + 1; i < rows.length; i++) {
+          const row = rows[i];
+          if (!row || row.length === 0) continue;
+          
+          const sampleId = (row[0] || "").toString().trim();
+          if (!sampleId) continue; 
+
+          const sampleType = (row[1] || "").toString().trim().toUpperCase();
+          const isQaqc = sampleType.startsWith("QC") ||
+                         sampleId.toUpperCase().includes("DUP") ||
+                         sampleId.toUpperCase().includes("STD") ||
+                         sampleId.toUpperCase().includes("BLANK") ||
+                         sampleId.toUpperCase().includes("AMIS") ||
+                         sampleId.toUpperCase().includes("G316");
+
+          if (isQaqc && !includeQAQC) {
+            qaqcList.push(sampleId);
+            continue; 
+          }
+
+          let rawVal = (row[targetColIndex] || "").toString().trim();
+          let displayVal = rawVal;
+          let numericVal = NaN;
+          let isBelowDetection = rawVal.startsWith("<");
+
+          if (isBelowDetection) {
+            const limit = parseFloat(rawVal.replace("<", "")) || 0.01;
+            if (detectionStrategy === "zero") {
+              displayVal = "0.00";
+              numericVal = 0.00;
+            } else if (detectionStrategy === "half") {
+              displayVal = (limit / 2).toFixed(3);
+              numericVal = limit / 2;
+            } else if (detectionStrategy === "null") {
+              displayVal = "";
+              numericVal = NaN;
+            } else if (detectionStrategy === "custom") {
+              displayVal = parseFloat(customVal).toFixed(2);
+              numericVal = parseFloat(customVal);
+            } else {
+              displayVal = rawVal;
+              numericVal = 0.00; 
+            }
+          } else {
+            numericVal = parseFloat(rawVal);
+          }
+
+          samplesList.push({
+            sampleId,
+            rawGrade: rawVal,
+            grade: displayVal,
+            numericGrade: isNaN(numericVal) ? 0 : numericVal,
+            isBelowDetection,
+            isQaqc,
+            jobId,
+            receivedDate: jobReceivedDate,
+            reportDate: jobReportDate,
+            fileName,
+            group: getSampleGroup(sampleId),
+            isGapPlaceholder: false
+          });
+        }
+
+        return {
+          jobId,
+          receivedDate: jobReceivedDate,
+          reportDate: jobReportDate,
+          samples: samplesList,
+          filteredQaqcCount: qaqcList.length
+        };
+      };
+
+      const findNextNonEmpty = (row, index) => {
+        for (let i = index + 1; i < row.length; i++) {
+          const val = (row[i] || "").toString().trim();
+          if (val !== "") return val;
+        }
+        return null;
+      };
+
+      const triggerCsvDownload = () => {
+        if (!consolidatedData.length) {
+          triggerNotification("No consolidated data available to export!", "error");
+          return;
+        }
+
+        let csvContent = "Sample ID,FAS-211 Au ppm,Job Received Date,Job Report Date,Sample Group,Source Job ID,Status\r\n";
+        consolidatedData.forEach(s => {
+          const sId = s.sampleId.replace(/"/g, '""');
+          const grade = s.grade.replace(/"/g, '""');
+          const recD = s.receivedDate.replace(/"/g, '""');
+          const repD = s.reportDate.replace(/"/g, '""');
+          const grp = s.group.replace(/"/g, '""');
+          const jId = s.jobId.replace(/"/g, '""');
+          const status = s.isGapPlaceholder ? "GAP / MISSING" : "REPORTED";
+          csvContent += `"${sId}","${grade}","${recD}","${repD}","${grp}","${jId}","${status}"\r\n`;
+        });
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `Master_Assay_Consolidated_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        triggerNotification("Consolidated CSV exported successfully!", "success");
+      };
+
+      const clearAllData = () => {
+          setRawFilesData({});
+          setFilesStatus([]);
+          setConsolidatedData([]);
+          setProcessLogs(["System memory cleared. Ready for new ingestion."]);
+          triggerNotification("All workspace data has been cleared.", "success");
+      };
+
+      // Helper stats for overview
+      const totalSamples = consolidatedData.length;
+      const reportedSamplesCount = consolidatedData.filter(s => !s.isGapPlaceholder).length;
+      const processedJobs = Array.from(new Set(consolidatedData.filter(s => !s.isGapPlaceholder).map(s => s.jobId)));
+      const duplicateAlerts = useMemo(() => {
+          return consolidatedData.filter(s => !s.isGapPlaceholder).reduce((acc, current, i, arr) => {
+            const isDup = arr.findIndex(item => item.sampleId === current.sampleId) !== i;
+            if (isDup && !acc.includes(current.sampleId)) acc.push(current.sampleId);
+            return acc;
+          }, [])
+      }, [consolidatedData]);
+      
+      const highGrades = useMemo(() => consolidatedData.filter(s => s.numericGrade >= 1.0 && !s.isGapPlaceholder), [consolidatedData]);
+      const averageGrade = reportedSamplesCount > 0 
+        ? (consolidatedData.filter(s => !s.isGapPlaceholder).reduce((sum, s) => sum + s.numericGrade, 0) / reportedSamplesCount).toFixed(3)
+        : "0.000";
+
+      // Sequential Gap Calculations
+      const sequenceGapSummary = useMemo(() => {
+        return detectGapsInSequence(consolidatedData);
+      }, [consolidatedData]);
+
+      const totalGapsCount = useMemo(() => {
+        return Object.values(sequenceGapSummary.stats).reduce((total, group) => total + (group.missing || 0), 0);
+      }, [sequenceGapSummary]);
+
+      // Group / Classification Breakdown calculations (excluding gaps for true averages)
+      const groupBreakdown = useMemo(() => {
+        const groups = {
+          "Dump Samples": { count: 0, sum: 0 },
+          "Crusher Samples": { count: 0, sum: 0 },
+          "grab Samples": { count: 0, sum: 0 },
+          "TR Samples": { count: 0, sum: 0 },
+          "DD Samples": { count: 0, sum: 0 },
+          "tailing group": { count: 0, sum: 0 },
+          "Alluvial Materials group": { count: 0, sum: 0 },
+          "other samples": { count: 0, sum: 0 }
+        };
+        
+        consolidatedData.filter(s => !s.isGapPlaceholder).forEach(s => {
+          if (groups[s.group] !== undefined) {
+            groups[s.group].count++;
+            groups[s.group].sum += s.numericGrade;
+          }
+        });
+        
+        return Object.keys(groups).map(name => ({
+          name,
+          count: groups[name].count,
+          percentage: reportedSamplesCount > 0 ? ((groups[name].count / reportedSamplesCount) * 100).toFixed(1) : "0.0",
+          avgGrade: groups[name].count > 0 ? (groups[name].sum / groups[name].count).toFixed(3) : "0.000"
+        }));
+      }, [consolidatedData, reportedSamplesCount]);
+
+      // Filter and sort consolidated records
+      const filteredRecords = useMemo(() => {
+          return consolidatedData.filter(item => {
+            const matchesSearch = item.sampleId.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                  item.jobId.toLowerCase().includes(searchQuery.toLowerCase());
+            
+            let matchesGrade = true;
+            if (gradeFilter === "high") matchesGrade = item.numericGrade >= 1.0 && !item.isGapPlaceholder;
+            if (gradeFilter === "med") matchesGrade = item.numericGrade >= 0.01 && item.numericGrade < 1.0 && !item.isGapPlaceholder;
+            if (gradeFilter === "low") matchesGrade = item.isBelowDetection && !item.isGapPlaceholder;
+            if (gradeFilter === "gap") matchesGrade = item.isGapPlaceholder;
+            
+            let matchesGroup = true;
+            if (groupFilter !== "all") matchesGroup = item.group === groupFilter;
+            
+            return matchesSearch && matchesGrade && matchesGroup;
+          })
+      }, [consolidatedData, searchQuery, gradeFilter, groupFilter]);
+
+      const sortedRecords = useMemo(() => {
+        return [...filteredRecords].sort((a, b) => {
+            let fieldA = a[sortBy.column];
+            let fieldB = b[sortBy.column];
+
+            if (sortBy.column === 'grade') {
+              fieldA = a.numericGrade;
+              fieldB = b.numericGrade;
+            }
+
+            if (fieldA < fieldB) return sortBy.direction === 'asc' ? -1 : 1;
+            if (fieldA > fieldB) return sortBy.direction === 'asc' ? 1 : -1;
+            return 0;
+          })
+      }, [filteredRecords, sortBy]);
+
+      // Pagination Logic
+      const indexOfLastRecord = currentPage * recordsPerPage;
+      const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
+      const currentRecords = sortedRecords.slice(indexOfFirstRecord, indexOfLastRecord);
+      const totalPages = Math.max(1, Math.ceil(sortedRecords.length / recordsPerPage));
+
+      useEffect(() => {
+          if (currentPage > totalPages) setCurrentPage(totalPages);
+      }, [totalPages, currentPage]);
+
+      const requestSort = (column) => {
+        let direction = 'asc';
+        if (sortBy.column === column && sortBy.direction === 'asc') {
+          direction = 'desc';
+        }
+        setSortBy({ column, direction });
+      };
+
+      const getBadgeClass = (groupName) => {
+        switch (groupName) {
+          case "Dump Samples":
+            return "bg-blue-500/10 text-blue-400 border border-blue-500/20";
+          case "Crusher Samples":
+            return "bg-orange-500/10 text-orange-400 border border-orange-500/20";
+          case "grab Samples":
+            return "bg-purple-500/10 text-purple-400 border border-purple-500/20";
+          case "TR Samples":
+            return "bg-pink-500/10 text-pink-400 border border-pink-500/20";
+          case "DD Samples":
+            return "bg-teal-500/10 text-teal-400 border border-teal-500/20";
+          case "tailing group":
+            return "bg-amber-500/10 text-amber-400 border border-amber-500/20";
+          case "Alluvial Materials group":
+            return "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+          default:
+            return "bg-slate-500/10 text-slate-400 border border-slate-500/20";
+        }
+      };
+
+      const generatePythonScript = () => {
+        return `import pandas as pd
+import glob
+import os
+
+# --- CONSOLIDATION SETUP CONFIGURATION ---
+DETECTION_STRATEGY = "${detectionStrategy}"  # Options: 'keep', 'zero', 'half', 'null', 'custom'
+CUSTOM_SUB_VALUE = ${parseFloat(customVal)}
+INCLUDE_QAQC = ${includeQAQC ? 'True' : 'False'}
+INPUT_DIR = "./02_In_Progress"
+OUTPUT_FILE = "./03_Consolidated_Master/Master_Assay_Consolidated.csv"
+
+def get_sample_group(sample_id):
+    id_str = str(sample_id).strip()
+    id_upper = id_str.upper()
+    
+    # Prefix numeric values out of sample ID
+    num_part = ''.join(filter(str.isdigit, id_str))
+    num = int(num_part) if num_part else None
+    
+    # 1. Custom Designated Geological Ranges
+    if num is not None:
+        if 8501 <= num <= 8600:
+            return "Alluvial Materials group"
+        if 8747 <= num <= 8782:
+            return "tailing group"
+            
+    # 2. Prefix indicators
+    if id_upper.startswith("SD"):
+        return "Dump Samples"
+    if id_upper.startswith("CR"):
+        return "Crusher Samples"
+        
+    # 3. Standard Sequential numeric ranges
+    if num is not None:
+        if 0 <= num <= 9999:
+            return "grab Samples"
+        if 10000 <= num <= 99999:
+            return "TR Samples"
+        if num >= 100000:
+            return "DD Samples"
+            
+    return "other samples"
+
+def extract_and_transform(file_path):
+    print(f"Reading lab report: {os.path.basename(file_path)}")
+    df_raw = pd.read_csv(file_path, header=None)
+    
+    # Capture Dates & Job ID
+    job_received_date = "N/A"
+    job_report_date = "N/A"
+    job_id = "N/A"
+    header_row_idx = 15
+    
+    for i in range(min(len(df_raw), 25)):
+        row = df_raw.iloc[i].astype(str).tolist()
+        for j, val in enumerate(row):
+            val_clean = val.strip().upper()
+            if "JOB RECEIVED DATE:" in val_clean:
+                job_received_date = next((x for x in row[j+1:] if x != "nan" and x.strip()), "N/A")
+            if "JOB REPORT DATE:" in val_clean:
+                job_report_date = next((x for x in row[j+1:] if x != "nan" and x.strip()), "N/A")
+            if "TEST REPORT" in val_clean:
+                job_id = next((x for x in row[j+1:] if x != "nan" and x.strip()), "N/A")
+                
+        if row[0].strip() == "Sample ID":
+            header_row_idx = i
+
+    if job_id == "N/A" or not job_id:
+        job_id = os.path.basename(file_path).split("-")[0]
+
+    # Extract analytical results 
+    target_assay_col = 6
+    for col in range(df_raw.shape[1]):
+        header_context = df_raw.iloc[header_row_idx-4:header_row_idx+1, col].astype(str).str.upper().tolist()
+        if any("FAS-211" in str(cell) or "AU" in str(cell) for cell in header_context):
+            target_assay_col = col
+            break
+
+    df_data = df_raw.iloc[header_row_idx + 1:].copy()
+    df_data = df_data.rename(columns={0: 'Sample ID', target_assay_col: 'Au_ppm'})
+    df_data = df_data.dropna(subset=['Sample ID'])
+    df_data = df_data[df_data['Sample ID'].astype(str).str.strip() != ""]
+
+    if not INCLUDE_QAQC:
+        qaqc_mask = (
+            df_data['Sample ID'].astype(str).str.upper().str.startswith("QC") |
+            df_data['Sample ID'].astype(str).str.upper().str.contains("DUP") |
+            df_data['Sample ID'].astype(str).str.upper().str.contains("STD") |
+            df_data['Sample ID'].astype(str).str.upper().str.contains("BLANK") |
+            df_data['Sample ID'].astype(str).str.upper().str.contains("AMIS") |
+            df_data['Sample ID'].astype(str).str.upper().str.contains("G316")
+        )
+        df_data = df_data[~qaqc_mask]
+
+    def parse_detection_limit(val):
+        val_str = str(val).strip()
+        if val_str.startswith("<"):
+            limit_val = float(val_str.replace("<", ""))
+            if DETECTION_STRATEGY == "zero":
+                return 0.00
+            elif DETECTION_STRATEGY == "half":
+                return limit_val / 2
+            elif DETECTION_STRATEGY == "null":
+                return None
+            elif DETECTION_STRATEGY == "custom":
+                return CUSTOM_SUB_VALUE
+            else:
+                return val_str
+        return val_str
+
+    df_data['FAS-211 Au ppm'] = df_data['Au_ppm'].apply(parse_detection_limit)
+    
+    df_data['Job Received Date'] = job_received_date
+    df_data['Job Report Date'] = job_report_date
+    df_data['Job ID'] = job_id
+    df_data['Sample Group'] = df_data['Sample ID'].apply(get_sample_group)
+    
+    final_cols = ['Sample ID', 'FAS-211 Au ppm', 'Job Received Date', 'Job Report Date', 'Sample Group', 'Job ID']
+    return df_data[final_cols]
+
+def detect_and_insert_sequence_gaps(df):
+    """
+    Scans the DataFrame for sequential missing numeric IDs exclusively within 
+    the active dynamic range of each geological group.
+    """
+    groups = ["Dump Samples", "Crusher Samples", "grab Samples", "TR Samples", "DD Samples", "tailing group", "Alluvial Materials group"]
+    gap_rows = []
+    
+    for group in groups:
+        df_group = df[df['Sample Group'] == group]
+        if len(df_group) < 2:
+            continue
+            
+        nums = []
+        formats = {} # Maps numeric value to its (Prefix, Padding Width)
+        
+        for idx, row in df_group.iterrows():
+            id_val = str(row['Sample ID']).strip()
+            num_part = ''.join(filter(str.isdigit, id_val))
+            if num_part:
+                n = int(num_part)
+                nums.append(n)
+                
+                # Capture the text prefix of the ID
+                prefix = ""
+                for char in id_val:
+                    if char.isalpha():
+                        prefix += char
+                    else:
+                        break
+                formats[n] = (prefix, len(num_part))
+                
+        if not nums:
+            continue
+            
+        nums = sorted(list(set(nums)))
+        min_n, max_n = nums[0], nums[-1]
+        
+        default_prefix, default_width = formats.get(nums[0], ("", 4))
+        
+        # Scans gap numbers ONLY inside actual bounds
+        for n in range(min_n + 1, max_n):
+            if n not in formats:
+                pad_str = str(n).zfill(default_width)
+                gap_id = f"{default_prefix}{pad_str}"
+                
+                gap_rows.append({
+                    'Sample ID': gap_id,
+                    'FAS-211 Au ppm': 'GAP / MISSING',
+                    'Job Received Date': 'MISSING',
+                    'Job Report Date': 'MISSING',
+                    'Sample Group': group,
+                    'Job ID': 'GAP - NOT REPORTED'
+                })
+                
+    if gap_rows:
+        df_gaps = pd.DataFrame(gap_rows)
+        df = pd.concat([df, df_gaps], ignore_index=True)
+    return df
+
+def run_consolidation_workflow():
+    all_reports = glob.glob(os.path.join(INPUT_DIR, "*.csv"))
+    if not all_reports:
+        print(f"No matching CSV assay reports found in {INPUT_DIR}!")
+        return
+        
+    compiled_list = []
+    for report_path in all_reports:
+        try:
+            df_mapped = extract_and_transform(report_path)
+            compiled_list.append(df_mapped)
+        except Exception as e:
+            print(f"Error parsing file {report_path}: {e}")
+            
+    if compiled_list:
+        master_df = pd.concat(compiled_list, ignore_index=True)
+        master_df = detect_and_insert_sequence_gaps(master_df)
+        
+        os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
+        master_df.to_csv(OUTPUT_FILE, index=False)
+        print(f"Success! Master database saved with {len(master_df)} rows to {OUTPUT_FILE}")
+
+if __name__ == "__main__":
+    run_consolidation_workflow()`;
+      };
+
+      return (
+        <div className="min-h-screen flex flex-col font-sans">
+          {/* Header Panel */}
+          <header className="bg-slate-950 border-b border-slate-800 py-4 px-6 shadow-md">
+            <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div className="flex items-center gap-3">
+                <div className="bg-gradient-to-tr from-emerald-500 to-teal-600 p-2.5 rounded-lg shadow-emerald-900/40 shadow-sm text-white">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                  </svg>
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                    LabFusion <span className="text-xs bg-teal-500/10 text-teal-400 border border-teal-500/20 px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold">Assay Suite</span>
+                    <span className="ml-1 text-[10px] bg-slate-800 text-slate-400 border border-slate-700 px-2 py-0.5 rounded-full">OFFLINE</span>
+                  </h1>
+                  <p className="text-xs text-slate-400">Precision Laboratory Report Aggregator & Sequence Auditor</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3 w-full sm:w-auto">
+                <button
+                  onClick={handleLoadPreloadedWorkspace}
+                  className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg font-medium text-sm transition-all border bg-slate-900 hover:bg-slate-800 text-teal-400 border-slate-700 shadow-sm"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  Preload Workspace Data
+                </button>
+
+                <button
+                  onClick={clearAllData}
+                  disabled={filesStatus.length === 0}
+                  className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg font-medium text-sm transition-all border ${
+                    filesStatus.length > 0
+                      ? 'bg-slate-900 hover:bg-slate-800 text-slate-300 border-slate-700'
+                      : 'bg-slate-900/40 text-slate-700 border-slate-800/60 cursor-not-allowed'
+                  }`}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Reset
+                </button>
+
+                <button
+                  onClick={triggerCsvDownload}
+                  disabled={!consolidatedData.length}
+                  className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all border ${
+                    consolidatedData.length
+                      ? 'bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-500 shadow-md shadow-emerald-950/40 hover:scale-[1.01]'
+                      : 'bg-slate-800/40 text-slate-600 border-slate-800/60 cursor-not-allowed'
+                  }`}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Export CSV
+                </button>
+              </div>
+            </div>
+          </header>
+
+          {/* Notifications Alert */}
+          {notification && (
+            <div className="bg-teal-950 border-y border-teal-500/20 text-teal-300 py-3 px-6 shadow-lg relative transition-all">
+              <div className="max-w-7xl mx-auto flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="flex-shrink-0 bg-teal-400 text-teal-950 rounded-full p-0.5">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </span>
+                  <p className="text-sm font-medium">{notification.message}</p>
+                </div>
+                <button onClick={() => setNotification(null)} className="text-teal-400 hover:text-white transition-colors">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Main Container Grid */}
+          <main className="flex-1 max-w-7xl w-full mx-auto px-4 md:px-6 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            {/* Left Side: Config Pane */}
+            <div className="lg:col-span-4 flex flex-col gap-6">
+              
+              {/* File Staging Block */}
+              <div className="bg-slate-950 border border-slate-800 rounded-xl p-5 shadow-sm">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-sm font-semibold text-slate-300 tracking-wide uppercase flex items-center gap-2">
+                    <svg className="w-4 h-4 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Assay Report Registry
+                  </h3>
+                  <span className="text-xs bg-slate-800 px-2 py-0.5 rounded-full text-slate-400">
+                    {filesStatus.filter(f => f.status === 'success').length} Loaded
+                  </span>
+                </div>
+
+                {/* Drag & Drop Area */}
+                <label className="border-2 border-dashed border-slate-700 hover:border-teal-500/50 rounded-lg p-6 mb-4 cursor-pointer flex flex-col items-center justify-center text-center transition-all bg-slate-900/40 hover:bg-slate-900 group">
+                  <div className="bg-slate-800 p-3 rounded-full mb-3 group-hover:bg-teal-900/30 transition-colors">
+                    <svg className="w-6 h-6 text-slate-400 group-hover:text-teal-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                  </div>
+                  <span className="text-sm font-semibold text-slate-300 group-hover:text-white transition-colors">Drag & Drop CSV Reports Here</span>
+                  <span className="text-xs text-slate-500 mt-1">Or click to browse your desktop</span>
+                  <input 
+                    type="file" 
+                    multiple 
+                    accept=".csv" 
+                    onChange={handleFileUpload} 
+                    className="hidden" 
+                  />
+                </label>
+
+                {/* List of Files */}
+                <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                  {filesStatus.length === 0 && (
+                      <div className="text-center py-4 text-xs text-slate-600 border border-slate-800/50 border-dashed rounded bg-slate-900/20">
+                          Awaiting files... (Or click "Preload Workspace Data" above)
+                      </div>
+                  )}
+                  {filesStatus.map((file, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-2.5 rounded bg-slate-900 border border-slate-800 text-xs">
+                      <div className="flex items-center gap-2 overflow-hidden mr-2">
+                        {file.status === 'success' ? (
+                          <span className="text-emerald-500">
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                          </span>
+                        ) : (
+                          <span className="text-slate-600">
+                            <div className="w-3.5 h-3.5 border-2 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
+                          </span>
+                        )}
+                        <span className="font-medium text-slate-300 truncate" title={file.name}>{file.name}</span>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        {file.status === 'success' && <span className="text-[10px] text-slate-500">{file.size}</span>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Transformation & Sequence Rules Block */}
+              <div className="bg-slate-950 border border-slate-800 rounded-xl p-5 shadow-sm space-y-4">
+                <h3 className="text-sm font-semibold text-slate-300 tracking-wide uppercase flex items-center gap-2">
+                  <svg className="w-4 h-4 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                  </svg>
+                  Auditing & Consolidation Rules
+                </h3>
+
+                {/* Sequence Analyzer Toggle */}
+                <div className="bg-slate-900/60 p-3 rounded-lg border border-slate-800">
+                  <label className="flex items-center justify-between cursor-pointer group">
+                    <div className="mr-2">
+                      <span className="text-xs font-semibold text-teal-400 group-hover:text-teal-300 transition-colors block">Identify Sequence Gaps</span>
+                      <span className="text-[10px] text-slate-500 block">Detects missed sample serials</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setInsertGaps(!insertGaps)}
+                      className={`w-11 h-6 flex items-center rounded-full p-1 transition-all duration-300 ${
+                        insertGaps ? 'bg-teal-500' : 'bg-slate-800'
+                      }`}
+                    >
+                      <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-300 ${
+                        insertGaps ? 'translate-x-5' : 'translate-x-0'
+                      }`}></div>
+                    </button>
+                  </label>
+                </div>
+
+                {/* Below Detection strategy */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                    Below Limit Strategy (&lt;0.01 ppm)
+                  </label>
+                  <div className="space-y-2">
+                    {[
+                      { id: 'keep', label: "Preserve original string (e.g. '<0.01')", desc: "Keeps textual identifier in dataset" },
+                      { id: 'zero', label: "Substitute with 0.00", desc: "Interprets as absolute negative" },
+                      { id: 'half', label: "Substitute with half detection limit (0.005)", desc: "Conservative statistical standard" },
+                      { id: 'custom', label: "Custom replacement value", desc: "User defined constant parameter" }
+                    ].map(opt => (
+                      <label key={opt.id} className={`flex items-start gap-3 p-2 rounded border transition-all cursor-pointer ${
+                        detectionStrategy === opt.id 
+                          ? 'bg-slate-900 border-teal-500/30' 
+                          : 'bg-transparent border-transparent hover:bg-slate-900/50'
+                      }`}>
+                        <input 
+                          type="radio" 
+                          name="detection" 
+                          value={opt.id}
+                          checked={detectionStrategy === opt.id}
+                          onChange={() => setDetectionStrategy(opt.id)}
+                          className="mt-1 text-teal-500 focus:ring-teal-500 bg-slate-800 border-slate-700"
+                        />
+                        <div>
+                          <span className="text-xs font-medium text-slate-200 block">{opt.label}</span>
+                          <span className="text-[10px] text-slate-500">{opt.desc}</span>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+
+                  {detectionStrategy === 'custom' && (
+                    <div className="mt-2.5">
+                      <label className="text-xs text-slate-400 block mb-1">Custom Numeric Constant</label>
+                      <input
+                        type="number"
+                        step="0.001"
+                        value={customVal}
+                        onChange={(e) => setCustomVal(e.target.value)}
+                        className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-xs text-white focus:outline-none focus:border-teal-500"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* QA/QC Toggle */}
+                <div className="border-t border-slate-800 pt-3">
+                  <label className="flex items-center justify-between cursor-pointer group">
+                    <div>
+                      <span className="text-xs font-semibold text-slate-300 group-hover:text-white transition-colors">Include QA/QC Assay Controls</span>
+                      <span className="text-[10px] text-slate-500 block">Dups, Blanks, Certified standards</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIncludeQAQC(!includeQAQC)}
+                      className={`w-11 h-6 flex items-center rounded-full p-1 transition-all duration-300 ${
+                        includeQAQC ? 'bg-teal-500' : 'bg-slate-800'
+                      }`}
+                    >
+                      <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-300 ${
+                        includeQAQC ? 'translate-x-5' : 'translate-x-0'
+                      }`}></div>
+                    </button>
+                  </label>
+                </div>
+              </div>
+
+              {/* Logs Terminal */}
+              <div className="bg-slate-950 border border-slate-800 rounded-xl p-5 shadow-sm flex-1 flex flex-col min-h-60 max-h-80">
+                <h3 className="text-sm font-semibold text-slate-300 tracking-wide uppercase mb-2 flex items-center gap-2">
+                  <svg className="w-4 h-4 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  Extraction System Logs
+                </h3>
+                <div className="flex-1 bg-slate-900 rounded-lg p-3 text-[10px] font-mono overflow-y-auto space-y-1.5 border border-slate-800">
+                  {processLogs.map((log, i) => (
+                    <div key={i} className="text-slate-400">
+                      <span className="text-slate-600 mr-1">[{new Date().toLocaleTimeString()}]</span> {log}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Right Side: Working Workspace */}
+            <div className="lg:col-span-8 flex flex-col gap-6">
+              
+              {/* Navigation Tab Bar */}
+              <div className="flex bg-slate-950 p-1.5 rounded-xl border border-slate-800 gap-1.5">
+                {[
+                  { id: 'analytics', label: 'Overview & Charts', icon: (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                  )},
+                  { id: 'master_table', label: 'Consolidated Sheet', icon: (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  )},
+                  { id: 'validation', label: 'Audit Checklist', icon: (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  )},
+                  { id: 'python_code', label: 'Python Script', icon: (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                    </svg>
+                  )}
+                ].map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-xs font-medium transition-all ${
+                      activeTab === tab.id
+                        ? 'bg-slate-800 text-teal-400 border border-slate-700/50 shadow-sm'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
+                    }`}
+                  >
+                    {tab.icon}
+                    <span className="hidden sm:inline">{tab.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Tab Content Panes */}
+              
+              {/* TAB 1: OVERVIEW & ANALYTICS */}
+              {activeTab === 'analytics' && (
+                <div className="space-y-6">
+                  {/* General KPI stats */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {[
+                      { label: "Reported Samples", val: reportedSamplesCount, suffix: "items", color: "text-white" },
+                      { label: "Active Job Batches", val: processedJobs.length, suffix: "reports", color: "text-teal-400" },
+                      { label: "Average Grade", val: averageGrade, suffix: "Au ppm", color: "text-emerald-400" },
+                      { label: "Sequence Gaps Found", val: totalGapsCount, suffix: "missing keys", color: totalGapsCount > 0 ? "text-rose-400 font-bold animate-pulse" : "text-slate-400" }
+                    ].map((stat, i) => (
+                      <div key={i} className="bg-slate-950 border border-slate-800 rounded-xl p-4 shadow-sm flex flex-col justify-between">
+                        <span className="text-[10px] uppercase font-semibold text-slate-500 tracking-wider block mb-2">{stat.label}</span>
+                        <div>
+                          <span className={`text-2xl font-bold tracking-tight ${stat.color} block`}>{stat.val}</span>
+                          <span className="text-[10px] text-slate-500">{stat.suffix}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Sample ID Source Classification Breakdown Grid */}
+                  <div className="bg-slate-950 border border-slate-800 rounded-xl p-5 shadow-sm">
+                    <h3 className="text-sm font-semibold text-slate-300 tracking-wide uppercase mb-4 flex items-center gap-2">
+                      <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                      </svg>
+                      Sample Source Classification Breakdown
+                    </h3>
+                    
+                    {totalSamples === 0 ? (
+                      <div className="text-center py-6 text-xs text-slate-500 bg-slate-900/30 rounded-lg border border-slate-850/50 border-dashed">
+                        Load laboratory files to view sample class breakdown.
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        {groupBreakdown.map((grp, i) => {
+                          let colorScheme = "from-slate-800 to-slate-900 border-slate-800";
+                          let badgeDot = "bg-slate-400";
+                          if (grp.name === "Dump Samples") { colorScheme = "from-blue-950/20 to-blue-900/10 border-blue-500/20 hover:border-blue-500/45"; badgeDot = "bg-blue-400"; }
+                          else if (grp.name === "Crusher Samples") { colorScheme = "from-orange-950/20 to-orange-900/10 border-orange-500/20 hover:border-orange-500/45"; badgeDot = "bg-orange-400"; }
+                          else if (grp.name === "grab Samples") { colorScheme = "from-purple-950/20 to-purple-900/10 border-purple-500/20 hover:border-purple-500/45"; badgeDot = "bg-purple-400"; }
+                          else if (grp.name === "TR Samples") { colorScheme = "from-pink-950/20 to-pink-900/10 border-pink-500/20 hover:border-pink-500/45"; badgeDot = "bg-pink-400"; }
+                          else if (grp.name === "DD Samples") { colorScheme = "from-teal-950/20 to-teal-900/10 border-teal-500/20 hover:border-teal-500/45"; badgeDot = "bg-teal-400"; }
+                          else if (grp.name === "tailing group") { colorScheme = "from-amber-950/20 to-amber-900/10 border-amber-500/20 hover:border-amber-500/45"; badgeDot = "bg-amber-400"; }
+                          else if (grp.name === "Alluvial Materials group") { colorScheme = "from-emerald-950/20 to-emerald-900/10 border-emerald-500/20 hover:border-emerald-500/45"; badgeDot = "bg-emerald-400"; }
+
+                          return (
+                            <div 
+                              key={i} 
+                              onClick={() => {
+                                setGroupFilter(grp.name);
+                                setActiveTab("master_table");
+                              }}
+                              className={`bg-gradient-to-br ${colorScheme} border rounded-xl p-4 cursor-pointer transition-all shadow-sm hover:scale-[1.01]`}
+                            >
+                              <div className="flex justify-between items-start mb-2">
+                                <span className="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
+                                  <span className={`w-2 h-2 rounded-full ${badgeDot}`}></span>
+                                  {grp.name}
+                                </span>
+                                <span className="text-[10px] bg-slate-900/60 text-slate-400 px-1.5 py-0.5 rounded">
+                                  {grp.percentage}%
+                                </span>
+                              </div>
+                              <div className="mt-4 flex justify-between items-end">
+                                <div>
+                                  <span className="text-xl font-bold tracking-tight text-white block">{grp.count}</span>
+                                  <span className="text-[10px] text-slate-500 uppercase font-semibold">Reported</span>
+                                </div>
+                                <div className="text-right">
+                                  <span className="text-sm font-bold text-emerald-400 block">{grp.avgGrade}</span>
+                                  <span className="text-[10px] text-slate-500 uppercase font-semibold">Avg Au ppm</span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Histogram Chart */}
+                  <div className="bg-slate-950 border border-slate-800 rounded-xl p-5 shadow-sm">
+                    <h3 className="text-sm font-semibold text-slate-300 tracking-wide uppercase mb-6">Assay Grade Distribution Histogram</h3>
+                    
+                    {totalSamples === 0 ? (
+                      <div className="h-60 flex flex-col items-center justify-center text-slate-600 text-xs border border-dashed border-slate-800 rounded-lg bg-slate-900/30">
+                        <span>No analytical data mapped yet.</span>
+                        <span className="mt-1">Drag and Drop CSV files on the left to view charts.</span>
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="flex items-end gap-3 h-48 border-b border-slate-800 px-4 pb-2">
+                          {[
+                            { 
+                              range: "Below Limit (<0.01)", 
+                              count: consolidatedData.filter(s => s.isBelowDetection && !s.isGapPlaceholder).length,
+                              color: "from-slate-700 to-slate-600"
+                            },
+                            { 
+                              range: "Low Range (0.01 - 0.1)", 
+                              count: consolidatedData.filter(s => !s.isBelowDetection && s.numericGrade < 0.1 && !s.isGapPlaceholder).length,
+                              color: "from-teal-600 to-teal-500"
+                            },
+                            { 
+                              range: "Medium Grade (0.1 - 1.0)", 
+                              count: consolidatedData.filter(s => s.numericGrade >= 0.1 && s.numericGrade < 1.0 && !s.isGapPlaceholder).length,
+                              color: "from-emerald-600 to-emerald-500"
+                            },
+                            { 
+                              range: "High Grade / Ore (>=1.0)", 
+                              count: consolidatedData.filter(s => s.numericGrade >= 1.0 && !s.isGapPlaceholder).length,
+                              color: "from-amber-500 to-yellow-500"
+                            }
+                          ].map((bar, i) => {
+                            const percent = (bar.count / reportedSamplesCount) * 100;
+                            return (
+                              <div key={i} className="flex-1 flex flex-col items-center justify-end h-full relative group">
+                                <span className="opacity-0 group-hover:opacity-100 bg-slate-800 text-white text-[10px] py-1 px-2 rounded absolute -top-8 transition-opacity z-10 font-mono shadow">
+                                  {bar.count} samples ({percent.toFixed(1)}%)
+                                </span>
+                                
+                                <div 
+                                  className={`w-full bg-gradient-to-t ${bar.color} rounded-t-md transition-all duration-700`} 
+                                  style={{ height: `${Math.max(percent, 4)}%` }}
+                                ></div>
+                                <span className="text-[10px] text-slate-400 mt-2 text-center font-medium truncate w-full" title={bar.range}>{bar.range}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 pt-4 border-t border-slate-900 text-xs">
+                          <div className="bg-slate-900/40 p-4 rounded-lg border border-slate-800/50">
+                            <span className="text-amber-400 font-semibold block mb-1">🔥 Ore Grade Anomalies Mapped</span>
+                            <p className="text-slate-400 leading-relaxed text-[11px]">
+                              Detected <span className="text-white font-medium">{highGrades.length}</span> field sample(s) with high gold content exceeding <span className="text-white font-medium">1.00 ppm</span>.
+                            </p>
+                          </div>
+                          <div className="bg-slate-900/40 p-4 rounded-lg border border-slate-800/50">
+                            <span className="text-teal-400 font-semibold block mb-1">📊 Limit of Reporting (LOR) Coverage</span>
+                            <p className="text-slate-400 leading-relaxed text-[11px]">
+                              Roughly <span className="text-white font-medium">{((consolidatedData.filter(s => s.isBelowDetection && !s.isGapPlaceholder).length / reportedSamplesCount) * 100 || 0).toFixed(1)}%</span> of samples returned results below the laboratory LOR limit of <span className="text-white font-medium">0.01 ppm</span>.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 2: CONSOLIDATED MASTER SHEET */}
+              {activeTab === 'master_table' && (
+                <div className="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-sm flex flex-col">
+                  
+                  {/* Grade and Group Filter controls */}
+                  <div className="p-4 border-b border-slate-800 flex flex-col gap-4 bg-slate-950/40">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                      
+                      {/* Search box */}
+                      <div className="relative w-full sm:w-72 order-2 sm:order-1">
+                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                          </svg>
+                        </span>
+                        <input
+                          type="text"
+                          placeholder="Search Sample ID, Job Batch ID..."
+                          value={searchQuery}
+                          onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+                          className="w-full bg-slate-900 text-xs border border-slate-700/80 rounded-lg pl-9 pr-4 py-2 text-white focus:outline-none focus:border-teal-500 placeholder-slate-500"
+                        />
+                      </div>
+
+                      {/* Grade filters */}
+                      <div className="flex flex-wrap items-center gap-2 order-1 sm:order-2 w-full sm:w-auto">
+                        <span className="text-xs font-semibold text-slate-500 uppercase mr-1">Grade Filter:</span>
+                        {[
+                          { id: 'all', label: 'All Mapped' },
+                          { id: 'high', label: 'Anomalous (>1.0)' },
+                          { id: 'med', label: 'Medium (0.01-1.0)' },
+                          { id: 'low', label: 'Below LOR (<0.01)' },
+                          { id: 'gap', label: 'Missing Gaps' }
+                        ].map(btn => (
+                          <button
+                            key={btn.id}
+                            onClick={() => { setGradeFilter(btn.id); setCurrentPage(1); }}
+                            className={`text-xs px-2.5 py-1 rounded transition-all ${
+                              gradeFilter === btn.id
+                                ? 'bg-teal-500/20 text-teal-300 border border-teal-500/30 font-semibold'
+                                : 'bg-slate-900 hover:bg-slate-800 text-slate-400'
+                            }`}
+                          >
+                            {btn.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Source group filters */}
+                    <div className="flex flex-wrap items-center gap-2 border-t border-slate-900 pt-3">
+                      <span className="text-xs font-semibold text-slate-500 uppercase mr-1">Source Group:</span>
+                      {[
+                        { id: 'all', label: 'All Classifications' },
+                        { id: 'Dump Samples', label: 'Dump (SD)' },
+                        { id: 'Crusher Samples', label: 'Crusher (CR)' },
+                        { id: 'grab Samples', label: 'Grab (0-9k)' },
+                        { id: 'TR Samples', label: 'Trench (10k-99k)' },
+                        { id: 'DD Samples', label: 'DD Drill (>=100k)' },
+                        { id: 'tailing group', label: 'Tailing (8747-8782)' },
+                        { id: 'Alluvial Materials group', label: 'Alluvial (8501-8600)' },
+                        { id: 'other samples', label: 'Other Codes' }
+                      ].map(btn => (
+                        <button
+                          key={btn.id}
+                          onClick={() => { setGroupFilter(btn.id); setCurrentPage(1); }}
+                          className={`text-xs px-2.5 py-1 rounded transition-all ${
+                            groupFilter === btn.id
+                              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                              : 'bg-slate-900 hover:bg-slate-800 text-slate-400'
+                          }`}
+                        >
+                          {btn.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="overflow-x-auto min-h-[300px]">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-slate-900/60 text-slate-400 text-[10px] font-semibold uppercase tracking-wider border-b border-slate-800">
+                          {[
+                            { id: 'sampleId', label: 'Sample ID' },
+                            { id: 'group', label: 'Class / Source Group' },
+                            { id: 'grade', label: 'FAS-211 Au ppm' },
+                            { id: 'receivedDate', label: 'Job Received Date' },
+                            { id: 'reportDate', label: 'Job Report Date' },
+                            { id: 'jobId', label: 'Job ID' }
+                          ].map(col => (
+                            <th 
+                              key={col.id} 
+                              onClick={() => requestSort(col.id)}
+                              className="py-3 px-4 cursor-pointer hover:bg-slate-800 hover:text-white transition-colors select-none"
+                            >
+                              <div className="flex items-center gap-1.5">
+                                {col.label}
+                                {sortBy.column === col.id ? (
+                                  sortBy.direction === 'asc' ? '▲' : '▼'
+                                ) : '↕'}
+                              </div>
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/60 text-xs">
+                        {currentRecords.length === 0 ? (
+                          <tr>
+                            <td colSpan="6" className="py-16 text-center text-slate-500 text-xs">
+                              {totalSamples === 0 
+                                ? "No CSV files have been loaded into the registry."
+                                : "No assay records match the current search filters."}
+                            </td>
+                          </tr>
+                        ) : (
+                          currentRecords.map((rec, i) => (
+                            <tr 
+                              key={i} 
+                              className={`hover:bg-slate-900/50 transition-colors ${
+                                rec.isGapPlaceholder 
+                                  ? 'bg-rose-500/5 hover:bg-rose-500/10 border-l-2 border-rose-500' 
+                                  : rec.numericGrade >= 1.0 
+                                  ? 'bg-amber-500/5' 
+                                  : ''
+                              }`}
+                            >
+                              <td className={`py-2.5 px-4 font-mono font-medium ${rec.isGapPlaceholder ? 'text-rose-400 font-bold' : 'text-slate-200'}`}>
+                                {rec.sampleId}
+                              </td>
+                              <td className="py-2.5 px-4">
+                                <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold ${getBadgeClass(rec.group)}`}>
+                                  {rec.group}
+                                </span>
+                              </td>
+                              <td className="py-2.5 px-4">
+                                {rec.isGapPlaceholder ? (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 font-bold border border-rose-500/30 uppercase text-[10px]">
+                                    GAP / MISSING
+                                  </span>
+                                ) : rec.numericGrade >= 1.0 ? (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500/15 border border-amber-500/35 font-mono text-amber-300 font-bold">
+                                    {rec.grade} <span className="text-[10px]">★</span>
+                                  </span>
+                                ) : rec.isBelowDetection ? (
+                                  <span className="font-mono text-slate-500 italic">{rec.grade}</span>
+                                ) : (
+                                  <span className="font-mono text-slate-300">{rec.grade}</span>
+                                )}
+                              </td>
+                              <td className={`py-2.5 px-4 ${rec.isGapPlaceholder ? 'text-rose-400/50 italic' : 'text-slate-400'}`}>{rec.receivedDate}</td>
+                              <td className={`py-2.5 px-4 ${rec.isGapPlaceholder ? 'text-rose-400/50 italic' : 'text-slate-400'}`}>{rec.reportDate}</td>
+                              <td className={`py-2.5 px-4 font-mono text-[11px] ${rec.isGapPlaceholder ? 'text-rose-400/50 italic' : 'text-teal-400'}`}>{rec.jobId}</td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {totalPages > 1 && (
+                    <div className="p-4 border-t border-slate-800 flex justify-between items-center text-xs bg-slate-950/60">
+                      <span className="text-slate-500">
+                        Showing <span className="text-slate-300 font-medium">{indexOfFirstRecord + 1}</span> to <span className="text-slate-300 font-medium">{Math.min(indexOfLastRecord, sortedRecords.length)}</span> of <span className="text-slate-300 font-medium">{sortedRecords.length}</span> records
+                      </span>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                          disabled={currentPage === 1}
+                          className="px-2.5 py-1 rounded bg-slate-900 text-slate-400 border border-slate-800 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-800"
+                        >
+                          ◄ Prev
+                        </button>
+                        <span className="px-3 py-1 bg-slate-800 border border-slate-700 rounded text-slate-200">
+                          Page {currentPage} of {totalPages}
+                        </span>
+                        <button
+                          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                          disabled={currentPage === totalPages}
+                          className="px-2.5 py-1 rounded bg-slate-900 text-slate-400 border border-slate-800 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-800"
+                        >
+                          Next ►
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* TAB 3: VERIFICATION & GAP INSPECTOR */}
+              {activeTab === 'validation' && (
+                <div className="bg-slate-950 border border-slate-800 rounded-xl p-6 shadow-sm space-y-6">
+                  <div>
+                    <h3 className="text-sm font-semibold text-slate-300 tracking-wide uppercase mb-2">Automated Audit Inspection Board</h3>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                      Below-checks run instant diagnostics over your merged dataset. Red flags point to inconsistencies inside the source files or transfer losses.
+                    </p>
+                  </div>
+
+                  {totalSamples === 0 ? (
+                      <div className="text-center py-10 text-xs text-slate-600 border border-slate-800 border-dashed rounded bg-slate-900/30">
+                          Load files to run validations.
+                      </div>
+                  ) : (
+                    <div className="space-y-6">
+                      
+                      {/* SEQUENCE GAP ANALYZER BOARD */}
+                      <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow">
+                        <h4 className="text-xs font-bold text-teal-400 uppercase tracking-wide mb-3 flex items-center gap-2">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 21h7a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v11m0 5l4.879-4.879m0 0a3 3 0 104.243-4.242 3 3 0 00-4.243 4.242z" />
+                          </svg>
+                          System Sequence Integrity Log (DYNAMIC RANGE BOUNDS)
+                        </h4>
+                        
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left border-collapse text-xs">
+                            <thead>
+                              <tr className="text-slate-400 font-semibold border-b border-slate-800 uppercase text-[10px] tracking-wider">
+                                <th className="py-2">Group Classification</th>
+                                <th className="py-2">Active Bounds</th>
+                                <th className="py-2 text-center">Expected</th>
+                                <th className="py-2 text-center">Present</th>
+                                <th className="py-2 text-center">Gaps Found</th>
+                                <th className="py-2 text-right">Fidelity Status</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-800/60">
+                              {Object.keys(sequenceGapSummary.stats).map((gName, i) => {
+                                const st = sequenceGapSummary.stats[gName];
+                                return (
+                                  <tr key={i} className="hover:bg-slate-850/50">
+                                    <td className="py-3 font-semibold text-slate-300">{gName}</td>
+                                    <td className="py-3 font-mono text-slate-400">{st.min} ➔ {st.max}</td>
+                                    <td className="py-3 text-center text-slate-300">{st.expected}</td>
+                                    <td className="py-3 text-center text-slate-300">{st.actual}</td>
+                                    <td className={`py-3 text-center font-bold ${st.missing > 0 ? 'text-rose-400 animate-pulse' : 'text-emerald-400'}`}>
+                                      {st.missing}
+                                    </td>
+                                    <td className="py-3 text-right">
+                                      {st.missing > 0 ? (
+                                        <span className="text-[10px] bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2 py-0.5 rounded font-semibold">
+                                          ⚠️ GAP DEVIATION
+                                        </span>
+                                      ) : st.expected === 0 ? (
+                                        <span className="text-[10px] bg-slate-800 text-slate-500 px-2 py-0.5 rounded font-semibold">
+                                          NO SEQUENCE
+                                        </span>
+                                      ) : (
+                                        <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-semibold">
+                                          ✓ INTEGRITY SEALED
+                                        </span>
+                                      )}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        {/* DETECTED GAP SERIAL NUMBERS */}
+                        {totalGapsCount > 0 && (
+                          <div className="mt-4 pt-4 border-t border-slate-800">
+                            <span className="text-[11px] font-semibold text-rose-400 block mb-2 uppercase tracking-wide">
+                              Lost/Skipped Serial Ranges Discovered inside bounds:
+                            </span>
+                            <div className="flex flex-wrap gap-2">
+                              {Object.keys(sequenceGapSummary.stats).map(gName => {
+                                const st = sequenceGapSummary.stats[gName];
+                                return st.ranges.map((rng, rIdx) => (
+                                  <span key={`${gName}-${rIdx}`} className="text-xs bg-rose-500/10 text-rose-300 border border-rose-500/30 rounded px-2.5 py-1 font-mono">
+                                    <strong className="text-rose-400 font-sans mr-1">[{gName.split(" ")[0]}]:</strong> {rng}
+                                  </span>
+                                ));
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Check 1 */}
+                      <div className={`p-4 rounded-xl border flex gap-4 ${
+                        duplicateAlerts.length > 0 ? 'bg-amber-950/10 border-amber-900/40' : 'bg-emerald-950/10 border-emerald-900/40'
+                      }`}>
+                        <span className={`text-xl flex-shrink-0 ${duplicateAlerts.length > 0 ? 'text-amber-500' : 'text-emerald-500'}`}>
+                          {duplicateAlerts.length > 0 ? '⚠️' : '✓'}
+                        </span>
+                        <div>
+                          <h4 className="text-xs font-semibold text-slate-200 mb-1">Duplicate Sample ID Scan</h4>
+                          <p className="text-[11px] text-slate-400 leading-relaxed">
+                            {duplicateAlerts.length > 0 
+                              ? `Found ${duplicateAlerts.length} duplicate identifier(s) in merged batch! Duplicate keys: [${duplicateAlerts.slice(0, 5).join(', ')}${duplicateAlerts.length > 5 ? '...' : ''}]. Check if same sample was submitted multiple times.`
+                              : "Success! Zero duplicate sample IDs detected across all loaded reports. Every sample contains a unique tracking key."}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Check 2 */}
+                      {(() => {
+                        const emptyFields = consolidatedData.filter(s => !s.isGapPlaceholder).filter(s => !s.sampleId || !s.grade || !s.receivedDate || !s.reportDate);
+                        const isSuccess = emptyFields.length === 0;
+                        return (
+                          <div className={`p-4 rounded-xl border flex gap-4 ${
+                            !isSuccess ? 'bg-rose-950/10 border-rose-900/40' : 'bg-emerald-950/10 border-emerald-900/40'
+                          }`}>
+                            <span className={`text-xl flex-shrink-0 ${!isSuccess ? 'text-rose-500' : 'text-emerald-500'}`}>
+                              {!isSuccess ? '❌' : '✓'}
+                            </span>
+                            <div>
+                              <h4 className="text-xs font-semibold text-slate-200 mb-1">Null / Empty Value Scan</h4>
+                              <p className="text-[11px] text-slate-400 leading-relaxed">
+                                {!isSuccess
+                                  ? `Warning: Found ${emptyFields.length} records containing blank critical fields. Clear out formatting spacing inside original CSVs.`
+                                  : "Excellent. Every row contains a complete set of attributes (ID, FAS-211 grade, received date, and report date). No gaps or missing segments found."}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      {/* Check 3 */}
+                      <div className="p-4 rounded-xl border bg-slate-900/40 border-slate-800/80 flex gap-4">
+                        <span className="text-xl text-teal-400 flex-shrink-0">⚙</span>
+                        <div>
+                          <h4 className="text-xs font-semibold text-slate-200 mb-1">Row Count Reconciliation Log</h4>
+                          <p className="text-[11px] text-slate-400 leading-relaxed mb-3">
+                            Reconcile raw input report lines against processed output records:
+                          </p>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            {filesStatus.map((f, i) => {
+                              const count = consolidatedData.filter(s => s.fileName === f.name).length;
+                              return (
+                                <div key={i} className="bg-slate-950 p-2.5 rounded border border-slate-800 font-mono text-[10px]">
+                                  <span className="text-slate-500 block truncate" title={f.name}>{f.name}</span>
+                                  <span className="text-slate-200 font-bold block mt-1">{count} Samples Mapped</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* TAB 4: PYTHON */}
+              {activeTab === 'python_code' && (
+                <div className="bg-slate-950 border border-slate-800 rounded-xl p-6 shadow-sm flex flex-col gap-4">
+                  <div>
+                    <h3 className="text-sm font-semibold text-slate-300 tracking-wide uppercase mb-2">Tailored Python Script Builder</h3>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                      This Python script is dynamically customized to mirror your selected consolidation strategy (Below Detection, QA/QC visibility, path settings). Drag it to your local environment to automate your weekly work loop!
+                    </p>
+                  </div>
+
+                  <div className="relative">
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(generatePythonScript());
+                        triggerNotification("Python code copied to clipboard!", "success");
+                      }}
+                      className="absolute right-3 top-3 bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 px-3 py-1.5 rounded border border-slate-700 transition-all font-medium"
+                    >
+                      Copy Script
+                    </button>
+                    <pre className="bg-slate-900 text-[10px] md:text-xs font-mono p-4 rounded-lg overflow-x-auto border border-slate-800 text-slate-300 max-h-[450px]">
+                      <code>{generatePythonScript()}</code>
+                    </pre>
+                  </div>
+
+                  <div className="bg-teal-950/10 border border-teal-900/30 rounded-lg p-4 text-xs text-teal-400">
+                    <h4 className="font-semibold mb-1">🐍 How to Run Local Automation:</h4>
+                    <ol className="list-decimal list-inside space-y-1 text-slate-400 text-[11px] leading-relaxed">
+                      <li>Create a Python file named <code className="text-teal-400">assay_merger.py</code> in your project directory.</li>
+                      <li>Copy and paste the code block above into the file.</li>
+                      <li>Ensure your input CSV reports are saved inside a subfolder named <code className="text-teal-400">02_In_Progress</code>.</li>
+                      <li>Run the command <code className="text-teal-400">python assay_merger.py</code> in your terminal.</li>
+                    </ol>
+                  </div>
+                </div>
+              )}
+
+            </div>
+          </main>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

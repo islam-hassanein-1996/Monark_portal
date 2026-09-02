@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>دليل الهجرة الماهرة إلى أستراليا | الجيولوجيا وGIS</title>
+<style>
+  :root{
+    color-scheme:dark;
+    --core:#0a0f1e;
+    --core-deep:#060a15;
+    --panel:rgba(255,255,255,.055);
+    --panel-2:rgba(255,255,255,.09);
+    --line:rgba(255,255,255,.13);
+    --sand:#eef1f8;
+    --sand-dim:#a4aec6;
+    --clay:#e2725b;
+    --clay-bright:#ff9270;
+    --copper:#e9a13b;
+    --teal:#3fd0b8;
+    --gold:#f2cd6b;
+    --violet:#8b7cf8;
+    --radius:20px;
+    --glass-blur:blur(22px) saturate(150%);
+    --glass-shadow:0 8px 32px rgba(3,6,16,.42), inset 0 1px 0 rgba(255,255,255,.09);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    position:relative;
+    min-height:100vh;
+    background:var(--core);
+    color:var(--sand);
+    font-family:'Tajawal',-apple-system,'Segoe UI',sans-serif;
+    line-height:1.75;
+    font-size:16px;
+    overflow-x:hidden;
+  }
+  .orb{position:fixed; border-radius:50%; filter:blur(90px); opacity:.5; z-index:0; pointer-events:none;}
+  .orb-1{width:520px; height:520px; background:#e2725b; top:-140px; right:-120px;}
+  .orb-2{width:460px; height:460px; background:#3fd0b8; top:36%; left:-160px; opacity:.34;}
+  .orb-3{width:600px; height:600px; background:#8b7cf8; bottom:-220px; right:12%; opacity:.3;}
+  .orb-4{width:380px; height:380px; background:#e9a13b; top:66%; right:-120px; opacity:.26;}
+  header.topnav, .hero, main, footer{position:relative; z-index:1;}
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important;}
+  }
+  h1,h2,h3,h4{font-family:'Amiri','Tajawal',serif; font-weight:700; color:var(--sand); margin:0;}
+  a{color:var(--clay-bright);}
+  .mono{font-family:'JetBrains Mono',monospace; direction:ltr; unicode-bidi:isolate; letter-spacing:0.02em;}
+
+  .strata-rail{
+    position:fixed; top:0; right:0; width:12px; height:100%;
+    background:linear-gradient(180deg,
+      rgba(242,205,107,.85) 0%, rgba(242,205,107,.85) 9%,
+      rgba(226,114,91,.85) 9%, rgba(226,114,91,.85) 22%,
+      rgba(233,161,59,.8) 22%, rgba(233,161,59,.8) 35%,
+      rgba(63,208,184,.8) 35%, rgba(63,208,184,.8) 50%,
+      rgba(139,124,248,.8) 50%, rgba(139,124,248,.8) 64%,
+      rgba(226,114,91,.6) 64%, rgba(226,114,91,.6) 78%,
+      rgba(255,255,255,.22) 78%, rgba(255,255,255,.22) 100%);
+    backdrop-filter:var(--glass-blur);
+    border-left:1px solid rgba(255,255,255,.14);
+    z-index:40;
+  }
+  .strata-rail::after{
+    content:""; position:absolute; inset:0; background:repeating-linear-gradient(180deg, rgba(0,0,0,.18) 0px, rgba(0,0,0,.18) 1px, transparent 1px, transparent 7px);
+  }
+
+  header.topnav{
+    position:sticky; top:0; z-index:50;
+    background:rgba(255,255,255,.07);
+    backdrop-filter:var(--glass-blur);
+    -webkit-backdrop-filter:var(--glass-blur);
+    border-bottom:1px solid var(--line);
+    box-shadow:0 4px 26px rgba(3,6,16,.34);
+    padding:14px 28px 14px 40px;
+    display:flex; align-items:center; justify-content:space-between; gap:18px;
+    flex-wrap:wrap;
+  }
+  .brand{display:flex; align-items:baseline; gap:10px;}
+  .brand .mark{color:var(--teal); font-family:'JetBrains Mono',monospace; font-size:13px; letter-spacing:.15em;}
+  .brand h2{font-size:19px;}
+  nav.pillnav{display:flex; gap:6px; flex-wrap:wrap;}
+  nav.pillnav a{
+    color:var(--sand-dim); text-decoration:none; font-size:13.5px; padding:7px 14px;
+    border:1px solid rgba(255,255,255,.1); border-radius:999px;
+    background:rgba(255,255,255,.04); transition:.25s;
+  }
+  nav.pillnav a:hover{color:var(--sand); border-color:rgba(255,255,255,.28); background:rgba(255,255,255,.12);}
+  nav.pillnav a:focus-visible{outline:2px solid var(--teal); outline-offset:2px;}
+
+  .hero{
+    padding:100px 40px 90px 60px; overflow:hidden;
+    border-bottom:1px solid var(--line);
+  }
+  .hero .eyebrow{
+    font-family:'JetBrains Mono',monospace; direction:ltr; display:inline-block;
+    color:var(--teal); font-size:12.5px; letter-spacing:.18em; margin-bottom:22px;
+    border:1px solid var(--line); padding:6px 14px; border-radius:999px;
+    background:rgba(255,255,255,.06); backdrop-filter:var(--glass-blur);
+  }
+  .hero h1{font-size:clamp(32px,4.2vw,54px); line-height:1.28; max-width:920px;}
+  .hero h1 em{color:var(--clay-bright); font-style:normal;}
+  .hero p.lede{max-width:680px; color:var(--sand-dim); font-size:18px; margin-top:22px;}
+  .hero-cores{
+    position:absolute; left:-30px; bottom:-30px; display:flex; gap:12px; opacity:.55; pointer-events:none; z-index:1;
+  }
+  .core-sample{
+    width:28px; height:190px; border-radius:16px;
+    border:1px solid rgba(255,255,255,.18);
+    backdrop-filter:blur(6px);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.2);
+  }
+  .core-sample:nth-child(1){background:linear-gradient(180deg,rgba(242,205,107,.75),rgba(226,114,91,.7),rgba(233,161,59,.55));}
+  .core-sample:nth-child(2){background:linear-gradient(180deg,rgba(63,208,184,.7),rgba(139,124,248,.65),rgba(226,114,91,.5)); height:236px;}
+  .core-sample:nth-child(3){background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(242,205,107,.6),rgba(233,161,59,.45)); height:158px;}
+  .hero .stat-row{display:flex; gap:14px; margin-top:44px; flex-wrap:wrap;}
+  .hero .stat{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur);
+    box-shadow:var(--glass-shadow); padding:16px 22px; min-width:150px;
+  }
+  .stat-row .stat b{display:block; font-size:26px; color:var(--sand); font-family:'JetBrains Mono',monospace;}
+  .stat-row .stat span{font-size:12.5px; color:var(--sand-dim);}
+
+  main{padding:0 40px 40px 60px; max-width:1180px;}
+  section{padding:70px 0; border-bottom:1px solid var(--line);}
+  section:last-of-type{border-bottom:none;}
+  .section-head{display:flex; gap:18px; align-items:flex-start; margin-bottom:34px;}
+  .section-num{
+    font-family:'JetBrains Mono',monospace; color:var(--teal); font-size:14px; padding-top:6px; min-width:34px;
+  }
+  .section-head h2{font-size:clamp(24px,2.6vw,32px);}
+  .section-head p.sub{color:var(--sand-dim); font-size:15px; margin-top:8px; max-width:720px;}
+
+  .card-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px;}
+  .card{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur);
+    box-shadow:var(--glass-shadow);
+    padding:24px 24px 20px; position:relative; transition:.25s;
+  }
+  .card:hover{background:rgba(255,255,255,.09); transform:translateY(-3px);}
+  .card .tag{
+    font-family:'JetBrains Mono',monospace; direction:ltr; font-size:11.5px; color:var(--teal);
+    display:block; margin-bottom:10px; letter-spacing:.08em;
+  }
+  .card h3{font-size:17px; margin-bottom:10px; color:var(--sand);}
+  .card p{color:var(--sand-dim); font-size:14.3px; margin:0 0 8px;}
+ .card .pts{
+  display:block;
+  width:fit-content;
+  margin-bottom:10px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px;
+  color:var(--gold);
+  border:1px solid rgba(242,205,107,.34);
+  background:rgba(242,205,107,.1);
+  padding:4px 10px;
+  border-radius:999px;
+}
+
+  table{width:100%; border-collapse:collapse; font-size:14.3px; background:transparent;}
+  table caption{text-align:right; color:var(--sand-dim); font-size:13px; padding:14px 16px 10px;}
+  th,td{padding:13px 16px; text-align:right; border-bottom:1px solid rgba(255,255,255,.08); vertical-align:top;}
+  th{background:rgba(255,255,255,.08); color:var(--copper); font-family:'JetBrains Mono',monospace; font-size:12.5px; letter-spacing:.04em; font-weight:600;}
+  tr:hover td{background:rgba(255,255,255,.05);}
+  .table-wrap{
+    overflow-x:auto; border:1px solid var(--line); border-radius:var(--radius);
+    background:var(--panel); backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur);
+    box-shadow:var(--glass-shadow);
+  }
+  td .n{font-family:'JetBrains Mono',monospace; color:var(--clay-bright); direction:ltr; display:inline-block;}
+
+  .occ-compare{display:grid; grid-template-columns:1fr 1fr; gap:18px;}
+  @media (max-width:760px){.occ-compare{grid-template-columns:1fr;}}
+  .occ-card{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur);
+    box-shadow:var(--glass-shadow); padding:28px;
+  }
+  .occ-card h3{font-size:19px; margin-bottom:4px;}
+  .occ-card .code{font-family:'JetBrains Mono',monospace; color:var(--teal); font-size:13px; direction:ltr; display:inline-block; margin-bottom:16px;}
+  .occ-card ul{margin:0; padding:0 0 0 0; list-style:none;}
+  .occ-card li{padding:10px 0; border-top:1px solid rgba(255,255,255,.09); font-size:14px; color:var(--sand-dim);}
+  .occ-card li:first-child{border-top:none;}
+  .occ-card li b{color:var(--sand); display:block; font-size:13px; margin-bottom:3px;}
+  .occ-card .excl{color:var(--clay-bright); font-size:13px; margin-top:14px;}
+
+  .state-bars{display:flex; flex-direction:column; gap:10px;}
+  .state-row{display:grid; grid-template-columns:140px 1fr 60px; align-items:center; gap:14px;}
+  .state-row .label{font-size:14px; color:var(--sand);}
+  .bar-track{
+    height:24px; background:rgba(255,255,255,.07); border:1px solid var(--line);
+    border-radius:999px; overflow:hidden; position:relative; backdrop-filter:blur(8px);
+  }
+  .bar-fill{
+    height:100%; background:linear-gradient(90deg,rgba(63,208,184,.85),rgba(233,161,59,.85),rgba(226,114,91,.9));
+    width:0; transition:width 1.1s ease; border-radius:999px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.25);
+  }
+  .state-row .pct{font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--gold); text-align:left; direction:ltr;}
+
+  .calc{
+    background:var(--panel); border:1px solid var(--line); padding:32px; border-radius:var(--radius);
+    backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur);
+    box-shadow:var(--glass-shadow);
+    display:grid; grid-template-columns:1.3fr 1fr; gap:34px;
+  }
+  @media (max-width:760px){.calc{grid-template-columns:1fr;}}
+  .calc-field{margin-bottom:18px;}
+  .calc-field label{display:block; font-size:13.5px; color:var(--sand-dim); margin-bottom:7px;}
+  .calc-field select{
+    width:100%; background:rgba(10,15,30,.55); color:var(--sand); border:1px solid var(--line);
+    padding:11px 14px; font-family:'Tajawal',sans-serif; font-size:14.5px; border-radius:12px;
+    appearance:none; backdrop-filter:blur(10px);
+  }
+  .calc-field select:focus-visible{outline:2px solid var(--teal); outline-offset:2px;}
+  .calc-result{display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; border-right:1px solid var(--line); padding-right:34px;}
+  @media (max-width:760px){.calc-result{border-right:none; border-top:1px solid var(--line); padding-right:0; padding-top:24px;}}
+  .calc-result .big{font-family:'JetBrains Mono',monospace; font-size:64px; color:var(--clay-bright); line-height:1; text-shadow:0 0 40px rgba(255,146,112,.35);}
+  .calc-result .label{color:var(--sand-dim); font-size:13px; margin-top:6px;}
+  .calc-result .verdict{margin-top:18px; font-size:14px; padding:11px 16px; border-radius:14px; border:1px solid var(--line); background:rgba(255,255,255,.05);}
+  .verdict.good{color:var(--teal); border-color:var(--teal);}
+  .verdict.mid{color:var(--gold); border-color:var(--gold);}
+  .verdict.low{color:var(--clay-bright); border-color:var(--clay);}
+
+  .lang-hi td{background:rgba(242,205,107,.12) !important;}
+
+  .timeline{position:relative; padding-right:26px; border-right:2px solid var(--line);}
+  .tl-item{position:relative; padding-bottom:34px;}
+  .tl-item:last-child{padding-bottom:0;}
+  .tl-item::before{
+    content:attr(data-n); position:absolute; right:-38px; top:0; width:26px; height:26px;
+    background:rgba(255,255,255,.14); color:var(--sand); border:1px solid rgba(255,255,255,.3);
+    backdrop-filter:blur(10px);
+    border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700;
+  }
+  .tl-item h4{font-size:16px; margin-bottom:6px;}
+  .tl-item .agency{font-size:12.5px; color:var(--teal); font-family:'JetBrains Mono',monospace; margin-bottom:6px; display:block;}
+  .tl-item p{color:var(--sand-dim); font-size:14.3px; margin:0;}
+
+  .addr-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px;}
+  .addr-card{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur);
+    box-shadow:var(--glass-shadow); padding:22px; border-right:3px solid rgba(226,114,91,.7);
+  }
+  .addr-card h4{font-size:15px; margin-bottom:8px;}
+  .addr-card p{color:var(--sand-dim); font-size:13.8px; margin:4px 0;}
+
+  .link-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:14px;}
+  .link-card{
+    display:block; background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur);
+    box-shadow:var(--glass-shadow);
+    padding:20px 22px; text-decoration:none; transition:.25s;
+  }
+  .link-card:hover{border-color:rgba(255,255,255,.3); background:rgba(255,255,255,.11); transform:translateY(-3px);}
+  .link-card:focus-visible{outline:2px solid var(--teal); outline-offset:3px;}
+  .link-card .cat{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--copper); letter-spacing:.06em;}
+  .link-card h4{color:var(--sand); font-size:14.5px; margin:7px 0 4px; line-height:1.5;}
+  .link-card span.url{color:var(--sand-dim); font-size:12.5px; direction:ltr; display:inline-block;}
+
+  .video-group{margin-bottom:30px;}
+  .vg-title{
+    display:flex; align-items:center; gap:12px; font-size:17px; margin:0 0 14px;
+    padding:12px 18px; border-radius:999px;
+    background:rgba(255,255,255,.06); border:1px solid var(--line);
+    backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur);
+  }
+  .vg-num{
+    font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--core-deep);
+    background:linear-gradient(135deg,var(--teal),var(--gold));
+    padding:3px 9px; border-radius:999px; font-weight:700;
+  }
+
+  .reco{
+    background:var(--panel); border:1px solid var(--line); border-right:4px solid rgba(242,205,107,.8);
+    border-radius:var(--radius); backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur);
+    box-shadow:var(--glass-shadow); padding:26px 28px; margin-bottom:14px;
+  }
+  .reco h4{color:var(--gold); font-size:15.5px; margin-bottom:8px;}
+  .reco p{color:var(--sand-dim); margin:0; font-size:14.5px;}
+
+  /* glossary */
+  .glossary-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:14px;}
+  .glossary-item{
+    background:var(--panel); border:1px solid var(--line); border-radius:14px;
+    padding:20px 22px; backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur);
+    box-shadow:var(--glass-shadow); transition:.25s;
+  }
+  .glossary-item:hover{background:rgba(255,255,255,.09);}
+  .glossary-item .g-code{
+    font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--teal);
+    display:block; margin-bottom:8px; letter-spacing:.06em; direction:ltr; text-align:right;
+  }
+  .glossary-item h4{font-size:15px; margin-bottom:6px;}
+  .glossary-item p{color:var(--sand-dim); font-size:13.5px; margin:0;}
+
+  footer{
+    padding:34px 40px 44px 60px; color:var(--sand-dim); font-size:13px;
+    border-top:1px solid var(--line); background:rgba(255,255,255,.04);
+    backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur);
+  }
+  footer .disclaimer{max-width:820px; line-height:1.8;}
+
+  .reveal{opacity:0; transform:translateY(14px); transition:opacity .6s ease, transform .6s ease;}
+  .reveal.in{opacity:1; transform:translateY(0);}
+
+  @media (max-width:640px){
+    header.topnav{padding:12px 16px 12px 24px;}
+    nav.pillnav{display:none;}
+    .hero{padding:70px 20px 60px 34px;}
+    main{padding:0 20px 20px 34px;}
+    .strata-rail{width:8px;}
+    .hero-cores{display:none;}
+    .state-row{grid-template-columns:112px 1fr 52px; gap:10px;}
+    .orb{filter:blur(70px); opacity:.4;}
+  }
+  @supports not ((backdrop-filter:blur(2px)) or (-webkit-backdrop-filter:blur(2px))){
+    .card,.link-card,.occ-card,.addr-card,.reco,.calc,.table-wrap,.vg-title,header.topnav,footer,.hero .stat,.glossary-item{
+      background:rgba(20,26,46,.92);
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="orb orb-1" aria-hidden="true"></div>
+<div class="orb orb-2" aria-hidden="true"></div>
+<div class="orb orb-3" aria-hidden="true"></div>
+<div class="orb orb-4" aria-hidden="true"></div>
+
+<div class="strata-rail" aria-hidden="true"></div>
+
+<header class="topnav">
+  <div class="brand">
+    <span class="mark">AU / 234411 · 232214</span>
+    <h2>ملف الهجرة الماهرة — الجيولوجيا وGIS</h2>
+  </div>
+  <nav class="pillnav">
+    <a href="#visas">التأشيرات</a>
+    <a href="#glossary">المصطلحات الرسمية</a>
+    <a href="#vetassess">VETASSESS</a>
+    <a href="#market">سوق العمل</a>
+    <a href="#points">النقاط</a>
+    <a href="#language">اللغة</a>
+    <a href="#process">الإجراءات</a>
+    <a href="#resources">المصادر</a>
+  </nav>
+</header>
+
+<section class="hero">
+  <div class="hero-cores" aria-hidden="true">
+    <div class="core-sample"></div>
+    <div class="core-sample"></div>
+    <div class="core-sample"></div>
+  </div>
+  <span class="eyebrow">SKILLED MIGRATION · GEOSCIENCE &amp; SPATIAL</span>
+  <h1>من <em>لباب الحفر</em> إلى <em>الإقامة الدائمة</em>:<br>خارطة طريق الجيولوجي وأخصائي GIS إلى أستراليا</h1>
+  <p class="lede">
+    دليل استراتيجي شامل يترجم متطلبات وزارة الشؤون الداخلية الأسترالية وهيئة VETASSESS إلى خطوات عملية،
+    لتخصصي الجيولوجيا (ANZSCO 234411) والعلوم المكانية / GIS (ANZSCO 232214)، بدءاً من التقييم المهني وحتى التقديم من القاهرة.
+  </p>
+  <div class="stat-row">
+    <div class="stat"><b>65</b><span>نقطة كحد أدنى قانوني (EOI)</span></div>
+    <div class="stat"><b>85–90</b><span>نقطة تنافسية فعلياً</span></div>
+    <div class="stat"><b>52.9%</b><span>من وظائف الجيولوجيا في WA</span></div>
+    <div class="stat"><b>Group A</b><span>تصنيف VETASSESS لكلا المهنتين</span></div>
+  </div>
+</section>
+
+<main>
+
+  <!-- 1. VISAS -->
+  <section id="visas">
+    <div class="section-head">
+      <span class="section-num">01</span>
+      <div>
+        <h2>المسارات التأشيرية السبعة</h2>
+        <p class="sub">تتوزع الهجرة الماهرة بين مسار مستقل تنافسي فيدرالي، ترشيح من الولايات، رعاية مباشرة من أصحاب العمل، ومسار إقليمي تحويلي — لكل مسار شروط قبول ومزايا نقاط مختلفة.</p>
+      </div>
+    </div>
+    <div class="card-grid">
+      <div class="card">
+        <span class="pts">نقاط ذاتية فقط</span>
+        <span class="tag">SUBCLASS 189</span>
+        <h3>المهرة المستقلة</h3>
+        <p>تنافسي فيدرالي دون قيود جغرافية. يشترط إدراج المهنة في MLTSSL وتقييم مهني إيجابي.</p>
+        <p><b style="color:var(--sand)">النتيجة:</b> إقامة دائمة فورية.</p>
+      </div>
+      <div class="card">
+        <span class="pts">+5 نقاط</span>
+        <span class="tag">SUBCLASS 190</span>
+        <h3>ترشيح الولاية</h3>
+        <p>ترشيح معتمد من حكومة ولاية أو إقليم بناءً على قوائم الاحتياج المحلي (مثل WASMOL).</p>
+        <p><b style="color:var(--sand)">النتيجة:</b> إقامة دائمة، مع التزام بالإقامة عامين.</p>
+      </div>
+      <div class="card">
+        <span class="pts">+15 نقطة</span>
+        <span class="tag">SUBCLASS 491</span>
+        <h3>العمل الإقليمي للمهرة</h3>
+        <p>ترشيح من منطقة إقليمية أو رعاية قريب مؤهل مقيم في إقليم مصنف.</p>
+        <p><b style="color:var(--sand)">النتيجة:</b> إقامة مؤقتة 5 سنوات → تحويل لدائمة (191) بعد 3 سنوات.</p>
+      </div>
+      <div class="card">
+        <span class="pts">نقطة تحول</span>
+        <span class="tag">SUBCLASS 191</span>
+        <h3>الإقامة الدائمة الإقليمية</h3>
+        <p>المرحلة النهائية لتحويل التأشيرة المؤقتة (مثل 491) إلى إقامة دائمة كاملة بعد استيفاء شرط الإقامة والعمل في الإقليم لمدة 3 سنوات.</p>
+        <p><b style="color:var(--sand)">النتيجة:</b> إقامة دائمة كاملة.</p>
+      </div>
+      <div class="card">
+        <span class="pts">رعاية مباشرة</span>
+        <span class="tag">SUBCLASS 482 · SID</span>
+        <h3>المهارات المطلوبة</h3>
+        <p>عقد عمل مع كفيل معتمد، إدراج المهنة في CSOL، وخبرة سنتين على الأقل.</p>
+        <p><b style="color:var(--sand)">النتيجة:</b> إقامة مؤقتة حتى 4 سنوات، مسار انتقالي لـ186 بعد عامين.</p>
+      </div>
+      <div class="card">
+        <span class="pts">إعفاء من النقاط</span>
+        <span class="tag">SUBCLASS 186</span>
+        <h3>ترشيح صاحب العمل</h3>
+        <p>رعاية مباشرة مع تقييم مهني وخبرة 3 سنوات، أو انتقال من 482 (TRT).</p>
+        <p><b style="color:var(--sand)">النتيجة:</b> إقامة دائمة فورية من تاريخ المنح.</p>
+      </div>
+      <div class="card">
+        <span class="pts">قيود إقليمية</span>
+        <span class="tag">SUBCLASS 494</span>
+        <h3>الرعاية الإقليمية</h3>
+        <p>رعاية صاحب عمل في منطقة إقليمية مصنفة، بخبرة 3 سنوات وتقييم مهني إيجابي.</p>
+        <p><b style="color:var(--sand)">النتيجة:</b> إقامة مؤقتة 5 سنوات → دائمة عبر تأشيرة 191.</p>
+      </div>
+    </div>
+
+    <div class="table-wrap" style="margin-top:24px;">
+      <table>
+        <caption>الحد الأدنى للأجور المرتبط بتأشيرة Subclass 482 (بحسب أحدث التحديثات الرسمية)</caption>
+        <thead><tr><th>المسار</th><th>العتبة</th><th>سارية من</th><th>ملاحظات</th></tr></thead>
+        <tbody>
+          <tr><td>مسار المهارات الأساسية (Core Skills)</td><td class="n">AUD 76,515</td><td class="n">2025-07-01</td><td>ترتفع إلى <span class="n">AUD 79,423</span> من 1 يوليو 2026 وفق مؤشر AWOTE</td></tr>
+          <tr><td>مسار المهارات المتخصصة (Specialist Skills)</td><td class="n">AUD 141,210</td><td class="n">2025-07-01</td><td>ترتفع إلى نحو <span class="n">AUD 146,600</span> من 1 يوليو 2026</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="color:var(--sand-dim); font-size:13px; margin-top:10px;">
+      هذه العتبات تُحدَّث سنوياً في 1 يوليو من كل عام حسب معدل نمو الأجور (AWOTE) — راجع
+      <a href="https://immi.homeaffairs.gov.au/employer-subsite/Pages/salary-requirements.aspx" target="_blank">صفحة وزارة الشؤون الداخلية</a> قبل التقديم للحصول على الرقم الساري وقت التقديم.
+    </p>
+  </section>
+
+  <!-- 2. GLOSSARY -->
+  <section id="glossary">
+    <div class="section-head">
+      <span class="section-num">02</span>
+      <div>
+        <h2>المصطلحات الرسمية والاختصارات الحاكمة</h2>
+        <p class="sub">فهم هذه المفاهيم بدقة هو الأساس الذي تُبنى عليه جميع القرارات في مسار الهجرة — من القوائم الفيدرالية حتى نمط العمل الميداني FIFO.</p>
+      </div>
+    </div>
+    <div class="glossary-grid">
+      <div class="glossary-item">
+        <span class="g-code">ANZSCO CODE</span>
+        <h4>تصنيف المهن المعياري الأسترالي/النيوزيلندي</h4>
+        <p>الرقم المرجعي للتصنيف المعياري للمهن في أستراليا ونيوزيلندا، وتستند إليه دائرة الهجرة لتحديد الوصف الوظيفي والمهام الدقيقة لمجالك؛ فالجيولوجي يصنف برقم <span class="n">234411</span> وأخصائي العلوم المكانية/GIS برقم <span class="n">232214</span>.</p>
+      </div>
+      <div class="glossary-item">
+        <span class="g-code">MLTSSL</span>
+        <h4>قائمة المهارات الإستراتيجية (Medium &amp; Long-term Strategic Skills List)</h4>
+        <p>قائمة فيدرالية بالمهن التي تعاني من عجز دائم في السوق الأسترالي، ووجود مهنتك فيها شرط أساسي للتقديم على التأشيرة المستقلة (189) دون الحاجة لكفيل أو ولاية.</p>
+      </div>
+      <div class="glossary-item">
+        <span class="g-code">CSOL</span>
+        <h4>قائمة مهارات الاحتياج (Core Skills Occupation List)</h4>
+        <p>قائمة الوظائف المطلوبة لرعاية أصحاب العمل وعقود العمل المباشرة (مثل تأشيرة 482) — تُستخدَم كمرجع أساسي لمسار العمل المباشر.</p>
+      </div>
+      <div class="glossary-item">
+        <span class="g-code">WASMOL</span>
+        <h4>جداول الولايات — مثال أستراليا الغربية</h4>
+        <p>قوائم الاحتياج التنافسية الخاصة بكل ولاية (مثل ولاية أستراليا الغربية WA)، وبناءً عليها توجه الولاية دعوات الترشيح للتأشيرات المحلية (190 و491). تختلف كل ولاية في متطلباتها وقوائمها.</p>
+      </div>
+      <div class="glossary-item">
+        <span class="g-code">SKILLSELECT</span>
+        <h4>البوابة الإلكترونية الفيدرالية لإبداء الاهتمام</h4>
+        <p>المنصة الرقمية التي تسجل من خلالها رغبتك في الهجرة الماهرة، وتُستخدم لإدارة ملفات EOI وإصدار الدعوات التنافسية.</p>
+      </div>
+      <div class="glossary-item">
+        <span class="g-code">EOI → ITA</span>
+        <h4>إبداء الاهتمام ثم دعوة التقديم</h4>
+        <p>الـ EOI هو استمارة رقمية مجانية تسجل فيها نقاطك ومؤهلاتك؛ وعند اختيار ملفك في سحوبات الهجرة، تصدر لك دعوة التقديم الرسمية (ITA — Invitation to Apply) لرفع المستندات وسداد الرسوم عبر حساب ImmiAccount.</p>
+      </div>
+      <div class="glossary-item">
+        <span class="g-code">FIFO</span>
+        <h4>نظام العمل Fly-In, Fly-Out</h4>
+        <p>نمط توظيف شائع جداً في قطاع التعدين بأستراليا الغربية، تتكفل فيه الشركة بنقلك بالطائرة إلى مواقع المناجم والعمل لأسابيع متتالية مع توفير السكن والإعاشة، يليها أسبوع أو أكثر إجازة مدفوعة في المدينة، مع رواتب وبدلات مرتفعة.</p>
+      </div>
+      <div class="glossary-item">
+        <span class="g-code">HAP ID</span>
+        <h4>رقم الفحص الطبي الإلكتروني</h4>
+        <p>رقم تعريفي إلكتروني يصدر لك بعد تقديم طلب التأشيرة، وتتوجه به حصرياً إلى المركز المعتمد في مصر (IOM MHAC بالدقي) لرفع نتائج الفحوصات والأشعة مباشرة إلى نظام الهجرة الإلكتروني eMedical.</p>
+      </div>
+      <div class="glossary-item">
+        <span class="g-code">NAATI-CCL</span>
+        <h4>اختبار الترجمة الفورية المجتمعية</h4>
+        <p>اختبار ترجمة فورية مجتمعية (بين العربية والإنجليزية) يمنح الناجح فيه <b style="color:var(--gold)">5 نقاط إضافية</b> تدعم ملف EOI — وهو مسار اختياري لرفع التنافسية دون الحاجة لخبرة أسترالية.</p>
+      </div>
+      <div class="glossary-item">
+        <span class="g-code">65 vs 85–90</span>
+        <h4>الحد الأدنى مقابل النطاق التنافسي</h4>
+        <p>الـ 65 نقطة هي الشرط القانوني لفتح ملف EOI فقط، ولكن السحوبات الفيدرالية تختار المتقدمين من الأعلى نقاطاً إلى الأدنى؛ لذا تحتاج التخصصات العلمية فعلياً 85–90 نقطة لضمان صدور الدعوة.</p>
+      </div>
+      <div class="glossary-item">
+        <span class="g-code">Superior English</span>
+        <h4>مستوى اللغة الأعلى (PTE 79+ / IELTS 8.0)</h4>
+        <p>الحصول على 79+ في جميع أقسام اختبار PTE Academic (أو IELTS 8.0) يمنحك <b style="color:var(--gold)">20 نقطة حاسمة</b> في النظام، وهي الرافعة الأساسية لتعويض نقاط الخبرة والدراسة داخل أستراليا لمقدمي الطلبات من الخارج.</p>
+      </div>
+      <div class="glossary-item">
+        <span class="g-code">Group A</span>
+        <h4>أعلى فئات التقييم المهني صرامة</h4>
+        <p>تصنيف VETASSESS الذي يندرج تحته الجيولوجي وأخصائي GIS — بكالوريوس فأعلى في تخصص وثيق الصلة، وسنة خبرة مدفوعة الأجر على الأقل بعد التخرج ضمن آخر 5 سنوات.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. VETASSESS -->
+  <section id="vetassess">
+    <div class="section-head">
+      <span class="section-num">03</span>
+      <div>
+        <h2>معايير VETASSESS — فئة Group A</h2>
+        <p class="sub">أعلى فئات التقييم صرامة: بكالوريوس فأعلى في تخصص وثيق الصلة، وسنة خبرة مدفوعة الأجر على الأقل بعد التخرج ضمن آخر خمس سنوات، بمعدل 20 ساعة أسبوعياً كحد أدنى.</p>
+      </div>
+    </div>
+
+    <div class="occ-compare">
+      <div class="occ-card">
+        <h3>الجيولوجي</h3>
+        <span class="code">Geologist — ANZSCO 234411</span>
+        <ul>
+          <li><b>المؤهلات المقبولة</b>الجيولوجيا، الجيولوجيا التطبيقية، علوم الأرض، الجيوفيزياء، علم الرسوبيات، علم الصخور، الجيولوجيا البيئية</li>
+          <li><b>مسميات مقبولة إضافية</b>جيولوجي بحري (Marine Geologist)، عالم حفريات ورسوبيات قديمة (Palaeontologist)</li>
+          <li><b>الواجبات المقبولة</b>تفسير بيانات الاستشعار عن بعد، فحوصات معملية للعينات ولباب الحفر، تقييم الجدوى الاقتصادية للمكامن، تقارير الأثر البيئي، الخرائط والقطاعات الجيولوجية</li>
+        </ul>
+        <p class="excl">
+          مستبعد ويُصنَّف بكود مستقل: الجيوفيزيائي (234412)، الهيدروجيولوجي (234413)، وفني علوم الأرض (311412) — الأخير مصنف فنياً لا مهنياً.
+        </p>
+      </div>
+      <div class="occ-card">
+        <h3>أخصائي GIS والعلوم المكانية</h3>
+        <span class="code">Other Spatial Scientist — ANZSCO 232214</span>
+        <ul>
+          <li><b>المؤهلات المقبولة</b>علوم نظم المعلومات الجغرافية، التحليل الجيومكاني، الاستشعار عن بعد، التصوير المساحي الرقمي، الجيوماتكس</li>
+          <li><b>مسميات مقبولة إضافية</b>مدير نظم المعلومات الجغرافية، محلل جغرافي مكاني / أخصائي GIS</li>
+          <li><b>الواجبات المقبولة</b>تصميم قواعد بيانات جيومكانية، معالجة الصور الفضائية ونماذج الارتفاع الرقمية DEM، تطوير تطبيقات ويب الخرائط، أتمتة التحليلات المكانية</li>
+        </ul>
+        <p class="excl">
+          مستبعد: المساح القانوني (232212)، رسام الخرائط (232213)، فني العلوم المكانية (3114)، المخطط الحضري (232611)، والمناصب الأكاديمية البحتة.
+        </p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:22px; border-color:var(--gold);">
+      <span class="tag" style="color:var(--gold);">تحذير حاسم لمتخرجي الجغرافيا</span>
+      <h3>فحص السجل الأكاديمي (Transcript)</h3>
+      <p>
+        المؤهلات الجامعية في الجغرافيا النظرية العامة <b style="color:var(--sand)">لا تُعتمد</b> إذا خلت من مكونات تقنية تطبيقية.
+        يجب أن تشكّل مقررات التحليل المكاني والاستشعار عن بعد والنمذجة الرقمية والبرمجة الجغرافية النسبة الأكبر من الساعات المعتمدة،
+        وإلا صُنِّف المؤهل كـ"جغرافيا عامة" ورُفض التقييم.
+      </p>
+    </div>
+
+    <div class="section-head" style="margin-top:50px;">
+      <span class="section-num">03.1</span>
+      <div>
+        <h3 style="font-size:20px;">توثيق الخبرة: Statement of Service والإثبات المالي</h3>
+        <p class="sub">لا يُعتَد بأي سنة خبرة في غياب التوثيق المتكامل — VETASSESS تفرّق بين الأدلة الوظيفية الأولية والأدلة المالية الثانوية.</p>
+      </div>
+    </div>
+    <div class="card-grid">
+      <div class="card">
+        <span class="tag">خطاب صاحب العمل</span>
+        <h3>المتطلبات الشكلية</h3>
+        <p>ورق رسمي، عنوان بريدي وفعلي، هاتف، بريد بنطاق مؤسسي، توقيع المدير المباشر أو مدير الموارد البشرية باسمه ومسماه.</p>
+      </div>
+      <div class="card">
+        <span class="tag">المحتوى المطلوب</span>
+        <h3>تفاصيل التوظيف</h3>
+        <p>تاريخ بدء وانتهاء دقيق (يوم/شهر/سنة)، المسمى الوظيفي، ساعات العمل الأسبوعية، دوام كامل/جزئي، و5-8 مهام وظيفية تفصيلية.</p>
+      </div>
+      <div class="card">
+        <span class="tag">دليل مالي إلزامي واحد على الأقل</span>
+        <h3>الإثبات البنكي أو الضريبي</h3>
+        <p>كشوف حسابات تُظهر تحويلات راتب دورية، قسائم راتب، مستخرجات تأمينات اجتماعية، أو إقرارات ضريبية رسمية — تغطي كل شهور الخبرة.</p>
+      </div>
+    </div>
+    <p style="color:var(--clay-bright); font-size:14px; margin-top:16px;">
+      ترفض الهيئة قطعياً الخبرات غير مدفوعة الأجر أو المدفوعة نقدياً دون أثر بنكي أو ضريبي رسمي.
+    </p>
+  </section>
+
+  <!-- 4. LABOR MARKET -->
+  <section id="market">
+    <div class="section-head">
+      <span class="section-num">04</span>
+      <div>
+        <h2>توزيع سوق العمل حسب الولاية</h2>
+        <p class="sub">نسبة وظائف الجيولوجيين لكل ولاية/إقليم، وطبيعة القطاعات السائدة لكل من الجيولوجيا وGIS — بالإضافة إلى نظام العمل الميداني FIFO السائد في التعدين.</p>
+      </div>
+    </div>
+
+    <div class="state-bars" id="stateBars">
+      <div class="state-row" data-pct="52.9"><span class="label">أستراليا الغربية (WA)</span><div class="bar-track"><div class="bar-fill"></div></div><span class="pct">52.9%</span></div>
+      <div class="state-row" data-pct="17.8"><span class="label">كوينزلاند (QLD)</span><div class="bar-track"><div class="bar-fill"></div></div><span class="pct">17.8%</span></div>
+      <div class="state-row" data-pct="12.0"><span class="label">نيو ساوث ويلز (NSW)</span><div class="bar-track"><div class="bar-fill"></div></div><span class="pct">12.0%</span></div>
+      <div class="state-row" data-pct="8.1"><span class="label">فيكتوريا (VIC)</span><div class="bar-track"><div class="bar-fill"></div></div><span class="pct">8.1%</span></div>
+      <div class="state-row" data-pct="5.5"><span class="label">جنوب أستراليا (SA)</span><div class="bar-track"><div class="bar-fill"></div></div><span class="pct">5.5%</span></div>
+      <div class="state-row" data-pct="2.2"><span class="label">تاسمانيا (TAS)</span><div class="bar-track"><div class="bar-fill"></div></div><span class="pct">2.2%</span></div>
+      <div class="state-row" data-pct="1.0"><span class="label">إقليم العاصمة (ACT)</span><div class="bar-track"><div class="bar-fill"></div></div><span class="pct">1.0%</span></div>
+      <div class="state-row" data-pct="0.6"><span class="label">الإقليم الشمالي (NT)</span><div class="bar-track"><div class="bar-fill"></div></div><span class="pct">0.6%</span></div>
+    </div>
+    <p style="color:var(--sand-dim); font-size:12.5px; margin-top:8px;">النسب تمثل توزيع وظائف الجيولوجيين تحديداً حسب التقرير المصدر.</p>
+
+    <div class="card-grid" style="margin-top:30px;">
+      <div class="card">
+        <span class="tag">FIFO — FLY-IN, FLY-OUT</span>
+        <h3>نظام العمل الميداني السائد في WA</h3>
+        <p>تتكفل الشركة بنقلك بالطائرة إلى مواقع المناجم النائية والعمل لأسابيع متتالية (غالباً 2:1 أو 4:1 أسابيع عمل:إجازة) مع توفير السكن والإعاشة الكاملة، تليها إجازة مدفوعة في المدينة. الرواتب والبدلات أعلى من المتوسط الوطني بشكل ملحوظ.</p>
+      </div>
+      <div class="card">
+        <span class="tag">AVERAGE ANNUAL SALARY</span>
+        <h3>الجيولوجي</h3>
+        <p style="font-family:'JetBrains Mono',monospace; font-size:28px; color:var(--clay-bright); margin:6px 0;">~AUD 105,000–109,000</p>
+        <p>متوسط تقديري وطني، مع تفاوت واضح بحسب الموقع والمواقع النائية وعمليات FIFO التي ترفع الأجور.</p>
+        <p style="font-size:12px; color:var(--sand-dim);">مصدر: Indeed Australia، SEEK career advice (أغسطس 2026)</p>
+      </div>
+      <div class="card">
+        <span class="tag">AVERAGE ANNUAL SALARY</span>
+        <h3>أخصائي GIS / محلل مكاني</h3>
+        <p style="font-family:'JetBrains Mono',monospace; font-size:28px; color:var(--clay-bright); margin:6px 0;">~AUD 99,000–126,000</p>
+        <p>يتفاوت حسب المسمى (Geospatial Analyst مقابل GIS Analyst/Specialist) والولاية — بريزبن وسيدني يميلان للأعلى.</p>
+        <p style="font-size:12px; color:var(--sand-dim);">مصدر: Indeed Australia، SEEK (أغسطس 2026)</p>
+      </div>
+    </div>
+
+    <div class="table-wrap" style="margin-top:30px;">
+      <table>
+        <thead><tr><th>الولاية</th><th>قطاعات الجيولوجيا السائدة</th><th>قطاعات GIS الحيوية</th></tr></thead>
+        <tbody>
+          <tr><td><b style="color:var(--sand)">WA</b></td><td>الحديد الخام، الذهب، الليثيوم، النيكل، الغاز الطبيعي المسال — نظام FIFO سائد</td><td>مراقبة الموارد البيئية، مكافحة حرائق الغابات، بيانات مناجم التعدين</td></tr>
+          <tr><td><b style="color:var(--sand)">QLD</b></td><td>المعادن الأساسية، الفحم، الطاقة المتجددة، المياه الجوفية</td><td>التخطيط الزراعي، إدارة الحيد المرجاني العظيم، الخرائط الساحلية</td></tr>
+          <tr><td><b style="color:var(--sand)">NSW</b></td><td>مقرات شركات التعدين، الاستشارات الهندسية والجيوتقنية</td><td>البنية التحتية والنقل الذكي، المجالس البلدية الكبرى</td></tr>
+          <tr><td><b style="color:var(--sand)">VIC</b></td><td>الدراسات الجيوتقنية للهندسة المدنية وحماية البيئة</td><td>نمذجة المدن الذكية، التخطيط العمراني، اللوجستيات</td></tr>
+          <tr><td><b style="color:var(--sand)">SA</b></td><td>النحاس، اليورانيوم، المعادن الاستراتيجية</td><td>الصناعات الدفاعية (Adelaide Defence Hub)، الاستشعار الفضائي</td></tr>
+          <tr><td><b style="color:var(--sand)">TAS</b></td><td>الجيولوجيا البيئية، التعدين المتخصص، الجيولوجيا الجليدية</td><td>مراقبة الغابات، التنوع الحيوي، البيانات المكانية البحرية</td></tr>
+          <tr><td><b style="color:var(--sand)">ACT</b></td><td>الهيئات البحثية الفيدرالية، الاستشارات العلمية</td><td>الوكالات الفيدرالية، Geoscience Australia</td></tr>
+          <tr><td><b style="color:var(--sand)">NT</b></td><td>المعادن النادرة، اليورانيوم، الغاز</td><td>إدارة أراضي السكان الأصليين، الحدائق الوطنية، الموارد المائية</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="margin-top:30px;">
+      <h3 style="font-size:19px; margin-bottom:14px;">أربعة قطاعات حيوية لطلب GIS</h3>
+      <div class="card-grid">
+        <div class="card"><span class="tag">EMERGENCY MGMT</span><h3>إدارة الطوارئ والكوارث</h3><p>دمج الاستشعار عن بعد ونظم ESRI/QGIS لتوقع حرائق الغابات والفيضانات، كما في DFES بأستراليا الغربية.</p></div>
+        <div class="card"><span class="tag">URBAN PLANNING</span><h3>المجالس البلدية والتخطيط العمراني</h3><p>تحليل مكاني لشبكات المرافق وتراخيص الأراضي في NSW وVIC وSA.</p></div>
+        <div class="card"><span class="tag">DEFENCE</span><h3>الصناعات الدفاعية والأمنية</h3><p>يتركز في Adelaide Defence Hub وكانبيرا عبر الاستشعار الفضائي والنمذجة العسكرية.</p></div>
+        <div class="card"><span class="tag">MINING SUPPORT</span><h3>الدعم الاستكشافي والتعديني</h3><p>معالجة النماذج الترسيبية والمسوحات الجوية والجيوفيزيائية في بيرث وبريزبن.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. POINTS -->
+  <section id="points">
+    <div class="section-head">
+      <span class="section-num">05</span>
+      <div>
+        <h2>نظام النقاط التنافسي</h2>
+        <p class="sub">65 نقطة حد أدنى قانوني لتسجيل EOI عبر SkillSelect، لكن جولات الدعوة التنافسية للتخصصات العلمية تتطلب فعلياً 80–90 نقطة.</p>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>المعيار</th><th>الفئة</th><th>النقاط</th></tr></thead>
+        <tbody>
+          <tr><td rowspan="4">العمر عند الدعوة</td><td>18–24 سنة</td><td class="n">25</td></tr>
+          <tr><td><b style="color:var(--gold)">25–32 سنة (الأعلى)</b></td><td class="n" style="color:var(--gold)">30</td></tr>
+          <tr><td>33–39 سنة</td><td class="n">25</td></tr>
+          <tr><td>40–44 سنة</td><td class="n">15</td></tr>
+
+          <tr><td rowspan="3">الكفاءة اللغوية</td><td>Competent (IELTS 6.0)</td><td class="n">0 (شرط أساسي)</td></tr>
+          <tr><td>Proficient (IELTS 7.0)</td><td class="n">10</td></tr>
+          <tr><td><b style="color:var(--gold)">Superior (IELTS 8.0 / PTE 79+)</b></td><td class="n" style="color:var(--gold)">20</td></tr>
+
+          <tr><td rowspan="3">خبرة خارج أستراليا (آخر 10 سنوات)</td><td>3–4 سنوات</td><td class="n">5</td></tr>
+          <tr><td>5–7 سنوات</td><td class="n">10</td></tr>
+          <tr><td>8–10 سنوات</td><td class="n">15</td></tr>
+
+          <tr><td rowspan="4">خبرة داخل أستراليا</td><td>1–2 سنة</td><td class="n">5</td></tr>
+          <tr><td>3–4 سنوات</td><td class="n">10</td></tr>
+          <tr><td>5–7 سنوات</td><td class="n">15</td></tr>
+          <tr><td>8+ سنوات</td><td class="n">20</td></tr>
+
+          <tr><td rowspan="3">المستوى الأكاديمي</td><td>دكتوراه</td><td class="n">20</td></tr>
+          <tr><td>بكالوريوس أو ماجستير</td><td class="n">15</td></tr>
+          <tr><td>دبلوم مهني معتمد</td><td class="n">10</td></tr>
+
+          <tr><td rowspan="2">نقاط الترشيح</td><td>ترشيح ولاية (190)</td><td class="n">5</td></tr>
+          <tr><td><b style="color:var(--gold)">ترشيح إقليمي (491)</b></td><td class="n" style="color:var(--gold)">15</td></tr>
+
+          <tr><td rowspan="3">عوامل إضافية</td><td>NAATI-CCL معتمد</td><td class="n">5</td></tr>
+          <tr><td>دراسة إقليمية مكتملة بأستراليا</td><td class="n">5</td></tr>
+          <tr><td>سنة مهنية (Professional Year)</td><td class="n">5</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card" style="margin-top:22px; border-color:var(--violet);">
+      <span class="tag" style="color:var(--violet);">اختبار NAATI-CCL — بالتفصيل</span>
+      <h3>اختبار الترجمة الفورية المجتمعية Credentialed Community Language</h3>
+      <p>
+        اختبار معتمد يقيس قدرتك على الترجمة الشفهية الفورية بين الإنجليزية والعربية في سياقات مجتمعية حقيقية (مثل مراجعات طبية، تصريحات قانونية، معاملات حكومية).
+        النجاح فيه يمنحك <b style="color:var(--gold)">5 نقاط إضافية</b> في نظام SkillSelect — بدون الحاجة لخبرة عمل في أستراليا أو دراسة جامعية فيها.
+        الاختبار متاح في مراكز معتمدة خارج أستراليا، ويُعد خياراً ذكياً لرفع التنافسية عندما تكون الخبرة الخارجية قريبة من الحد الأقصى.
+      </p>
+    </div>
+
+    <div style="margin-top:40px;">
+      <h3 style="font-size:19px; margin-bottom:16px;">حاسبة تقديرية سريعة</h3>
+      <div class="calc">
+        <div>
+          <div class="calc-field">
+            <label>العمر عند توجيه الدعوة</label>
+            <select id="c-age">
+              <option value="25">18–24 سنة (25 نقطة)</option>
+              <option value="30" selected>25–32 سنة (30 نقطة)</option>
+              <option value="25b">33–39 سنة (25 نقطة)</option>
+              <option value="15">40–44 سنة (15 نقطة)</option>
+            </select>
+          </div>
+          <div class="calc-field">
+            <label>مستوى اللغة الإنجليزية</label>
+            <select id="c-lang">
+              <option value="0">Competent — IELTS 6.0 (0 نقطة)</option>
+              <option value="10">Proficient — IELTS 7.0 (10 نقاط)</option>
+              <option value="20" selected>Superior — IELTS 8.0 / PTE 79+ (20 نقطة)</option>
+            </select>
+          </div>
+          <div class="calc-field">
+            <label>الخبرة خارج أستراليا</label>
+            <select id="c-expout">
+              <option value="0">أقل من 3 سنوات (0)</option>
+              <option value="5">3–4 سنوات (5)</option>
+              <option value="10">5–7 سنوات (10)</option>
+              <option value="15" selected>8–10 سنوات (15)</option>
+            </select>
+          </div>
+          <div class="calc-field">
+            <label>الخبرة داخل أستراليا</label>
+            <select id="c-expin">
+              <option value="0" selected>لا يوجد (0)</option>
+              <option value="5">1–2 سنة (5)</option>
+              <option value="10">3–4 سنوات (10)</option>
+              <option value="15">5–7 سنوات (15)</option>
+              <option value="20">8+ سنوات (20)</option>
+            </select>
+          </div>
+          <div class="calc-field">
+            <label>المستوى الأكاديمي</label>
+            <select id="c-edu">
+              <option value="20">دكتوراه (20)</option>
+              <option value="15" selected>بكالوريوس / ماجستير (15)</option>
+              <option value="10">دبلوم مهني (10)</option>
+            </select>
+          </div>
+          <div class="calc-field">
+            <label>نقاط الترشيح</label>
+            <select id="c-nom">
+              <option value="0" selected>مسار مستقل 189 (0)</option>
+              <option value="5">ترشيح ولاية 190 (5)</option>
+              <option value="15">ترشيح إقليمي 491 (15)</option>
+            </select>
+          </div>
+        </div>
+        <div class="calc-result">
+          <div class="big" id="calcTotal">80</div>
+          <div class="label">نقطة تقديرية</div>
+          <div class="verdict good" id="calcVerdict">ضمن النطاق التنافسي (85–90) للتخصصات العلمية</div>
+        </div>
+      </div>
+      <p style="font-size:12px; color:var(--sand-dim); margin-top:10px;">
+        حاسبة تقريبية للتوجيه الذاتي فقط، ولا تشمل نقاط الشريك أو الحالة الاجتماعية أو NAATI-CCL. الرقم الرسمي يُحتسب داخل نظام SkillSelect.
+      </p>
+    </div>
+  </section>
+
+  <!-- 6. LANGUAGE -->
+  <section id="language">
+    <div class="section-head">
+      <span class="section-num">06</span>
+      <div>
+        <h2>اختبارات اللغة المعتمدة</h2>
+        <p class="sub">إلغاء قبول نتائج الاختبارات المنزلية أو المنفذة عبر الإنترنت لجميع أغراض الهجرة — الاختبار الحضوري في مركز معتمد إلزامي.</p>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>المستوى</th><th>IELTS Academic/General</th><th>PTE Academic</th><th>النقاط</th></tr></thead>
+        <tbody>
+          <tr><td>Competent English</td><td>6.0 في كل مهارة</td><td>50 في كل قسم</td><td class="n">0 (شرط إلزامي)</td></tr>
+          <tr><td>Proficient English</td><td>7.0 في كل مهارة</td><td>65 في كل قسم</td><td class="n">10</td></tr>
+          <tr class="lang-hi"><td><b style="color:var(--gold)">Superior English</b></td><td><b style="color:var(--gold)">8.0 في كل مهارة</b></td><td><b style="color:var(--gold)">79 في كل قسم</b></td><td class="n" style="color:var(--gold)">20</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="color:var(--sand-dim); margin-top:16px; font-size:14.5px; max-width:760px;">
+      استهداف <b style="color:var(--sand)">PTE Academic 79+</b> في كل قسم هو الخيار الأكثر فاعلية عملياً للمتقدمين من خارج أستراليا (Offshore)،
+      لأنه يعوّض غياب نقاط الخبرة المحلية والدراسة داخل أستراليا، ويرفع المجموع إلى النطاق التنافسي 85–90 نقطة.
+      كما يمكن الجمع بين Superior English واختبار <b style="color:var(--sand)">NAATI-CCL</b> للحصول على 25 نقطة لغوية إجمالية.
+    </p>
+  </section>
+
+  <!-- 7. PROCESS -->
+  <section id="process">
+    <div class="section-head">
+      <span class="section-num">07</span>
+      <div>
+        <h2>مسار الإجراءات من مصر</h2>
+        <p class="sub">تسلسل رقمي مركزي عبر بوابات وزارة الشؤون الداخلية، مع خدمات قياسات حيوية وفحص طبي داخل جمهورية مصر العربية.</p>
+      </div>
+    </div>
+    <div class="timeline">
+      <div class="tl-item" data-n="1">
+        <span class="agency">VETASSESS PORTAL</span>
+        <h4>التقييم المهني الأولي</h4>
+        <p>رفع المؤهلات والسجلات الأكاديمية وبيان الخدمة والأدلة المالية للحصول على شهادة المعادلة المهنية.</p>
+      </div>
+      <div class="tl-item" data-n="2">
+        <span class="agency">SKILLSELECT — FEDERAL</span>
+        <h4>إيداع طلب إبداء الاهتمام (EOI)</h4>
+        <p>تسجيل الحساب، إدخال بيانات التقييم ودرجات اللغة، واختيار الولايات المستهدفة وتأشيرات 190/491/189.</p>
+      </div>
+      <div class="tl-item" data-n="3">
+        <span class="agency">STATE PORTALS + SKILLSELECT</span>
+        <h4>الترشيح وتوجيه الدعوة (ITA)</h4>
+        <p>مراجعة متطلبات الولاية المستهدفة (WA أو SA مثلاً)، الحصول على الموافقة، ثم تلقي الدعوة الفيدرالية.</p>
+      </div>
+      <div class="tl-item" data-n="4">
+        <span class="agency">IMMIACCOUNT</span>
+        <h4>التقديم الرقمي الرسمي للتأشيرة</h4>
+        <p>سداد الرسوم الحكومية، رفع الوثائق الثبوتية وشهادات الخبرة والصحيفة الجنائية المميكنة.</p>
+      </div>
+      <div class="tl-item" data-n="5">
+        <span class="agency">IOM MHAC — القاهرة (الدقي)</span>
+        <h4>الفحص الطبي المعتمد عبر HAP ID</h4>
+        <p>بعد تقديم الطلب، يصدر لك رقم HAP ID إلكتروني. تتوجه به إلى مركز IOM MHAC بالدقي لإجراء الفحص السريري وأشعة الصدر والتحاليل المخبرية، وتُرفع النتائج مباشرة إلى نظام eMedical التابع للهجرة الأسترالية.</p>
+      </div>
+      <div class="tl-item" data-n="6">
+        <span class="agency">VFS GLOBAL — القاهرة / الإسكندرية</span>
+        <h4>تسجيل البصمات والبيانات الحيوية</h4>
+        <p>حجز موعد رسمي للحضور الشخصي وتقديم البصمات والصورة الرقمية فور استلام خطاب الطلب.</p>
+      </div>
+    </div>
+
+    <h3 style="font-size:19px; margin:44px 0 16px;">المراكز المعتمدة في مصر</h3>
+    <div class="addr-grid">
+      <div class="addr-card">
+        <h4>السفارة الأسترالية بالقاهرة</h4>
+        <p>لا تستقبل طلبات ورقية للتأشيرات — تُدار كافة الإجراءات حصرياً عبر ImmiAccount الرقمي.</p>
+      </div>
+      <div class="addr-card">
+        <h4>VFS Global — فرع القاهرة</h4>
+        <p>مجمع البنوك، التجمع الخامس / شيراتون هليوبوليس.</p>
+      </div>
+      <div class="addr-card">
+        <h4>VFS Global — فرع الإسكندرية</h4>
+        <p>الطابق الأول، 62 طريق الجيش، الإبراهيمية بحري، سيدي جابر.</p>
+      </div>
+      <div class="addr-card">
+        <h4>مركز IOM للفحص الطبي (MHAC)</h4>
+        <p>8 شارع عبد القوي أحمد، متفرع من شارع مصدق، الدقي، الجيزة. الأحد–الخميس، 8:30ص–5:00م، بالحجز المسبق. يحمل المريض رقم HAP ID الصادر من ImmiAccount.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8. RESOURCES -->
+  <section id="resources">
+    <div class="section-head">
+      <span class="section-num">08</span>
+      <div>
+        <h2>المراجع الرقمية والمصادر</h2>
+        <p class="sub">بوابات حكومية رسمية للتحقق المباشر، إلى جانب منصات توثيقية لتجارب المهاجرين العرب في أستراليا.</p>
+      </div>
+    </div>
+
+    <div class="link-grid">
+      <a class="link-card" href="https://immi.homeaffairs.gov.au" target="_blank">
+        <span class="cat">GOVERNMENT</span>
+        <h4>وزارة الشؤون الداخلية الأسترالية</h4>
+        <span class="url">immi.homeaffairs.gov.au</span>
+      </a>
+      <a class="link-card" href="https://immi.homeaffairs.gov.au/visas/working-in-australia/skillselect" target="_blank">
+        <span class="cat">GOVERNMENT</span>
+        <h4>منصة SkillSelect</h4>
+        <span class="url">immi.homeaffairs.gov.au/.../skillselect</span>
+      </a>
+      <a class="link-card" href="https://www.vetassess.com.au" target="_blank">
+        <span class="cat">ASSESSMENT AUTHORITY</span>
+        <h4>الهيئة الأسترالية لتقييم المهارات — VETASSESS</h4>
+        <span class="url">vetassess.com.au</span>
+      </a>
+      <a class="link-card" href="https://www.vetassess.com.au/check-my-occupation/professional-occupations/geologist" target="_blank">
+        <span class="cat">ASSESSMENT AUTHORITY</span>
+        <h4>معايير تقييم الجيولوجي (234411)</h4>
+        <span class="url">vetassess.com.au/.../geologist</span>
+      </a>
+      <a class="link-card" href="https://www.vetassess.com.au/check-my-occupation/professional-occupations/other-spatial-scientist" target="_blank">
+        <span class="cat">ASSESSMENT AUTHORITY</span>
+        <h4>معايير تقييم أخصائي العلوم المكانية (232214)</h4>
+        <span class="url">vetassess.com.au/.../other-spatial-scientist</span>
+      </a>
+      <a class="link-card" href="https://www.wa.gov.au" target="_blank">
+        <span class="cat">STATE PROGRAM</span>
+        <h4>برنامج الهجرة الماهرة — أستراليا الغربية</h4>
+        <span class="url">wa.gov.au</span>
+      </a>
+      <a class="link-card" href="https://www.migration.sa.gov.au" target="_blank">
+        <span class="cat">STATE PROGRAM</span>
+        <h4>برنامج الهجرة الماهرة — جنوب أستراليا</h4>
+        <span class="url">migration.sa.gov.au</span>
+      </a>
+      <a class="link-card" href="https://visa.vfsglobal.com/egy/en/aus" target="_blank">
+        <span class="cat">BIOMETRICS</span>
+        <h4>مركز VFS Global مصر</h4>
+        <span class="url">visa.vfsglobal.com/egy/en/aus</span>
+      </a>
+    </div>
+
+    <h3 style="font-size:18px; margin:36px 0 6px;">مكتبة الفيديوهات — 7 مجموعات حسب مرحلة رحلتك</h3>
+    <p style="color:var(--sand-dim); font-size:13.5px; margin:0 0 22px; max-width:820px;">
+      فيديوهات حقيقية من قنوات يوتيوب عربية متخصصة في الهجرة لأستراليا، منظمة حسب الموضوع بدلاً من اسم القناة — من التخطيط الأول وحتى الجنسية.
+    </p>
+
+    <div class="video-group">
+      <h4 class="vg-title"><span class="vg-num">01</span> مسارات الهجرة، التأشيرات، ونظام النقاط</h4>
+      <div class="link-grid">
+        <a class="link-card" href="https://www.youtube.com/watch?v=2jiBWSD8QV8" target="_blank">
+          <span class="cat">Ahmed Raafat</span>
+          <h4>احسب نقاطك للهجرة إلى أستراليا 2026 — هل عندك فرصة فعلاً؟</h4>
+        </a>
+        <a class="link-card" href="https://www.youtube.com/watch?v=l6gUTngykxY" target="_blank">
+          <span class="cat">Ahmed Raafat</span>
+          <h4>إزاي تزود نقاط الهجرة لأستراليا في 2025</h4>
+        </a>
+        <a class="link-card" href="https://www.youtube.com/playlist?list=PLhqzvsu7dZ2U6eaRIrbDJUxImopLIC0DL" target="_blank">
+          <span class="cat">الهجرة إلى أستراليا مع محمد كمال</span>
+          <h4>قائمة تشغيل: خطوات الهجرة إلى أستراليا فى 2025</h4>
+        </a>
+        <a class="link-card" href="https://www.youtube.com/watch?v=x2p90fxFZns" target="_blank">
+          <span class="cat">Morad W مراد والهجرة</span>
+          <h4>إزاي تبدأ مشوار الهجرة لأستراليا؟ (دليل شامل)</h4>
+        </a>
+        <a class="link-card" href="https://www.youtube.com/watch?v=uUUuQ4BUje0" target="_blank">
+          <span class="cat">الهجرة إلى أستراليا مع محمد كمال</span>
+          <h4>إحذر: أهم أسباب رفض الفيزا لأستراليا</h4>
+        </a>
+        <a class="link-card" href="https://www.youtube.com/watch?v=oY1zrxxKmhc" target="_blank">
+          <span class="cat">Ahmed Raafat</span>
+          <h4>عقود العمل داخل استراليا</h4>
+        </a>
+        <a class="link-card" href="https://www.youtube.com/watch?v=Qw7k_MLZzYc" target="_blank">
+          <span class="cat">Ahmed Raafat</span>
+          <h4>تعالي احسب نقاطك للهجرة إلى استراليا — نسخة 2025</h4>
+        </a>
+        <a class="link-card" href="https://www.youtube.com/watch?v=NufliEbzHXc" target="_blank">
+          <span class="cat">Ahmed Raafat</span>
+          <h4>تجربتي مع الهجرة لاستراليا بالتفصيل — الجزء الأول</h4>
+        </a>
+        <a class="link-card" href="https://www.youtube.com/watch?v=3LNPWYBaZbI" target="_blank">
+          <span class="cat">الهجرة إلى أستراليا مع محمد كمال</span>
+          <h4>هل تتغير الهجرة إلى أستراليا؟ وتأثير ذلك على Skilled Visa</h4>
+        </a>
+        <a class="link-card" href="https://www.youtube.com/watch?v=QsW5_qbtet4" target="_blank">
+          <span class="cat">الهجرة إلى أستراليا مع محمد كمال</span>
+          <h4>فتح الحدود في أستراليا للمهاجرين — ميعاد فتح الهجرة</h4>
+        </a>
+        <a class="link-card" href="https://www.youtube.com/watch?v=0KsFLOmNCcc" target="_blank">
+          <span class="cat">With Hatem</span>
+          <h4>أهم إقامتين في استراليا</h4>
+        </a>
+        <a class="link-card" href="https://www.youtube.com/watch?v=IucvoSsG8no" target="_blank">
+          <span class="cat">Morad W مراد والهجرة</span>
+          <h4>تلخيص اللجوء في أستراليا</h4>
+        </a>
+        <a class="link-card" href="https://www.youtube.com/playlist?list=PLHnuJQ6kborynA0qiXRtty1Nd6R7OnuXP" target="_blank">
+          <span class="cat">PTE &amp; CCL Training Center</span>
+          <h4>قائمة تشغيل: الهجرة إلى أستراليا — أسئلة وأجوبة</h4>
+        </a>
+      </div>
+    </div>
+
+    <div class="video-group">
+      <h4 class="vg-title"><span class="vg-num">02</span> اختبارات اللغة والمعادلات المهنية</h4>
+      <div class="link-grid">
+        <a class="link-card" href="https://www.youtube.com/watch?v=uNXUpWu-bMY" target="_blank">
+          <span class="cat">الهجرة إلى أستراليا مع محمد كمال</span>
+          <h4>تغييرات مهمة فى درجات الـ PTE المطلوبة للهجرة</h4>
+        </a>
+        <a class="link-card" href="https://www.youtube.com/watch?v=60h1VeRiGFI" target="_blank">
+          <span class="cat">الهجرة إلى أستراليا مع محمد كمال</span>
+          <h4>منح مجانية لامتحان الـ PTE Academic والـ NAATI CCL</h4>
+        </a>
+        <a class="link-card" href="https://www.youtube.com/watch?v=mzpb8AAtNWs" target="_blank">
+          <span class="cat">Adam's Daily : أستراليا بالعربى</span>
+          <h4>تجربتي مع الإنجليزي للهجرة لأستراليا</h4>
+        </a>
+        <a class="link-card" href="https://www.youtube.com/playlist?list=PLhqzvsu7dZ2Wj9eJ4fr946gIoLuYHtXHv" target="_blank">
+          <span class="cat">الهجرة إلى أستراليا مع محمد كمال</span>
+          <h4>قائمة تشغيل: هجرة الصيادلة إلى أستراليا بالتفصيل</h4>
+        </a>
+        <a class="link-card" href="https://www.youtube.com/playlist?list=PLjdDMFdF6a9HpPSX8kocWJ3JcC36opDJn" target="_blank">
+          <span class="cat">Alaa Nasr</span>
+          <h4>قائمة تشغيل: هجرة الصيادلة إلى استراليا — تجربة صيدلانية</h4>
+        </a>
+        <a class="link-card" href="https://www.youtube.com/playlist?list=PL07nXFawOm0a7NuqItIVLcJkjOnBZ12Fa" target="_blank">
+          <span class="cat">Mohamed R (DrRef)</span>
+          <h4>قائمة تشغيل: طريق الأطباء إلى استراليا — معادلة وبحث عمل</h4>
+        </a>
+      </div>
+    </div>
+
+    <div class="video-group">
+      <h4 class="vg-title"><span class="vg-num">03</span> التكاليف والتخطيط المالي</h4>
+      <div class="link-grid">
+        <a class="link-card" href="https://www.youtube.com/watch?v=6uEdF-1k3FY" target="_blank">
+          <span class="cat">الهجرة إلى أستراليا مع محمد كمال</span>
+          <h4>تكاليف التقديم لهجرة أستراليا 2026 بالتفصيل</h4>
+        </a>
+        <a class="link-card" href="https://www.youtube.com/watch?v=V5X0egYmGsg" target="_blank">
+          <span class="cat">With Hatem</span>
+          <h4>الهجرة لأستراليا بتكلف كام؟</h4>
+        </a>
+      </div>
+    </div>
+
+    <div class="video-group">
+      <h4 class="vg-title"><span class="vg-num">04</span> دليل الولايات والمدن الأسترالية</h4>
+      <div class="link-grid">
+        <a class="link-card" href="https://www.youtube.com/watch?v=jjPXj7kBekU" target="_blank">
+          <span class="cat">Adam's Daily : أستراليا بالعربى</span>
+          <h4>دليلك للهجرة والمعيشة في أديلايد أستراليا — جزء 1</h4>
+        </a>
+        <a class="link-card" href="https://www.youtube.com/playlist?list=PLsdiGku8fUaFWG8W-MzLlo0-0n4W5NXc1" target="_blank">
+          <span class="cat">Adam's Daily : أستراليا بالعربى</span>
+          <h4>قائمة تشغيل: أستراليا بالعربي ودليل الولايات</h4>
+        </a>
+      </div>
+    </div>
+
+    <div class="video-group">
+      <h4 class="vg-title"><span class="vg-num">05</span> الاستقرار، السكن، والخدمات اليومية</h4>
+      <div class="link-grid">
+        <a class="link-card" href="https://www.youtube.com/watch?v=dLJtdLpMVtM" target="_blank">
+          <span class="cat">Adam's Daily : أستراليا بالعربى</span>
+          <h4>اشتريت بيت في أستراليا.. هل ندمت بعد سنة؟</h4>
+        </a>
+        <a class="link-card" href="https://www.youtube.com/watch?v=n94xA2qeqAY" target="_blank">
+          <span class="cat">الهجرة إلى أستراليا مع محمد كمال</span>
+          <h4>مميزات التأمين الصحي المجاني في أستراليا — Medicare</h4>
+        </a>
+        <a class="link-card" href="https://www.youtube.com/shorts/im0X6UrET94" target="_blank">
+          <span class="cat">الهجرة إلى أستراليا مع محمد كمال</span>
+          <h4>أزمة البيوت في أستراليا؟ هل فعلًا مش هتلاقي سكن؟</h4>
+        </a>
+        <a class="link-card" href="https://www.youtube.com/shorts/_w8YdVWZxx0" target="_blank">
+          <span class="cat">الخطوة الجاية | step</span>
+          <h4>هالاقي شغل ولا لا لما أوصل كندا أو استراليا؟</h4>
+        </a>
+      </div>
+    </div>
+
+    <div class="video-group">
+      <h4 class="vg-title"><span class="vg-num">06</span> الواقع النفسي، التحديات، والاندماج</h4>
+      <div class="link-grid">
+        <a class="link-card" href="https://www.youtube.com/watch?v=IzKSzT-EuGs" target="_blank">
+          <span class="cat">Morad W مراد والهجرة</span>
+          <h4>تحديات الهجرة والمعيشة في أستراليا</h4>
+        </a>
+        <a class="link-card" href="https://www.youtube.com/watch?v=p0azCAxVmw0" target="_blank">
+          <span class="cat">Adam's Daily : أستراليا بالعربى</span>
+          <h4>ثمن الغربة في أستراليا</h4>
+        </a>
+        <a class="link-card" href="https://www.youtube.com/watch?v=32EaxAgL7xw" target="_blank">
+          <span class="cat">الهجرة إلى أستراليا مع محمد كمال</span>
+          <h4>أكبر 5 أخطاء كارثية عملتهم في الهجرة</h4>
+        </a>
+        <a class="link-card" href="https://www.youtube.com/watch?v=nuutmCJSmrQ" target="_blank">
+          <span class="cat">With Hatem</span>
+          <h4>الحياة في أستراليا بعيون مهاجر مصري — الحقيقة الكاملة</h4>
+        </a>
+        <a class="link-card" href="https://www.youtube.com/watch?v=uwSNliia1bo" target="_blank">
+          <span class="cat">With Hatem</span>
+          <h4>الهجرة لاستراليا بالتفصيل (بودكاست كامل مع ضيف)</h4>
+        </a>
+        <a class="link-card" href="https://www.youtube.com/watch?v=tGo0pbJgIIY" target="_blank">
+          <span class="cat">Morad W مراد والهجرة</span>
+          <h4>السفر والهجرة لأمريكا أسهل ولا أستراليا؟ تجربتي مع البلدين</h4>
+        </a>
+        <a class="link-card" href="https://www.youtube.com/watch?v=3CtptI3iPxg" target="_blank">
+          <span class="cat">الهجرة إلى أستراليا مع محمد كمال</span>
+          <h4>الهجرة إلى نيوزيلاندا و لا استراليا؟ مقارنة كاملة</h4>
+        </a>
+        <a class="link-card" href="https://www.youtube.com/watch?v=OrKjVXAVCYk" target="_blank">
+          <span class="cat">With Hatem</span>
+          <h4>مين أحسن للهجرة: بريطانيا ولا استراليا؟</h4>
+        </a>
+        <a class="link-card" href="https://www.youtube.com/watch?v=akcxJ4TjmRY" target="_blank">
+          <span class="cat">الهجرة إلى أستراليا مع محمد كمال</span>
+          <h4>ليه اخترت الهجرة لأستراليا؟ السبب الحقيقي مش الفلوس</h4>
+        </a>
+        <a class="link-card" href="https://www.youtube.com/watch?v=AK4C4toYfdk" target="_blank">
+          <span class="cat">الهجرة إلى أستراليا مع محمد كمال</span>
+          <h4>هل الأستراليين عنصريين وضد المهاجرين؟ الأرقام تكشف الحقيقة</h4>
+        </a>
+        <a class="link-card" href="https://www.youtube.com/watch?v=p46w6tS2Uw0" target="_blank">
+          <span class="cat">Adam's Daily : أستراليا بالعربى</span>
+          <h4>بعد سن الـ35.. 7 دروس علّمتني إياها الحياة والغربة</h4>
+        </a>
+        <a class="link-card" href="https://www.youtube.com/watch?v=V0Qy33rvCD4" target="_blank">
+          <span class="cat">Morad W مراد والهجرة</span>
+          <h4>بقولك متهاجرش — 10 مرات</h4>
+        </a>
+        <a class="link-card" href="https://www.youtube.com/watch?v=6bHlIUAgYPg" target="_blank">
+          <span class="cat">Morad W مراد والهجرة</span>
+          <h4>لا تهاجر — نصيحة شخصية</h4>
+        </a>
+        <a class="link-card" href="https://www.youtube.com/watch?v=tx3WERra3tg" target="_blank">
+          <span class="cat">Morad W مراد والهجرة</span>
+          <h4>الهجرة الفاشلة: الأخطاء التلاتة</h4>
+        </a>
+        <a class="link-card" href="https://www.youtube.com/watch?v=bPRiWCxLWFw" target="_blank">
+          <span class="cat">Morad W مراد والهجرة</span>
+          <h4>اوعى تقول الجملة دي في الهجرة</h4>
+        </a>
+        <a class="link-card" href="https://www.youtube.com/watch?v=YE2pYSuNAq0" target="_blank">
+          <span class="cat">Morad W مراد والهجرة</span>
+          <h4>فنانون والهجرة والطريق المختصر</h4>
+        </a>
+        <a class="link-card" href="https://www.youtube.com/watch?v=qLRUdrzRhEw" target="_blank">
+          <span class="cat">الخطوة الجاية | step</span>
+          <h4>محدش عايزك تيجي استراليا.. فاكرينك هتقطع الرزق عليهم!</h4>
+        </a>
+        <a class="link-card" href="https://www.youtube.com/watch?v=dtAANdKf5VA" target="_blank">
+          <span class="cat">الخطوة الجاية | step</span>
+          <h4>استراليا محتاجة نية وخطة وشكرا!</h4>
+        </a>
+        <a class="link-card" href="https://www.youtube.com/shorts/eUx-JvfC6Ic" target="_blank">
+          <span class="cat">الخطوة الجاية | step</span>
+          <h4>لو معايا فلوس كتير بس مفيش إنجليزي.. أعمل إيه؟</h4>
+        </a>
+      </div>
+    </div>
+
+    <div class="video-group">
+      <h4 class="vg-title"><span class="vg-num">07</span> الإقامة الدائمة والجنسية الأسترالية</h4>
+      <div class="link-grid">
+        <a class="link-card" href="https://www.youtube.com/watch?v=1ZrkOWd9fUA" target="_blank">
+          <span class="cat">Adam's Daily : أستراليا بالعربى</span>
+          <h4>أخيرا قدمت على الجنسية الأسترالية</h4>
+        </a>
+        <a class="link-card" href="https://www.youtube.com/watch?v=Z_GfwOqVbp0" target="_blank">
+          <span class="cat">Morad W مراد والهجرة</span>
+          <h4>9 مزايا للجنسية الأسترالية — تجربة شخصية</h4>
+        </a>
+        <a class="link-card" href="https://www.youtube.com/watch?v=GRKh54Ln6Nw" target="_blank">
+          <span class="cat">Adam's Daily : أستراليا بالعربى</span>
+          <h4>مميزات الباسبور الأسترالي.. أغلى باسبور في العالم</h4>
+        </a>
+      </div>
+    </div>
+
+    <p style="font-size:12px; color:var(--sand-dim); margin-top:8px; max-width:820px;">
+      القنوات المصدر: <a href="https://www.youtube.com/channel/UC1XtnWkNRd2YA980hs6yKrg" target="_blank">Ahmed Raafat</a> ·
+      <a href="https://www.youtube.com/channel/UCdJZCAwKGomWlFLhuqi_qIA" target="_blank">الهجرة إلى أستراليا مع محمد كمال</a> ·
+      <a href="https://www.youtube.com/channel/UCy3pi7t6pZJE7cnGylPUwHA" target="_blank">Morad W مراد والهجرة</a> ·
+      <a href="https://www.youtube.com/channel/UCybhXeO0N8YdEcjeVVcuSNQ" target="_blank">With Hatem</a> ·
+      <a href="https://www.youtube.com/channel/UCmYDx2NrGkvsmFTaJ8hB5cQ" target="_blank">Adam's Daily : أستراليا بالعربى</a> ·
+      <a href="https://www.youtube.com/channel/UCzc-aOA7J_u5IDym5RoxfCg" target="_blank">الخطوة الجاية | step</a> ·
+      <a href="https://www.youtube.com/channel/UCF1TgfPdHd7L64OrnoBCngw" target="_blank">Alaa Nasr</a> ·
+      <a href="https://www.youtube.com/channel/UCHQzeytbTOqGJWTbcYS8M6w" target="_blank">Mohamed R (DrRef)</a> ·
+      <a href="https://www.youtube.com/channel/UCFDsCFfgKEz6QoMoBO1wQRA" target="_blank">PTE &amp; CCL Training Center</a>.
+      المحتوى تجارب شخصية لأغراض التوعية العامة وليس استشارة هجرة رسمية — تحقق دوماً من المصادر الحكومية أعلاه قبل اتخاذ أي قرار.
+    </p>
+  </section>
+
+  <!-- 9. STRATEGY -->
+  <section id="strategy" style="border-bottom:none;">
+    <div class="section-head">
+      <span class="section-num">09</span>
+      <div>
+        <h2>التوجيهات الاستراتيجية</h2>
+        <p class="sub">أولويات تنفيذية لبناء ملف تنافسي، مستخلصة من تحليل التقرير الكامل.</p>
+      </div>
+    </div>
+    <div class="reco">
+      <h4>فحص السجل الأكاديمي لمتخرجي الجغرافيا</h4>
+      <p>تأكد من أن المقررات التقنية (تحليل مكاني، استشعار عن بعد، جيوماتكس، برمجة جغرافية) تشكل النسبة الأكبر من الساعات المعتمدة قبل التقديم لـVETASSESS، تجنباً لتصنيف "جغرافيا عامة" الذي يؤدي للرفض.</p>
+    </div>
+    <div class="reco">
+      <h4>جهّز الإثبات المالي أولاً، لا لاحقاً</h4>
+      <p>كشوف الحسابات أو السجلات التأمينية التي تغطي كل شهر من شهور الخبرة (12 شهراً كحد أدنى بعد التخرج) هي الركيزة غير القابلة للتنازل — وأي فجوة توثيقية تُسقط سنوات الخبرة من الحساب.</p>
+    </div>
+    <div class="reco">
+      <h4>استثمر في PTE Academic بهدف 79+ في كل قسم</h4>
+      <p>هذا هو الرافع الأكثر فاعلية لحصد 20 نقطة إضافية، خصوصاً للمتقدمين من خارج أستراليا الذين لا يملكون نقاط خبرة محلية أو دراسة داخل أستراليا. اجمعها مع NAATI-CCL للحصول على 25 نقطة لغوية إجمالية.</p>
+    </div>
+    <div class="reco">
+      <h4>وجّه ملف الجيولوجيا نحو WA ثم QLD</h4>
+      <p>الاستفادة من الطلب المرتفع في التعدين والطاقة، ومن إدراج المهنة بانتظام في جداول WASMOL — ما يجعل تأشيرتي 190 و491 الخيار الاستراتيجي الأول. نظام FIFO السائد في WA يعني رواتب أعلى وبدلات ميدانية.</p>
+    </div>
+    <div class="reco">
+      <h4>نوّع ملف GIS بين SA وACT وWA</h4>
+      <p>عبر مساري 190 و491 الإقليمي، لرفع احتمالات الترشيح الحكومي والدعوة النهائية، نظراً لتوزع الطلب على قطاعات الدفاع والبيئة والتعدين معاً.</p>
+    </div>
+    <div class="reco">
+      <h4>راقب تحديثات AWOTE وقوائم CSOL وWASMOL سنوياً</h4>
+      <p>تحديثات 1 يوليو من كل عام قد تغير العتبات المالية وقوائم المهن والتصنيفات — راجع البوابات الرسمية قبل تقديم أي طلب للتأكد من بقاء مهنتك ضمن القوائم السارية.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="disclaimer">
+    هذا الدليل مبني على تقرير تحليلي وتم تحديث أرقام العتبات المالية والرواتب بحثاً من مصادر رسمية حديثة (أغسطس 2026).
+    عتبات الأجور ونقاط النظام ومتطلبات VETASSESS تخضع للتغيير الدوري — يُنصح دوماً بالتحقق من الأرقام النهائية عبر
+    <a href="https://immi.homeaffairs.gov.au" target="_blank">الموقع الرسمي لوزارة الشؤون الداخلية الأسترالية</a> و<a href="https://www.vetassess.com.au" target="_blank">VETASSESS</a> مباشرة قبل اتخاذ أي قرار أو تقديم أي طلب. هذا المحتوى لا يشكل استشارة هجرة رسمية.
+  </div>
+</footer>
+
+<script>
+  const observer = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('in'); });
+  }, {threshold:0.12});
+  document.querySelectorAll('section').forEach(s=>{ s.classList.add('reveal'); observer.observe(s); });
+
+  const barObserver = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        const pct = e.target.getAttribute('data-pct');
+        e.target.querySelector('.bar-fill').style.width = pct + '%';
+      }
+    });
+  }, {threshold:0.3});
+  document.querySelectorAll('.state-row').forEach(r=>barObserver.observe(r));
+
+  function recalc(){
+    const age = document.getElementById('c-age').value;
+    const ageVal = age === '25b' ? 25 : parseInt(age);
+    const lang = parseInt(document.getElementById('c-lang').value);
+    const expout = parseInt(document.getElementById('c-expout').value);
+    const expin = parseInt(document.getElementById('c-expin').value);
+    const edu = parseInt(document.getElementById('c-edu').value);
+    const nom = parseInt(document.getElementById('c-nom').value);
+    const total = ageVal + lang + expout + expin + edu + nom;
+    document.getElementById('calcTotal').textContent = total;
+    const verdict = document.getElementById('calcVerdict');
+    verdict.className = 'verdict';
+    if(total >= 85){ verdict.classList.add('good'); verdict.textContent = 'ضمن النطاق التنافسي (85+) للتخصصات العلمية'; }
+    else if(total >= 65){ verdict.classList.add('mid'); verdict.textContent = 'يتجاوز الحد الأدنى القانوني، لكنه أقل من النطاق التنافسي'; }
+    else { verdict.classList.add('low'); verdict.textContent = 'دون الحد الأدنى القانوني لتسجيل EOI (65 نقطة)'; }
+  }
+  ['c-age','c-lang','c-expout','c-expin','c-edu','c-nom'].forEach(id=>{
+    document.getElementById(id).addEventListener('change', recalc);
+  });
+  recalc();
+</script>
+
+</body>
+</html>
