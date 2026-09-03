@@ -103,7 +103,7 @@ var SC = {"DK":"#e6194b","FOL":"#3cb44b","SHR":"#ffe119","VN":"#4363d8","CON":"#
 var SL = {"DK":"Dyke","FOL":"Foliation","SHR":"Shear Zone","VN":"Vein","CON":"Contact","FR":"Fracture","FLT":"Fault","JT":"Joint","BD":"Bedding","FD":"Fold","ALZ":"Alteration Zone","FDH":"Fold Hinge"};
 var BM = "bing_aerial";
 var ZN = 37;
-var map = L.map("map",{zoomControl:false,zoomSnap:0.5,zoomDelta:0.5}).setView([22.29363741061735,36.17001743595867],15);
+var map = L.map("map",{zoomControl:false,zoomSnap:0.5,zoomDelta:0.5,maxZoom:22,preferCanvas:true,renderer:L.canvas({padding:0.5})}).setView([22.29363741061735,36.17001743595867],15);
 L.control.zoom({position:"topright"}).addTo(map);
 L.control.scale({position:"bottomleft",imperial:false,maxWidth:150,metric:true}).addTo(map);
 var bl={};
@@ -130,7 +130,7 @@ function structSVG(t,c){  if(t==="FOL")return'<line x1="-11" y1="0" x2="11" y2="
 var sl=L.layerGroup(),stl=L.layerGroup(),tll=L.layerGroup();
 sl.addTo(map);stl.addTo(map);tll.addTo(map);
 var sampleMarkers=[];
-SP.forEach(function(s){if(!s.lat)return;var m=L.circleMarker([s.lat,s.lng],{radius:4.5,fillColor:aCol(s.as),color:"rgba(0,0,0,0.4)",weight:0.8,fillOpacity:0.85});m.bindTooltip("<b>"+s.sid+"</b><br>Trench: "+s.tid+"<br>Depth: "+s.df+"-"+s.dt+"m<br>Assay: "+s.ar+"<br>Litho: "+s.li,{direction:"top",offset:[0,-5]});sl.addLayer(m);sampleMarkers.push(m);});
+SP.forEach(function(s){if(!s.lat)return;var m=L.circleMarker([s.lat,s.lng],{radius:5,fillColor:aCol(s.as),color:"rgba(0,0,0,0.4)",weight:0.8,fillOpacity:0.85});m.bindTooltip("<b>"+s.sid+"</b><br>Trench: "+s.tid+"<br>Depth: "+s.df+"-"+s.dt+"m<br>Assay: "+s.ar+"<br>Litho: "+s.li,{direction:"top",offset:[0,-5]});sl.addLayer(m);sampleMarkers.push(m);});
 var typeGroups={};
 ST.forEach(function(s){if(!s.lat)return;var c=SC[s.t]||"#808080";var r=(s.sr!=null)?(s.sr-90):((s.dd!=null)?(s.dd-180):0);var label=SL[s.t]||s.t||"?";var svg='<svg width="28" height="28" viewBox="-14 -14 28 28" style="overflow:visible">'+structSVG(s.t,c)+'</svg>';var icon=L.divIcon({html:'<div style="transform:rotate('+r+'deg);width:28px;height:28px">'+svg+'</div>',iconSize:[28,28],iconAnchor:[14,14],popupAnchor:[0,-14],className:""});  var pop='<div style="min-width:200px">'+'<div class="pop-title">'+label+' @ '+s.m+'m</div>'+'<table class="pop-table"><tr><td>Trench</td><td><b>'+s.tid+'</b></td></tr><tr><td>Type</td><td>'+s.t+'</td></tr><tr><td>Thickness</td><td>'+(s.tc!=null?s.tc+" cm":"N/A")+'</td></tr><tr><td>Str/Dip/DD</td><td>'+(s.sr!=null?s.sr+"°":"?")+' / '+(s.dp!=null?s.dp+"°":"?")+' / '+(s.dd!=null?s.dd+"°":"?")+'</td></tr><tr><td>East</td><td>'+(s.X!=null?s.X.toFixed(2):"N/A")+'</td></tr><tr><td>North</td><td>'+(s.Y!=null?s.Y.toFixed(2):"N/A")+'</td></tr><tr><td>Elev</td><td>'+(s.Z!=null?s.Z.toFixed(2):"N/A")+' m</td></tr>'+(s.ox!=null?'<tr><td>Original</td><td style="font-size:10px;color:#888">X='+s.ox.toFixed(2)+' Y='+s.oy.toFixed(2)+' Z='+s.oz.toFixed(2)+'</td></tr>':"")+'</table>'+'<div class="pop-ver" style="color:'+(s.ver.indexOf("OK")>=0?"#27ae60":(s.ver.indexOf("⚠")>=0?"#e74c3c":"#888"))+'">'+(s.ver||"")+'</div>'+'</div>';  var mk=L.marker([s.lat,s.lng],{icon:icon}).bindPopup(pop,{maxWidth:300});mk.bindTooltip(label+" @ "+s.m+"m",{direction:"top",offset:[0,-14]});  if(!typeGroups[s.t])typeGroups[s.t]=L.layerGroup();typeGroups[s.t].addLayer(mk);stl.addLayer(mk);});
 var tc={};SP.forEach(function(s){if(!s.tid||!s.lat)return;var tid=String(s.tid).trim();if(!tc[tid])tc[tid]={lats:[],lngs:[],n:0,id:tid};tc[tid].lats.push(s.lat);tc[tid].lngs.push(s.lng);tc[tid].n++;});

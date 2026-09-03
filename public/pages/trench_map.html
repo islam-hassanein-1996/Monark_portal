@@ -140,7 +140,7 @@ var STRUCTURES_DEFAULT = [{"tid": "AEC001", "m": 0.0, "x": 208329.403, "y": 2467
 var samplesRaw = SAMPLES_DEFAULT;
 var strRaw = STRUCTURES_DEFAULT;
 
-var map = L.map('map',{zoomControl:true,zoomSnap:0.5,zoomDelta:0.5}).setView([22.5, 34.5], 7);
+var map = L.map('map',{zoomControl:true,zoomSnap:0.5,zoomDelta:0.5,maxZoom:22,preferCanvas:true,renderer:L.canvas({padding:0.5})}).setView([22.5, 34.5], 7);
 L.control.scale({position:'bottomright',imperial:false,maxWidth:150,metric:true}).addTo(map);
 
 var BingAerial = L.TileLayer.extend({
@@ -488,7 +488,7 @@ function renderMap(samplePts,structures,aMin,aMax,zone){
   samplePts.forEach(function(s){
     if(!s.lat)return;
     var m=L.circleMarker([s.lat,s.lng],{
-      radius:4,fillColor:aCol(s.as),color:'rgba(0,0,0,0.5)',weight:0.8,fillOpacity:0.85
+      radius:5,fillColor:aCol(s.as),color:'rgba(0,0,0,0.5)',weight:0.8,fillOpacity:0.85
     });
     m.bindTooltip('<b>'+s.sid+'</b><br>Trench: '+s.tid+'<br>Depth: '+s.df+'-'+s.dt+'m<br>Assay: '+s.ar+'<br>Litho: '+s.li,
       {direction:'top',offset:[0,-5]});
@@ -933,7 +933,7 @@ document.getElementById('btnExportView').onclick=function(){
   'var SL = '+strLblsJson+';\n'+
   'var BM = "'+bm+'";\n'+
   'var ZN = '+zone+';\n'+
-  'var map = L.map("map",{zoomControl:false,zoomSnap:0.5,zoomDelta:0.5}).setView(['+center.lat+','+center.lng+'],'+zoom+');\n'+
+  'var map = L.map("map",{zoomControl:false,zoomSnap:0.5,zoomDelta:0.5,maxZoom:22,preferCanvas:true,renderer:L.canvas({padding:0.5})}).setView(['+center.lat+','+center.lng+'],'+zoom+');\n'+
   'L.control.zoom({position:"topright"}).addTo(map);\n'+
   'L.control.scale({position:"bottomleft",imperial:false,maxWidth:150,metric:true}).addTo(map);\n'+
   // Basemap layers
@@ -987,7 +987,7 @@ document.getElementById('btnExportView').onclick=function(){
 
   // Render samples
   'var sampleMarkers=[];\n'+
-  'SP.forEach(function(s){if(!s.lat)return;var m=L.circleMarker([s.lat,s.lng],{radius:4.5,fillColor:aCol(s.as),color:"rgba(0,0,0,0.4)",weight:0.8,fillOpacity:0.85});m.bindTooltip("<b>"+s.sid+"</b><br>Trench: "+s.tid+"<br>Depth: "+s.df+"-"+s.dt+"m<br>Assay: "+s.ar+"<br>Litho: "+s.li,{direction:"top",offset:[0,-5]});sl.addLayer(m);sampleMarkers.push(m);});\n'+
+  'SP.forEach(function(s){if(!s.lat)return;var m=L.circleMarker([s.lat,s.lng],{radius:5,fillColor:aCol(s.as),color:"rgba(0,0,0,0.4)",weight:0.8,fillOpacity:0.85});m.bindTooltip("<b>"+s.sid+"</b><br>Trench: "+s.tid+"<br>Depth: "+s.df+"-"+s.dt+"m<br>Assay: "+s.ar+"<br>Litho: "+s.li,{direction:"top",offset:[0,-5]});sl.addLayer(m);sampleMarkers.push(m);});\n'+
 
   // Render structures
   'var typeGroups={};\n'+
