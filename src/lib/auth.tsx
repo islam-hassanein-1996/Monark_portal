@@ -3,6 +3,7 @@ import type { Session } from '@supabase/supabase-js'
 import { Navigate, useLocation } from 'react-router-dom'
 import { db } from './supabase'
 import { fetchProfile, type Profile } from './portal'
+import { clearApps } from './offline'
 
 type State = {
   session: Session | null
@@ -46,7 +47,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
 
     auth.getSession().then(({ data }) => apply(data.session))
-    const { data } = auth.onAuthStateChange((_event, session) => apply(session))
+    const { data } = auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        clearApps()
+      }
+      apply(session)
+    })
 
     return () => {
       live = false
