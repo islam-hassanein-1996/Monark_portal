@@ -3,6 +3,7 @@ import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-route
 import { db } from './lib/supabase'
 import { useSession } from './lib/auth'
 import { fetchApp, fetchApps, resolveTarget, type PortalApp } from './lib/portal'
+import { loadApps, saveApps } from './lib/offline'
 
 export function Login() {
   const { session } = useSession()
@@ -55,42 +56,106 @@ export function Login() {
 }
 
 export function Dashboard() {
-  const { profile } = useSession()
+  const { session, profile } = useSession()
   const [apps, setApps] = useState<PortalApp[] | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [isCached, setIsCached] = useState(false)
+  const [isOnline, setIsOnline] = useState(() => (typeof navigator !== 'undefined' ? navigator.onLine : true))
 
   useEffect(() => {
-    fetchApps().then(setApps).catch((e: Error) => setError(e.message))
+    const handleOnline = () => setIsOnline(true)
+    const handleOffline = () => setIsOnline(false)
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
   }, [])
+
+  useEffect(() => {
+    let live = true
+    const uid = session?.user.id
+
+    fetchApps()
+      .then((data) => {
+        if (!live) return
+        setApps(data)
+        setIsCached(false)
+        setError(null)
+        if (uid) saveApps(uid, data)
+      })
+      .catch((e: Error) => {
+        if (!live) return
+        if (uid) {
+          const cached = loadApps(uid)
+          if (cached) {
+            setApps(cached)
+            setIsCached(true)
+            setError(null)
+            return
+          }
+        }
+        setError(e.message)
+      })
+
+    return () => {
+      live = false
+    }
+  }, [session?.user.id])
 
   if (error) return <p role="alert" className="error">Could not load your apps: {error}</p>
   if (!apps) return <p className="muted">Loading apps…</p>
+
+  const isOfflineMode = isCached || !isOnline
+
   if (apps.length === 0) {
     return (
-      <p className="muted">
-        No applications are assigned to
-        {profile ? ` the “${profile.role}” role` : ' your account'} yet.
-      </p>
+      <>
+        {isOfflineMode && (
+          <div className="card offline-banner" role="status">
+            Offline Mode — Viewing cached tools
+          </div>
+        )}
+        <p className="muted">
+          No applications are assigned to
+          {profile ? ` the “${profile.role}” role` : ' your account'} yet.
+        </p>
+      </>
     )
   }
 
   return (
-    <ul className="grid">
-      {apps.map((app) => {
-        const target = resolveTarget(app)
-        return (
-          <li key={app.id} className="card tile">
-            <span className="icon" aria-hidden="true">{app.icon ?? '▦'}</span>
-            {target.mode === 'external' ? (
-              <a href={target.href} target="_blank" rel="noopener noreferrer">{app.name}</a>
-            ) : (
-              <Link to={`/a/${app.slug}`}>{app.name}</Link>
-            )}
-            {app.description && <p className="muted">{app.description}</p>}
-          </li>
-        )
-      })}
-    </ul>
+    <>
+      {isOfflineMode && (
+        <div className="card offline-banner" role="status">
+          Offline Mode — Viewing cached tools
+        </div>
+      )}
+      <ul className="grid">
+        {apps.map((app) => {
+          const target = resolveTarget(app)
+          const isRedirectDisabled = app.kind === 'redirect' && !isOnline
+
+          return (
+            <li key={app.id} className={`card tile ${isRedirectDisabled ? 'disabled' : ''}`}>
+              <span className="icon" aria-hidden="true">{app.icon ?? '▦'}</span>
+              {isRedirectDisabled ? (
+                <>
+                  <span className="tile-title">{app.name}</span>
+                  <span className="badge">Requires connection</span>
+                </>
+              ) : target.mode === 'external' ? (
+                <a href={target.href} target="_blank" rel="noopener noreferrer">{app.name}</a>
+              ) : (
+                <Link to={`/a/${app.slug}`}>{app.name}</Link>
+              )}
+              {app.description && <p className="muted">{app.description}</p>}
+            </li>
+          )
+        })}
+      </ul>
+    </>
   )
 }
 
