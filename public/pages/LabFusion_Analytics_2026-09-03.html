@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LabFusion Assay Suite - Analytics Overview</title>
+<style>
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: #0f172a; }
+  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #475569; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 32px 20px; background-color: #0f172a; color: #f1f5f9; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+  .wrap { max-width: 980px; margin: 0 auto; }
+  .h-eyebrow { color: #94a3b8; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px; }
+  .h-title { margin: 0; font-size: 22px; font-weight: 800; color: #f1f5f9; letter-spacing: -0.01em; }
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }
+  .stat-card { background-color: #020617; border: 1px solid #1e293b; border-radius: 12px; padding: 18px; }
+  .stat-label { color: #64748b; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+  .stat-value { font-size: 28px; font-weight: 800; }
+  .panel { background-color: #020617; border: 1px solid #1e293b; border-radius: 12px; padding: 22px; margin-bottom: 22px; }
+  .panel-h { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  .panel-title { margin: 0; font-size: 13px; font-weight: 600; color: #cbd5e1; text-transform: uppercase; }
+  .panel-sub { color: #64748b; font-size: 10px; }
+  .group-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+  .group-card { text-align: left; background-color: #0f172a; border: 1px solid #1e293b; border-radius: 12px; padding: 14px; cursor: pointer; transition: all .15s ease; font-family: inherit; color: inherit; }
+  .group-card:hover { border-color: rgba(94,234,212,0.4); background-color: rgba(30,41,59,0.6); }
+  .group-card.active { border-color: rgba(94,234,212,0.6); box-shadow: 0 0 0 1px rgba(94,234,212,0.4) inset; background-color: rgba(13,148,136,0.10); }
+  .gc-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .gc-name { font-size: 12px; font-weight: 700; color: #e5e7eb; }
+  .gc-name.active { color: #5eead4; }
+  .gc-pill { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: #1e293b; color: #94a3b8; }
+  .gc-row { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 8px; }
+  .gc-count { font-size: 20px; font-weight: 800; color: #ffffff; display: block; }
+  .gc-cap { font-size: 10px; color: #64748b; text-transform: uppercase; }
+  .gc-avg { font-size: 13px; font-weight: 700; color: #34d399; display: block; text-align: right; }
+  .gc-flag { display: none; margin-top: 8px; font-size: 9px; font-weight: 800; color: #5eead4; letter-spacing: 0.05em; text-transform: uppercase; }
+  .group-card.active .gc-flag { display: block; }
+  select.sel { width: 100%; min-width: 11rem; max-width: 220px; height: 40px; line-height: 20px; background-color: #1a1f2b; color: #e5e7eb; font-size: 13px; border-radius: 6px; padding-left: 12px; padding-right: 32px; border: 1px solid #374151; cursor: pointer; outline: none; -webkit-appearance: none; -moz-appearance: none; appearance: none; }
+  .sel-wrap { position: relative; width: 100%; min-width: 11rem; max-width: 220px; }
+  .chev { pointer-events: none; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; fill: #94a3b8; }
+  .bar-row { display: flex; align-items: center; gap: 12px; margin-bottom: 9px; }
+  .bar-lbl { width: 96px; flex-shrink: 0; font-size: 11px; font-weight: 600; color: #cbd5e1; font-family: monospace; }
+  .bar-track { flex: 1; height: 24px; border-radius: 6px; background-color: #1e293b; overflow: hidden; border: 1px solid #1e293b; position: relative; }
+  .bar-fill { height: 100%; border-radius: 5px; }
+  .bar-count { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px; font-size: 10px; font-weight: 700; }
+  .bar-n { width: 64px; flex-shrink: 0; text-align: right; font-size: 12px; font-weight: 700; color: #ffffff; }
+  .bar-pct { width: 56px; flex-shrink: 0; text-align: right; font-size: 10px; color: #94a3b8; }
+  .total-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; padding-top: 12px; margin-top: 14px; border-top: 1px solid #1e293b; }
+  .total-l { color: #64748b; }
+  .total-v { font-weight: 700; color: #ffffff; }
+  .footer { color: #64748b; font-size: 11px; margin-top: 28px; padding-top: 14px; border-top: 1px solid #1e293b; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div style="margin-bottom:26px;">
+      <div class="h-eyebrow">LabFusion Assay Suite - Mining Suite v4 - Generated 9/3/2026, 2:43:40 PM</div>
+      <h1 class="h-title">Analytics Overview</h1>
+    </div>
+    <div class="stat-grid" id="stat-grid"></div>
+    <div class="panel">
+      <div class="panel-h">
+        <h2 class="panel-title">Sample Classification Breakdown</h2>
+        <span class="panel-sub">Click a card to show its grade distribution below</span>
+      </div>
+      <div class="group-grid" id="group-grid"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-h">
+        <h2 class="panel-title" id="dist-title">Au Grade Colour Distribution</h2>
+        <div class="sel-wrap">
+          <select class="sel" id="dist-select"></select>
+          <svg class="chev" viewBox="0 0 20 20" aria-hidden="true"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+        </div>
+      </div>
+      <div id="dist-rows"></div>
+      <div class="total-row">
+        <span class="total-l">Total samples in colour scale</span>
+        <span class="total-v" id="dist-total">0</span>
+      </div>
+    </div>
+    <div class="footer">Generated by LabFusion Assay Suite - Advanced Mining Edition v4 on 9/3/2026, 2:43:40 PM</div>
+  </div>
+<script>
+  var DATA = {"initialGroup":"other samples","distByGroup":{"all":[{"id":"lt_010","label":"\u003c 0.10","rangeLabel":"\u003c 0.10","color":"#94a3b8","min":null,"max":0.1,"count":5426,"percentage":"63.3"},{"id":"010_030","label":"0.10 – 0.30","color":"#1f6fff","min":0.1,"max":0.3,"count":980,"percentage":"11.4"},{"id":"030_050","label":"0.30 – 0.50","color":"#00e57a","min":0.3,"max":0.5,"count":401,"percentage":"4.7"},{"id":"050_100","label":"0.50 – 1.00","color":"#ffd21e","min":0.5,"max":1,"count":565,"percentage":"6.6"},{"id":"100_300","label":"1.00 – 3.00","color":"#f5222d","min":1,"max":3,"count":834,"percentage":"9.7"},{"id":"gte_300","label":"≥ 3.00","color":"#e838ff","min":3,"max":null,"count":362,"percentage":"4.2"}],"Black Sand Samples":[{"id":"lt_010","label":"\u003c 0.10","rangeLabel":"\u003c 0.10","color":"#94a3b8","min":null,"max":0.1,"count":79,"percentage":"100.0"},{"id":"010_030","label":"0.10 – 0.30","color":"#1f6fff","min":0.1,"max":0.3,"count":0,"percentage":"0.0"},{"id":"030_050","label":"0.30 – 0.50","color":"#00e57a","min":0.3,"max":0.5,"count":0,"percentage":"0.0"},{"id":"050_100","label":"0.50 – 1.00","color":"#ffd21e","min":0.5,"max":1,"count":0,"percentage":"0.0"},{"id":"100_300","label":"1.00 – 3.00","color":"#f5222d","min":1,"max":3,"count":0,"percentage":"0.0"},{"id":"gte_300","label":"≥ 3.00","color":"#e838ff","min":3,"max":null,"count":0,"percentage":"0.0"}],"grab Samples":[{"id":"lt_010","label":"\u003c 0.10","rangeLabel":"\u003c 0.10","color":"#94a3b8","min":null,"max":0.1,"count":1057,"percentage":"82.1"},{"id":"010_030","label":"0.10 – 0.30","color":"#1f6fff","min":0.1,"max":0.3,"count":103,"percentage":"8.0"},{"id":"030_050","label":"0.30 – 0.50","color":"#00e57a","min":0.3,"max":0.5,"count":31,"percentage":"2.4"},{"id":"050_100","label":"0.50 – 1.00","color":"#ffd21e","min":0.5,"max":1,"count":25,"percentage":"1.9"},{"id":"100_300","label":"1.00 – 3.00","color":"#f5222d","min":1,"max":3,"count":46,"percentage":"3.6"},{"id":"gte_300","label":"≥ 3.00","color":"#e838ff","min":3,"max":null,"count":25,"percentage":"1.9"}],"Hisham Samples (HZ)":[{"id":"lt_010","label":"\u003c 0.10","rangeLabel":"\u003c 0.10","color":"#94a3b8","min":null,"max":0.1,"count":47,"percentage":"100.0"},{"id":"010_030","label":"0.10 – 0.30","color":"#1f6fff","min":0.1,"max":0.3,"count":0,"percentage":"0.0"},{"id":"030_050","label":"0.30 – 0.50","color":"#00e57a","min":0.3,"max":0.5,"count":0,"percentage":"0.0"},{"id":"050_100","label":"0.50 – 1.00","color":"#ffd21e","min":0.5,"max":1,"count":0,"percentage":"0.0"},{"id":"100_300","label":"1.00 – 3.00","color":"#f5222d","min":1,"max":3,"count":0,"percentage":"0.0"},{"id":"gte_300","label":"≥ 3.00","color":"#e838ff","min":3,"max":null,"count":0,"percentage":"0.0"}],"Processing Plant group":[{"id":"lt_010","label":"\u003c 0.10","rangeLabel":"\u003c 0.10","color":"#94a3b8","min":null,"max":0.1,"count":41,"percentage":"48.2"},{"id":"010_030","label":"0.10 – 0.30","color":"#1f6fff","min":0.1,"max":0.3,"count":10,"percentage":"11.8"},{"id":"030_050","label":"0.30 – 0.50","color":"#00e57a","min":0.3,"max":0.5,"count":10,"percentage":"11.8"},{"id":"050_100","label":"0.50 – 1.00","color":"#ffd21e","min":0.5,"max":1,"count":14,"percentage":"16.5"},{"id":"100_300","label":"1.00 – 3.00","color":"#f5222d","min":1,"max":3,"count":7,"percentage":"8.2"},{"id":"gte_300","label":"≥ 3.00","color":"#e838ff","min":3,"max":null,"count":3,"percentage":"3.5"}],"TR Samples":[{"id":"lt_010","label":"\u003c 0.10","rangeLabel":"\u003c 0.10","color":"#94a3b8","min":null,"max":0.1,"count":2577,"percentage":"77.2"},{"id":"010_030","label":"0.10 – 0.30","color":"#1f6fff","min":0.1,"max":0.3,"count":356,"percentage":"10.7"},{"id":"030_050","label":"0.30 – 0.50","color":"#00e57a","min":0.3,"max":0.5,"count":98,"percentage":"2.9"},{"id":"050_100","label":"0.50 – 1.00","color":"#ffd21e","min":0.5,"max":1,"count":82,"percentage":"2.5"},{"id":"100_300","label":"1.00 – 3.00","color":"#f5222d","min":1,"max":3,"count":102,"percentage":"3.1"},{"id":"gte_300","label":"≥ 3.00","color":"#e838ff","min":3,"max":null,"count":123,"percentage":"3.7"}],"Alluvial Materials group":[{"id":"lt_010","label":"\u003c 0.10","rangeLabel":"\u003c 0.10","color":"#94a3b8","min":null,"max":0.1,"count":106,"percentage":"93.8"},{"id":"010_030","label":"0.10 – 0.30","color":"#1f6fff","min":0.1,"max":0.3,"count":6,"percentage":"5.3"},{"id":"030_050","label":"0.30 – 0.50","color":"#00e57a","min":0.3,"max":0.5,"count":0,"percentage":"0.0"},{"id":"050_100","label":"0.50 – 1.00","color":"#ffd21e","min":0.5,"max":1,"count":1,"percentage":"0.9"},{"id":"100_300","label":"1.00 – 3.00","color":"#f5222d","min":1,"max":3,"count":0,"percentage":"0.0"},{"id":"gte_300","label":"≥ 3.00","color":"#e838ff","min":3,"max":null,"count":0,"percentage":"0.0"}],"Dump Samples":[{"id":"lt_010","label":"\u003c 0.10","rangeLabel":"\u003c 0.10","color":"#94a3b8","min":null,"max":0.1,"count":682,"percentage":"46.2"},{"id":"010_030","label":"0.10 – 0.30","color":"#1f6fff","min":0.1,"max":0.3,"count":350,"percentage":"23.7"},{"id":"030_050","label":"0.30 – 0.50","color":"#00e57a","min":0.3,"max":0.5,"count":132,"percentage":"8.9"},{"id":"050_100","label":"0.50 – 1.00","color":"#ffd21e","min":0.5,"max":1,"count":125,"percentage":"8.5"},{"id":"100_300","label":"1.00 – 3.00","color":"#f5222d","min":1,"max":3,"count":136,"percentage":"9.2"},{"id":"gte_300","label":"≥ 3.00","color":"#e838ff","min":3,"max":null,"count":52,"percentage":"3.5"}],"DD Samples":[{"id":"lt_010","label":"\u003c 0.10","rangeLabel":"\u003c 0.10","color":"#94a3b8","min":null,"max":0.1,"count":820,"percentage":"81.8"},{"id":"010_030","label":"0.10 – 0.30","color":"#1f6fff","min":0.1,"max":0.3,"count":87,"percentage":"8.7"},{"id":"030_050","label":"0.30 – 0.50","color":"#00e57a","min":0.3,"max":0.5,"count":18,"percentage":"1.8"},{"id":"050_100","label":"0.50 – 1.00","color":"#ffd21e","min":0.5,"max":1,"count":25,"percentage":"2.5"},{"id":"100_300","label":"1.00 – 3.00","color":"#f5222d","min":1,"max":3,"count":30,"percentage":"3.0"},{"id":"gte_300","label":"≥ 3.00","color":"#e838ff","min":3,"max":null,"count":22,"percentage":"2.2"}],"tailing group":[{"id":"lt_010","label":"\u003c 0.10","rangeLabel":"\u003c 0.10","color":"#94a3b8","min":null,"max":0.1,"count":5,"percentage":"13.9"},{"id":"010_030","label":"0.10 – 0.30","color":"#1f6fff","min":0.1,"max":0.3,"count":2,"percentage":"5.6"},{"id":"030_050","label":"0.30 – 0.50","color":"#00e57a","min":0.3,"max":0.5,"count":1,"percentage":"2.8"},{"id":"050_100","label":"0.50 – 1.00","color":"#ffd21e","min":0.5,"max":1,"count":3,"percentage":"8.3"},{"id":"100_300","label":"1.00 – 3.00","color":"#f5222d","min":1,"max":3,"count":11,"percentage":"30.6"},{"id":"gte_300","label":"≥ 3.00","color":"#e838ff","min":3,"max":null,"count":14,"percentage":"38.9"}],"Crusher Samples":[{"id":"lt_010","label":"\u003c 0.10","rangeLabel":"\u003c 0.10","color":"#94a3b8","min":null,"max":0.1,"count":12,"percentage":"1.1"},{"id":"010_030","label":"0.10 – 0.30","color":"#1f6fff","min":0.1,"max":0.3,"count":66,"percentage":"6.0"},{"id":"030_050","label":"0.30 – 0.50","color":"#00e57a","min":0.3,"max":0.5,"count":111,"percentage":"10.1"},{"id":"050_100","label":"0.50 – 1.00","color":"#ffd21e","min":0.5,"max":1,"count":290,"percentage":"26.3"},{"id":"100_300","label":"1.00 – 3.00","color":"#f5222d","min":1,"max":3,"count":502,"percentage":"45.5"},{"id":"gte_300","label":"≥ 3.00","color":"#e838ff","min":3,"max":null,"count":123,"percentage":"11.1"}]},"totalsByGroup":{"all":8568,"Black Sand Samples":79,"grab Samples":1287,"Hisham Samples (HZ)":47,"Processing Plant group":85,"TR Samples":3338,"Alluvial Materials group":113,"Dump Samples":1477,"DD Samples":1002,"tailing group":36,"Crusher Samples":1104},"groups":[{"name":"Alluvial Materials group","count":113,"percentage":"1.3","avgGrade":"0.036","accent":{"bg":"rgba(16,185,129,0.10)","text":"#34d399","border":"rgba(16,185,129,0.20)"}},{"name":"Crusher Samples","count":1104,"percentage":"12.9","avgGrade":"1.578","accent":{"bg":"rgba(249,115,22,0.10)","text":"#fb923c","border":"rgba(249,115,22,0.20)"}},{"name":"Black Sand Samples","count":79,"percentage":"0.9","avgGrade":"0.001","accent":{"bg":"rgba(100,116,139,0.20)","text":"#cbd5e1","border":"rgba(100,116,139,0.30)"}},{"name":"Hisham Samples (HZ)","count":47,"percentage":"0.5","avgGrade":"0.005","accent":{"bg":"rgba(99,102,241,0.10)","text":"#818cf8","border":"rgba(99,102,241,0.20)"}},{"name":"Processing Plant group","count":85,"percentage":"1.0","avgGrade":"0.593","accent":{"bg":"rgba(245,158,11,0.10)","text":"#fbbf24","border":"rgba(245,158,11,0.20)"}},{"name":"Dump Samples","count":1477,"percentage":"17.2","avgGrade":"0.589","accent":{"bg":"rgba(59,130,246,0.10)","text":"#60a5fa","border":"rgba(59,130,246,0.20)"}},{"name":"grab Samples","count":1287,"percentage":"15.0","avgGrade":"0.268","accent":{"bg":"rgba(168,85,247,0.10)","text":"#c084fc","border":"rgba(168,85,247,0.20)"}},{"name":"TR Samples","count":3338,"percentage":"39.0","avgGrade":"0.455","accent":{"bg":"rgba(236,72,153,0.10)","text":"#f472b6","border":"rgba(236,72,153,0.20)"}},{"name":"DD Samples","count":1002,"percentage":"11.7","avgGrade":"0.285","accent":{"bg":"rgba(20,184,166,0.10)","text":"#2dd4bf","border":"rgba(20,184,166,0.20)"}},{"name":"tailing group","count":36,"percentage":"0.4","avgGrade":"3.029","accent":{"bg":"rgba(245,158,11,0.10)","text":"#fbbf24","border":"rgba(245,158,11,0.20)"}},{"name":"other samples","count":0,"percentage":"0.0","avgGrade":"0.000","accent":{"bg":"rgba(100,116,139,0.10)","text":"#94a3b8","border":"rgba(100,116,139,0.20)"}}],"groupOptions":["all","Black Sand Samples","grab Samples","Hisham Samples (HZ)","Processing Plant group","TR Samples","Alluvial Materials group","Dump Samples","DD Samples","tailing group","Crusher Samples"],"statCards":[{"label":"Reported Samples","value":"8568","color":"#ffffff"},{"label":"Dispatches Processed","value":"67","color":"#5eead4"},{"label":"Average Au Grade","value":"0.575","color":"#86efac"}],"generated":"9/3/2026, 2:43:40 PM"};
+  var gradeTextColor = (function () {
+    return function (hex) {
+      var c = String(hex || "#94a3b8").replace('#', '');
+      var r = parseInt(c.substr(0, 2), 16);
+      var g = parseInt(c.substr(2, 2), 16);
+      var b = parseInt(c.substr(4, 2), 16);
+      var lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+      return lum > 0.6 ? '#0f172a' : '#ffffff';
+    };
+  })();
+  var currentGroup = DATA.initialGroup || "all";
+  if (!DATA.distByGroup[currentGroup]) currentGroup = "all";
+
+  function renderStats() {
+    document.getElementById('stat-grid').innerHTML = DATA.statCards.map(function (c) {
+      return '<div class="stat-card">' +
+        '<div class="stat-label">' + escapeHtml(c.label) + '</div>' +
+        '<div class="stat-value" style="color:' + c.color + '">' + escapeHtml(c.value) + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  function renderGroupCards() {
+    document.getElementById('group-grid').innerHTML = DATA.groups.map(function (grp) {
+      var active = grp.name === currentGroup;
+      var a = grp.accent;
+      return '<button type="button" class="group-card' + (active ? ' active' : '') + '" data-name="' + escapeAttr(grp.name) + '">' +
+        '<div class="gc-top">' +
+          '<span class="gc-name' + (active ? ' active' : '') + '">' + escapeHtml(grp.name) + '</span>' +
+          '<span class="gc-pill">' + grp.percentage + '%</span>' +
+        '</div>' +
+        '<div class="gc-row">' +
+          '<div><span class="gc-count">' + grp.count + '</span><span class="gc-cap">Samples</span></div>' +
+          '<div><span class="gc-avg">' + escapeHtml(grp.avgGrade) + '</span><span class="gc-cap" style="text-align:right;">Avg Au ppm</span></div>' +
+        '</div>' +
+        '<span class="gc-flag">&#9679; Shown in distribution below - click to clear</span>' +
+      '</button>';
+    }).join('');
+    Array.prototype.forEach.call(document.querySelectorAll('.group-card'), function (btn) {
+      btn.addEventListener('click', function () {
+        var name = btn.getAttribute('data-name');
+        currentGroup = (currentGroup === name) ? "all" : name;
+        renderAll();
+      });
+    });
+  }
+
+  function renderSelect() {
+    var sel = document.getElementById('dist-select');
+    sel.innerHTML = DATA.groupOptions.map(function (g) {
+      return '<option value="' + escapeAttr(g) + '">' + (g === "all" ? "All Sample Types" : escapeHtml(g)) + '</option>';
+    }).join('');
+    sel.value = currentGroup;
+    sel.onchange = function () { currentGroup = sel.value; renderAll(); };
+  }
+
+  function renderDistribution() {
+    var list = DATA.distByGroup[currentGroup] || [];
+    var total = DATA.totalsByGroup[currentGroup] || 0;
+    var title = document.getElementById('dist-title');
+    title.innerHTML = 'Au Grade Colour Distribution' + (currentGroup !== "all" ? ' <span style="color:#5eead4;text-transform:none;margin-left:8px;">- ' + escapeHtml(currentGroup) + '</span>' : '');
+    document.getElementById('dist-total').textContent = String(total);
+    document.getElementById('dist-rows').innerHTML = list.map(function (r) {
+      var frac = total > 0 ? Math.max((r.count / total) * 100, r.count > 0 ? 3 : 0) : 0;
+      var txt = gradeTextColor(r.color);
+      return '<div class="bar-row">' +
+        '<span class="bar-lbl">' + escapeHtml(r.label) + '</span>' +
+        '<div class="bar-track">' + (r.count > 0
+          ? '<div class="bar-fill" style="background-color:' + r.color + ';width:' + frac + '%;"></div><div class="bar-count" style="color:' + txt + ';">' + r.count + '</div>'
+          : '') + '</div>' +
+        '<span class="bar-n">' + r.count + '</span>' +
+        '<span class="bar-pct">' + r.percentage + '%</span>' +
+      '</div>';
+    }).join('');
+  }
+
+  function renderAll() {
+    renderGroupCards();
+    renderSelect();
+    renderDistribution();
+  }
+
+  function escapeHtml(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function escapeAttr(s) { return escapeHtml(s).replace(/"/g, '&quot;'); }
+
+  renderStats();
+  renderAll();
+</script>
+</body>
+</html>
