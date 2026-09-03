@@ -30,7 +30,18 @@ jobs:
           const path = require("path");
 
           async function sync() {
-            const pagesDir = path.join(process.cwd(), "public/pages");
+            // تنظيف الرابط من أي مسافات أو أقواس أو سلاش زائدة
+            let rawUrl = (process.env.SUPABASE_URL || "").trim();
+            const urlMatch = rawUrl.match(/https?:\/\/[^\s\)\"\']+/);
+            const supabaseUrl = urlMatch ? urlMatch[0].replace(/\/+$/, "") : "";
+            const supabaseKey = (process.env.SUPABASE_KEY || "").trim();
+
+            if (!supabaseUrl || !supabaseKey) {
+              console.error("Error: SUPABASE_URL or SUPABASE_KEY is missing or invalid.");
+              process.exit(1);
+            }
+
+            const pagesDir = path.join(process.cwd(), "public", "pages");
             if (!fs.existsSync(pagesDir)) {
               console.log("No pages directory found.");
               return;
@@ -55,11 +66,12 @@ jobs:
 
               console.log(`Syncing: ${file} -> slug: ${slug}`);
 
-              const res = await fetch(`${process.env.SUPABASE_URL}/rest/v1/portal_apps?on_conflict=slug`, {
+              const endpoint = `${supabaseUrl}/rest/v1/portal_apps?on_conflict=slug`;
+              const res = await fetch(endpoint, {
                 method: "POST",
                 headers: {
-                  "apikey": process.env.SUPABASE_KEY,
-                  "Authorization": `Bearer ${process.env.SUPABASE_KEY}`,
+                  "apikey": supabaseKey,
+                  "Authorization": `Bearer ${supabaseKey}`,
                   "Content-Type": "application/json",
                   "Prefer": "resolution=merge-duplicates"
                 },
