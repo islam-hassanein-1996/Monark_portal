@@ -125,7 +125,9 @@
   .stat-row .stat b{display:block; font-size:26px; color:var(--sand); font-family:'JetBrains Mono',monospace;}
   .stat-row .stat span{font-size:12.5px; color:var(--sand-dim);}
 
-  main{padding:0 40px 40px 60px; max-width:1180px;}
+  main{padding:0 16px 40px 16px; width:100%;}
+  @media (min-width:640px){main{padding:0 24px 40px 24px;}}
+  @media (min-width:1024px){main{padding:0 32px 40px 32px;}}
   section{padding:70px 0; border-bottom:1px solid var(--line);}
   section:last-of-type{border-bottom:none;}
   .section-head{display:flex; gap:18px; align-items:flex-start; margin-bottom:34px;}

@@ -8,10 +8,12 @@ function Header() {
   if (!session) return null
 
   return (
-    <header>
+    <header className="app-header">
       <Link to="/" className="brand">Portal</Link>
-      <span className="muted">{profile?.email ?? session.user.email}</span>
-      {profile && <span className="badge">{profile.role}</span>}
+      <div className="user-profile">
+        <span className="muted user-email">{profile?.email ?? session.user.email}</span>
+        {profile && <span className="badge">{profile.role}</span>}
+      </div>
       <button type="button" onClick={() => void db().auth.signOut()}>Sign out</button>
     </header>
   )
@@ -21,18 +23,20 @@ export default function App() {
   return (
     <SessionProvider>
       <BrowserRouter>
-        <Header />
-        <main>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/" element={<RequireAuth><Dashboard /></RequireAuth>} />
-            <Route path="/a/:slug" element={<RequireAuth><AppView /></RequireAuth>} />
-            <Route
-              path="*"
-              element={<p className="muted">Not found. <Link to="/">Back to portal</Link></p>}
-            />
-          </Routes>
-        </main>
+        <div className="root-shell">
+          <Header />
+          <main className="main-content">
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/" element={<RequireAuth><Dashboard /></RequireAuth>} />
+              <Route path="/a/:slug" element={<RequireAuth><AppView /></RequireAuth>} />
+              <Route
+                path="*"
+                element={<p className="muted">Not found. <Link to="/">Back to portal</Link></p>}
+              />
+            </Routes>
+          </main>
+        </div>
       </BrowserRouter>
     </SessionProvider>
   )

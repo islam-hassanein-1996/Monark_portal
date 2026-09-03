@@ -1112,7 +1112,7 @@ SD1068,Number skipped / Misnumbered,,,Open`;
   ::-webkit-scrollbar-thumb:hover { background: #475569; }
   * { box-sizing: border-box; }
   body { margin: 0; padding: 32px 20px; background-color: #0f172a; color: #f1f5f9; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
-  .wrap { max-width: 980px; margin: 0 auto; }
+  .wrap { width: 100%; margin: 0 auto; }
   .h-eyebrow { color: #94a3b8; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px; }
   .h-title { margin: 0; font-size: 22px; font-weight: 800; color: #f1f5f9; letter-spacing: -0.01em; }
   .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }
@@ -1612,7 +1612,7 @@ if __name__ == "__main__":
       return (
         <div className="min-h-screen flex flex-col font-sans">
           <header className="bg-slate-950 border-b border-slate-800 py-4 px-6 shadow-md">
-            <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="w-full px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div className="flex items-center gap-3">
                 <div className="bg-gradient-to-tr from-teal-500 to-emerald-600 p-2.5 rounded-lg text-white">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1640,7 +1640,7 @@ if __name__ == "__main__":
 
           {notification && (
             <div className="bg-teal-950 border-y border-teal-500/20 text-teal-300 py-3 px-6 shadow-lg">
-              <div className="max-w-7xl mx-auto flex items-center justify-between">
+              <div className="w-full px-4 sm:px-6 lg:px-8 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="bg-teal-400 text-teal-950 rounded-full p-0.5">✓</span>
                   <p className="text-sm font-medium">{notification.message}</p>
@@ -1650,7 +1650,7 @@ if __name__ == "__main__":
             </div>
           )}
 
-          <main className="flex-1 max-w-7xl w-full mx-auto px-4 md:px-6 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+          <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
             <div className="lg:col-span-4 flex flex-col gap-6">
               <div className="bg-slate-950 border border-slate-800 rounded-xl p-5 shadow-sm">
                 <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide mb-3">📂 Report Registry</h3>
