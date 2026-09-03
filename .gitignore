@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Kill switch for scripts/preview-killswitch.mjs, created ad hoc when testing
+# service-worker behaviour against an unreachable origin.
+.offline
+
 .env
 .env.*
 !.env.example

@@ -1,0 +1,1852 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Processing area · Control Center — Mallogrim Gold Mines</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700;800&family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+:root{
+  --bg-deep:#060b14; --bg-surface:#0c1522; --bg-card:#111d2e;
+  --border-subtle:#1e2d42; --border-glow:#2a3f5a;
+  --gold:#d4af37; --gold-light:#f0d060; --red:#e85a4f; --amber:#f59e0b;
+  --emerald:#10b981; --sky:#38bdf8; --violet:#a78bfa;
+  --text-primary:#eef2f8; --text-secondary:#94a3b8; --text-muted:#64748b;
+}
+*{box-sizing:border-box}
+body{
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  background:var(--bg-deep); color:var(--text-primary); min-height:100vh;
+  background-image:
+    radial-gradient(ellipse at 18% 6%, rgba(212,175,55,.05) 0%, transparent 52%),
+    radial-gradient(ellipse at 82% 94%, rgba(56,189,248,.035) 0%, transparent 52%);
+  background-attachment:fixed;
+}
+html[dir="rtl"] body{font-family:'Cairo','Inter',sans-serif}
+.font-mono{font-family:'JetBrains Mono',monospace}
+.glass{background:rgba(12,21,34,.88);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(30,45,66,.6)}
+.glass-light{background:rgba(17,29,46,.75);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(30,45,66,.4)}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg-deep)}
+::-webkit-scrollbar-thumb{background:var(--border-subtle);border-radius:6px}
+::-webkit-scrollbar-thumb:hover{background:var(--gold)}
+
+@keyframes flow-conveyor{0%{stroke-dashoffset:40}100%{stroke-dashoffset:0}}
+.flowing{stroke-dasharray:7,7;animation:flow-conveyor 1.5s linear infinite}
+.flowing-slow{stroke-dasharray:4,8;animation:flow-conveyor 3s linear infinite}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.shimmer-text{background:linear-gradient(90deg,var(--gold),var(--gold-light),var(--gold));background-size:200% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 5s linear infinite}
+@keyframes status-pulse{0%,100%{opacity:1}50%{opacity:.25}}
+.status-dot{animation:status-pulse 1.7s ease-in-out infinite}
+@keyframes danger-pulse{0%,100%{border-color:rgba(232,90,79,.75);box-shadow:0 0 22px rgba(232,90,79,.16)}50%{border-color:rgba(232,90,79,.22);box-shadow:0 0 8px rgba(232,90,79,.04)}}
+.pond-danger{animation:danger-pulse 2s ease-in-out infinite}
+.hover-lift{transition:transform .25s cubic-bezier(.2,0,0,1),box-shadow .3s ease,border-color .3s ease}
+.hover-lift:hover{transform:translateY(-3px);box-shadow:0 14px 42px rgba(0,0,0,.5)}
+.modal-overlay{background:rgba(3,6,14,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+@keyframes toastIn{0%{opacity:0;transform:translateY(18px) scale(.96)}100%{opacity:1;transform:none}}
+@keyframes toastOut{0%{opacity:1}100%{opacity:0;transform:scale(.95)}}
+.toast-enter{animation:toastIn .35s cubic-bezier(.34,1.56,.64,1) forwards}
+.toast-exit{animation:toastOut .3s ease forwards}
+.tab-btn{padding:.5rem .9rem;border-radius:.75rem;font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--text-secondary);border:1px solid transparent;transition:all .2s;white-space:nowrap}
+.tab-btn:hover{color:var(--gold-light);background:rgba(212,175,55,.06)}
+.tab-btn.active{color:#0b1220;background:linear-gradient(135deg,var(--gold-light),var(--gold));border-color:rgba(212,175,55,.5);box-shadow:0 4px 16px rgba(212,175,55,.2)}
+.panel{display:none}
+.panel.active{display:block;animation:toastIn .35s ease}
+input,select,textarea{color-scheme:dark}
+.fld{width:100%;background:rgba(2,6,14,.8);border:1px solid rgba(30,45,66,.7);border-radius:.7rem;padding:.45rem .65rem;font-size:12px;color:#e2e8f0;outline:none;transition:border-color .2s}
+.fld:focus{border-color:rgba(212,175,55,.65)}
+.lbl{font-size:9px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--text-muted);margin-bottom:.22rem;display:block}
+.btn{border-radius:.75rem;font-size:11px;font-weight:800;padding:.45rem .8rem;transition:all .2s;display:inline-flex;align-items:center;gap:.4rem;border:1px solid transparent;cursor:pointer}
+.btn-gold{background:linear-gradient(135deg,#f0d060,#d4af37);color:#0b1220;box-shadow:0 4px 14px rgba(212,175,55,.22)}
+.btn-gold:hover{filter:brightness(1.08)}
+.btn-ghost{background:rgba(2,6,14,.7);color:#cbd5e1;border-color:rgba(30,45,66,.8)}
+.btn-ghost:hover{background:rgba(30,45,66,.5);color:#f1f5f9}
+.btn-emerald{background:rgba(16,185,129,.14);color:#34d399;border-color:rgba(16,185,129,.35)}
+.btn-emerald:hover{background:rgba(16,185,129,.24)}
+.btn-red{background:rgba(232,90,79,.15);color:#f87171;border-color:rgba(232,90,79,.35)}
+.btn-red:hover{background:rgba(232,90,79,.26)}
+.btn-sky{background:rgba(56,189,248,.13);color:#7dd3fc;border-color:rgba(56,189,248,.32)}
+.btn-sky:hover{background:rgba(56,189,248,.23)}
+.chip{font-size:9px;font-weight:800;padding:.16rem .5rem;border-radius:999px;letter-spacing:.06em;text-transform:uppercase}
+.c-safe{background:rgba(16,185,129,.13);color:#34d399;border:1px solid rgba(16,185,129,.3)}
+.c-warn{background:rgba(245,158,11,.15);color:#fbbf24;border:1px solid rgba(245,158,11,.32)}
+.c-danger{background:rgba(232,90,79,.17);color:#f87171;border:1px solid rgba(232,90,79,.38)}
+.c-info{background:rgba(56,189,248,.13);color:#7dd3fc;border:1px solid rgba(56,189,248,.3)}
+.c-idle{background:rgba(100,116,139,.15);color:#94a3b8;border:1px solid rgba(100,116,139,.3)}
+.c-violet{background:rgba(167,139,250,.14);color:#c4b5fd;border:1px solid rgba(167,139,250,.32)}
+table.data{width:100%;border-collapse:collapse;font-size:11px}
+table.data th{text-align:start;font-size:9px;letter-spacing:.09em;text-transform:uppercase;color:var(--text-muted);font-weight:800;padding:.5rem .55rem;border-bottom:1px solid rgba(30,45,66,.7);white-space:nowrap}
+table.data td{padding:.45rem .55rem;border-bottom:1px solid rgba(30,45,66,.35);color:#cbd5e1;white-space:nowrap}
+table.data tr:hover td{background:rgba(30,45,66,.22)}
+.node-clickable{cursor:pointer;transition:filter .2s}
+.node-clickable:hover{filter:brightness(1.25)}
+@media print{body{background:#fff;color:#000}.no-print{display:none!important}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ══════ AUTH GATE ══════ */
+#authGate{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;padding:1rem;
+  background:var(--bg-deep);
+  background-image:radial-gradient(ellipse at 50% 0%, rgba(212,175,55,.08) 0%, transparent 60%);}
+#authGate.hidden{display:none}
+.auth-card{width:100%;max-width:390px;background:rgba(12,21,34,.94);border:1px solid rgba(42,63,90,.7);
+  border-radius:1.25rem;padding:1.75rem;box-shadow:0 25px 60px -12px rgba(0,0,0,.75)}
+.auth-logo{width:56px;height:56px;border-radius:1rem;display:flex;align-items:center;justify-content:center;
+  margin:0 auto .9rem;font-size:1.35rem;color:#0b1220;
+  background:linear-gradient(135deg,var(--gold-light),var(--gold),#8a6d1f);box-shadow:0 10px 30px -6px rgba(212,175,55,.4)}
+.auth-err{display:none;margin-top:.85rem;padding:.6rem .75rem;border-radius:.6rem;font-size:11px;font-weight:600;
+  background:rgba(232,90,79,.12);border:1px solid rgba(232,90,79,.35);color:#fca5a5}
+.auth-err.show{display:block}
+
+/* ══════ ROLE: VIEWER — hide every mutating control ══════ */
+body.role-viewer .btn-gold,
+body.role-viewer .btn-red,
+body.role-viewer [data-edit]{display:none!important}
+body.role-viewer #logoSlot{cursor:default}
+.role-chip{font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+  padding:.15rem .45rem;border-radius:.4rem}
+.role-chip.admin{background:rgba(212,175,55,.15);color:var(--gold-light);border:1px solid rgba(212,175,55,.35)}
+.role-chip.viewer{background:rgba(56,189,248,.12);color:var(--sky);border:1px solid rgba(56,189,248,.3)}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--emerald);transition:background .3s}
+.sync-dot.saving{background:var(--amber)}
+.sync-dot.error{background:var(--red)}
+</style>
+</head>
+<body class="p-3 sm:p-4 antialiased selection:bg-amber-500/30">
+
+<!-- ══════ LOGIN GATE ══════ -->
+<div id="authGate">
+  <div class="auth-card">
+    <div class="auth-logo"><i class="fa-solid fa-mountain-sun"></i></div>
+    <h2 class="text-center text-base font-extrabold tracking-tight shimmer-text">CONTROL CENTER</h2>
+    <p class="text-center text-[11px] text-slate-400 mt-1 mb-5">Mallogrim Gold Mines · Processing area</p>
+
+    <form id="authForm" autocomplete="on">
+      <div class="space-y-3">
+        <div>
+          <label class="lbl" for="authEmail">Email</label>
+          <input id="authEmail" class="fld" type="email" required autocomplete="username" placeholder="you@company.com">
+        </div>
+        <div>
+          <label class="lbl" for="authPass">Password</label>
+          <input id="authPass" class="fld" type="password" required autocomplete="current-password" placeholder="••••••••">
+        </div>
+      </div>
+      <button id="authBtn" type="submit" class="btn btn-gold w-full justify-center mt-5">
+        <i class="fa-solid fa-right-to-bracket"></i><span id="authBtnLabel">Sign in</span>
+      </button>
+      <div id="authErr" class="auth-err"></div>
+    </form>
+
+    <p class="text-center text-[10px] text-slate-600 mt-5 leading-relaxed">
+      Accounts are issued by the site administrator.<br>Contact them if you cannot sign in.
+    </p>
+  </div>
+</div>
+
+<div class="max-w-[1620px] mx-auto space-y-3.5" id="appRoot" style="display:none">
+
+<!-- ══════ HEADER ══════ -->
+<header class="glass rounded-2xl p-3.5 flex flex-wrap items-center justify-between gap-3 shadow-2xl">
+  <div class="flex items-center gap-3">
+    <label id="logoSlot" title="Click to set the company logo"
+      class="w-12 h-12 rounded-2xl overflow-hidden flex items-center justify-center cursor-pointer shrink-0
+             bg-gradient-to-br from-amber-400 via-amber-500 to-yellow-700 text-slate-950 text-lg shadow-lg shadow-amber-500/25">
+      <i class="fa-solid fa-mountain-sun"></i>
+      <input type="file" accept="image/*" class="hidden" id="logoInput">
+    </label>
+    <div>
+      <h1 class="text-lg font-extrabold tracking-tight shimmer-text leading-none" data-i18n="appTitle">Processing area · CONTROL CENTER</h1>
+      <p class="text-[11px] text-slate-400 flex items-center gap-2 mt-1">
+        <span><i class="fa-solid fa-location-dot text-amber-400 me-1"></i><span data-i18n="siteName">Mallogrim Gold Mines</span></span>
+        <span class="text-slate-600">•</span>
+        <span class="text-emerald-400 font-semibold flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 status-dot"></span>
+          <span id="hdrActiveCount">—</span> <span data-i18n="vatsRunning">vats leaching</span>
+        </span>
+      </p>
+    </div>
+  </div>
+
+  <div class="flex items-center gap-2 flex-wrap">
+    <div class="flex items-center gap-2 bg-slate-950/80 px-3 py-1.5 rounded-xl border border-slate-800/60 font-mono">
+      <i class="fa-regular fa-calendar text-amber-400/70 text-xs"></i>
+      <span id="todayLabel" class="text-xs text-slate-300 font-semibold">—</span>
+      <span class="text-slate-700">|</span>
+      <i class="fa-regular fa-clock text-amber-400/70 text-xs"></i>
+      <span id="liveClock" class="text-xs text-slate-300">00:00:00</span>
+    </div>
+    <div class="flex items-center gap-2 bg-slate-950/80 px-3 py-1.5 rounded-xl border border-slate-800/60">
+      <span id="syncDot" class="sync-dot" title="Synced"></span>
+      <span id="userEmail" class="text-[11px] text-slate-300 font-semibold max-w-[140px] truncate">—</span>
+      <span id="userRole" class="role-chip viewer">viewer</span>
+      <button id="btnLogout" class="text-slate-500 hover:text-rose-400 transition-colors ms-1" title="Sign out">
+        <i class="fa-solid fa-right-from-bracket text-xs"></i>
+      </button>
+    </div>
+    <button id="btnLang" class="btn btn-ghost"><i class="fa-solid fa-language"></i><span id="langLabel">عربي</span></button>
+    <button id="btnSettings" class="btn btn-ghost" title="Settings"><i class="fa-solid fa-sliders"></i></button>
+    <button id="btnBackup" class="btn btn-ghost"><i class="fa-solid fa-database"></i><span class="hidden sm:inline" data-i18n="backup">Backup</span></button>
+    <button id="btnExportHtml" class="btn btn-ghost text-amber-300 hover:text-amber-200 border-amber-500/30 hover:border-amber-500/60" title="Export Standalone HTML Viewer"><i class="fa-solid fa-file-export"></i><span class="hidden sm:inline" data-i18n="exportHtml">Export HTML</span></button>
+    <button id="btnQuickHaul" class="btn btn-gold"><i class="fa-solid fa-truck-fast"></i><span data-i18n="logHauls">Log hauls</span></button>
+  </div>
+</header>
+
+<!-- ══════ ALERT BAR ══════ -->
+<div id="alertBar" class="space-y-2"></div>
+
+<!-- ══════ KPI RIBBON ══════ -->
+<section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5" id="kpiRibbon"></section>
+
+<!-- ══════ TABS ══════ -->
+<nav class="glass-light rounded-xl p-1.5 flex items-center gap-1 overflow-x-auto no-print">
+  <button class="tab-btn active" data-tab="flow"><i class="fa-solid fa-diagram-project me-1.5"></i><span data-i18n="tabFlow">Flow &amp; Vats</span></button>
+  <button class="tab-btn" data-tab="hauls"><i class="fa-solid fa-truck me-1.5"></i><span data-i18n="tabHauls">Daily hauls</span></button>
+  <button class="tab-btn" data-tab="assays"><i class="fa-solid fa-flask-vial me-1.5"></i><span data-i18n="tabAssays">Solution assays</span></button>
+  <button class="tab-btn" data-tab="stock"><i class="fa-solid fa-cubes-stacked me-1.5"></i><span data-i18n="tabStock">Stockpiles</span></button>
+  <button class="tab-btn" data-tab="gold"><i class="fa-solid fa-coins me-1.5"></i><span data-i18n="tabGold">Gold balance</span></button>
+  <button class="tab-btn" data-tab="history"><i class="fa-solid fa-clock-rotate-left me-1.5"></i><span data-i18n="tabHistory">History</span></button>
+</nav>
+
+<!-- ══════ PANEL: FLOW ══════ -->
+<section class="panel active" id="panel-flow">
+  <div class="glass rounded-2xl p-3 sm:p-4 shadow-2xl">
+    <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+      <div class="flex items-center gap-2 text-xs font-bold text-slate-200">
+        <i class="fa-solid fa-diagram-project text-amber-400"></i>
+        <span data-i18n="flowTitle">Ore circuit · pit to vat</span>
+      </div>
+      <div class="flex items-center gap-3 text-[9px] font-bold uppercase tracking-wider text-slate-500 flex-wrap">
+        <span><i class="fa-solid fa-minus text-amber-400"></i> <span data-i18n="lgOre">ore flow</span></span>
+        <span><i class="fa-solid fa-minus text-rose-400"></i> <span data-i18n="lgOversize">screen 5 oversize</span></span>
+        <span><i class="fa-solid fa-minus text-emerald-400"></i> <span data-i18n="lgStock">from stockpile</span></span>
+        <span><i class="fa-solid fa-minus text-violet-400"></i> <span data-i18n="lgRecycle">recycle</span></span>
+      </div>
+    </div>
+    <div class="rounded-xl bg-slate-950/80 border border-slate-800/60 p-2 overflow-x-auto">
+      <div id="flowDiagram" style="min-width:1290px"></div>
+    </div>
+  </div>
+
+  <div class="mt-3.5">
+    <div class="flex items-center gap-2 text-xs font-bold text-slate-200 mb-2.5 px-1">
+      <i class="fa-solid fa-layer-group text-amber-400"></i>
+      <span data-i18n="vatGridTitle">Vat status · live</span>
+      <span class="text-[9px] text-slate-500 font-medium normal-case tracking-normal" data-i18n="vatOrderNote">(order 4 · 3 / 2 · 1 as on site)</span>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="vatGrid"></div>
+  </div>
+</section>
+
+<!-- ══════ PANEL: HAULS ══════ -->
+<section class="panel" id="panel-hauls">
+  <div class="glass rounded-2xl p-4 shadow-2xl">
+    <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
+      <div class="text-xs font-bold text-slate-200"><i class="fa-solid fa-truck text-amber-400 me-2"></i><span data-i18n="haulLogTitle">Haul log · every load recorded</span></div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <select id="haulFilterVat" class="fld" style="width:auto"><option value="ALL">All vats</option></select>
+        <select id="haulFilterArea" class="fld" style="width:auto"><option value="ALL">All areas</option></select>
+        <button class="btn btn-gold" onclick="openHaulModal()"><i class="fa-solid fa-plus"></i><span data-i18n="addEntry">Add entry</span></button>
+        <button class="btn btn-ghost" onclick="exportCSV('hauls')"><i class="fa-solid fa-file-csv"></i>CSV</button>
+      </div>
+    </div>
+    <div class="overflow-x-auto rounded-xl border border-slate-800/50"><table class="data" id="haulTable"></table></div>
+  </div>
+</section>
+
+<!-- ══════ PANEL: ASSAYS ══════ -->
+<section class="panel" id="panel-assays">
+  <div class="glass rounded-2xl p-4 shadow-2xl">
+    <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
+      <div class="text-xs font-bold text-slate-200"><i class="fa-solid fa-flask-vial text-amber-400 me-2"></i><span data-i18n="assayTitle">Pregnant solution · Au ppm</span></div>
+      <button class="btn btn-gold" onclick="openAssayModal()"><i class="fa-solid fa-plus"></i><span data-i18n="addAssay">Add assay</span></button>
+    </div>
+    <div id="assayCharts" class="grid grid-cols-1 lg:grid-cols-2 gap-3"></div>
+  </div>
+</section>
+
+<!-- ══════ PANEL: STOCKPILES ══════ -->
+<section class="panel" id="panel-stock">
+  <div class="glass rounded-2xl p-4 shadow-2xl">
+    <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
+      <div class="text-xs font-bold text-slate-200"><i class="fa-solid fa-cubes-stacked text-amber-400 me-2"></i><span data-i18n="stockTitle">Stockpile balances</span></div>
+      <div class="flex gap-2">
+        <button class="btn btn-ghost" data-edit onclick="openStockModal('new')"><i class="fa-solid fa-plus"></i><span data-i18n="newPile">New pile</span></button>
+        <button class="btn btn-gold" onclick="openMoveModal()"><i class="fa-solid fa-right-left"></i><span data-i18n="movement">Movement</span></button>
+      </div>
+    </div>
+    <div id="stockGrid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3"></div>
+    <div class="mt-4">
+      <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2" data-i18n="moveLog">Movement log</div>
+      <div class="overflow-x-auto rounded-xl border border-slate-800/50"><table class="data" id="moveTable"></table></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ PANEL: GOLD ══════ -->
+<section class="panel" id="panel-gold">
+  <div class="glass rounded-2xl p-4 shadow-2xl">
+    <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
+      <div class="text-xs font-bold text-slate-200"><i class="fa-solid fa-coins text-amber-400 me-2"></i><span data-i18n="goldTitle">Calculated vs actual gold</span></div>
+      <button class="btn btn-gold" onclick="openPourModal()"><i class="fa-solid fa-plus"></i><span data-i18n="addPour">Record gold</span></button>
+    </div>
+    <div id="goldSummary" class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 mb-4"></div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+      <div>
+        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2" data-i18n="perCycle">Per cycle · calculated</div>
+        <div class="overflow-x-auto rounded-xl border border-slate-800/50"><table class="data" id="goldCycleTable"></table></div>
+      </div>
+      <div>
+        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2" data-i18n="pourLog">Recorded gold</div>
+        <div class="overflow-x-auto rounded-xl border border-slate-800/50"><table class="data" id="pourTable"></table></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ PANEL: HISTORY ══════ -->
+<section class="panel" id="panel-history">
+  <div class="glass rounded-2xl p-4 shadow-2xl">
+    <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
+      <div class="text-xs font-bold text-slate-200"><i class="fa-solid fa-clock-rotate-left text-amber-400 me-2"></i><span data-i18n="historyTitle">Cycle archive</span></div>
+      <div class="flex gap-2 flex-wrap">
+        <select id="histFilterVat" class="fld" style="width:auto"><option value="ALL">All vats</option></select>
+        <button class="btn btn-ghost" onclick="exportCSV('cycles')"><i class="fa-solid fa-file-csv"></i>CSV</button>
+        <button class="btn btn-ghost" onclick="window.print()"><i class="fa-solid fa-print"></i><span data-i18n="print">Print</span></button>
+      </div>
+    </div>
+    <div id="histChart" class="mb-4"></div>
+    <div class="overflow-x-auto rounded-xl border border-slate-800/50"><table class="data" id="histTable"></table></div>
+  </div>
+</section>
+
+<footer class="text-center text-[10px] text-slate-600 py-3 font-mono">
+  <span data-i18n="footer">Data is stored on this device only · export a backup regularly</span>
+</footer>
+</div>
+
+<div id="modalRoot"></div>
+<div id="toastContainer" class="fixed bottom-5 end-5 z-[60] space-y-2 pointer-events-none"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   VAT LEACH CONTROL CENTER — data layer
+   ═══════════════════════════════════════════════════════════ */
+/* ══════════ CONFIG & CONSTANTS ══════════ */
+/* ┌────────────────────────────────────────────────────────────┐
+   │  SUPABASE — REPLACE THESE TWO VALUES WITH YOUR OWN         │
+   │  Dashboard → Project Settings → API                        │
+   │  The anon key is safe to publish: Row Level Security (RLS) │
+   │  is what actually protects the data. See setup notes at    │
+   │  the bottom of this file.                                  │
+   └────────────────────────────────────────────────────────────┘ */
+const SUPABASE_URL      = 'https://gntvdgdpltvnowrexetb.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdudHZkZ2RwbHR2bm93cmV4ZXRiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYyMDg4ODEsImV4cCI6MjEwMTc4NDg4MX0.2K6LJphs7msRBom3qFa7_nYANhOc4BtHOzPR0Fai1pU';
+
+/* __STANDALONE_MARKER_START__ */
+const IS_STANDALONE = false;
+const EMBEDDED_DB   = null;
+const EXPORTED_AT   = null;
+/* __STANDALONE_MARKER_END__ */
+
+/* id of the shared document row in the `workspaces` table */
+const WORKSPACE_ID = 'default';
+
+const STORE_KEY = 'vatLeachDB_v1';   // offline cache (read-only fallback)
+const LANG_KEY  = 'vatLeachLang';    // language is a per-device preference
+const VATS = ['V4','V3','V2','V1'];              // display order: 4,3 first row · 2,1 second row
+const NODE_DEFS = [
+  {key:'F1',name:'Finger 1',nameAr:'فنجر 1',type:'finger'},
+  {key:'F2',name:'Finger 2',nameAr:'فنجر 2',type:'finger'},
+  {key:'F3',name:'Finger 3',nameAr:'فنجر 3',type:'finger'},
+  {key:'RAMP',name:'Crusher ramp',nameAr:'رامب الكسارة',type:'route'},
+  {key:'DIRECT',name:'Direct to crusher',nameAr:'مباشر للكسارة',type:'route'},
+  {key:'CRUSHED',name:'Crushed ore',nameAr:'الخام المكسر',type:'product'},
+  {key:'PREP4',name:'Prep area 4',nameAr:'تحضير 4',type:'prep',vat:'V4'},
+  {key:'PREP3',name:'Prep area 3',nameAr:'تحضير 3',type:'prep',vat:'V3'},
+  {key:'PREP2',name:'Prep area 2',nameAr:'تحضير 2',type:'prep',vat:'V2'},
+  {key:'PREP1',name:'Prep area 1',nameAr:'تحضير 1',type:'prep',vat:'V1'},
+];
+const AREAS = ['El Saad','Abo Elmagd','Adel East','Adel West','Samir East','Samir West','Adel East & West','Stockpile'];
+const GRADES = ['Super high grade','High grade','Medium grade','Low grade'];
+const STATES = ['FILLING','LEACHING','RINSING','DISCHARGING','CLOSED'];
+
+/* ══════════ i18n ══════════ */
+const I18N = {
+ appTitle:['Processing area · CONTROL CENTER','منطقة الاستخلاص · مركز التحكم'],
+ siteName:['Mallogrim Gold Mines','مناجم مالوجريم للذهب'],
+ confirmSave:['Confirm save','تأكيد الحفظ'],
+ reviewHint:['Check the values above, then confirm.','راجع البيانات بالأعلى ثم أكّد.'],
+ nodeIn:['Received','الوارد'], nodeOut:['Sent out','المنصرف'], nodeBal:['On hand','المتبقي'],
+ receive:['Receive loads','استلام نقلات'], sendOut:['Send out','صرف نقلات'],
+ loads:['loads','نقلة'], fromTo:['From / To','من / إلى'], nodeLedger:['Load ledger','سجل النقلات'],
+ sourceNode:['Taken from','مأخوذة من'], noSource:['— not tracked —','— بدون خصم —'],
+ prepNote:['Loads prepared here are deducted when they enter the vat.','النقلات المجهزة هنا تُخصم عند دخولها الحوض.'],
+ auto:['auto','تلقائي'],
+ vatsRunning:['vats leaching','حوض قيد التشغيل'],
+ backup:['Backup','نسخة احتياطية'], logHauls:['Log hauls','تسجيل نقلات'],
+ exportHtml:['Export HTML','تصدير HTML'], exportHtmlSuccess:['Standalone viewer HTML exported','تم تصدير ملف العرض المستقل'],
+ tabFlow:['Flow & Vats','المخطط والأحواض'], tabHauls:['Daily hauls','النقلات اليومية'],
+ tabAssays:['Solution assays','تحاليل المحلول'], tabStock:['Stockpiles','المخازن'],
+ tabGold:['Gold balance','ميزان الذهب'], tabHistory:['History','السجل'],
+ flowTitle:['Ore circuit · pit to vat','دورة الخام · من الجبل إلى الحوض'],
+ lgOre:['ore flow','مسار الخام'], lgOversize:['screen 5 oversize','ناتج غربال 5'],
+ lgStock:['from stockpile','من المخزن'], lgRecycle:['recycle','إعادة تدوير'],
+ vatGridTitle:['Vat status · live','حالة الأحواض · مباشر'],
+ vatOrderNote:['(order 4 · 3 / 2 · 1 as on site)','(الترتيب 4 · 3 / 2 · 1 كما في الموقع)'],
+ haulLogTitle:['Haul log · every load recorded','سجل النقلات · كل نقلة مسجلة'],
+ addEntry:['Add entry','إضافة'], assayTitle:['Pregnant solution · Au ppm','المحلول المحمّل · Au ppm'],
+ addAssay:['Add assay','إضافة تحليل'], stockTitle:['Stockpile balances','أرصدة المخازن'],
+ newPile:['New pile','مخزن جديد'], movement:['Movement','حركة'], moveLog:['Movement log','سجل الحركة'],
+ goldTitle:['Calculated vs actual gold','الذهب المحسوب مقابل الفعلي'], addPour:['Record gold','تسجيل ذهب'],
+ perCycle:['Per cycle · calculated','لكل دورة · محسوب'], pourLog:['Recorded gold','الذهب المسجل'],
+ historyTitle:['Cycle archive','أرشيف الدورات'], print:['Print','طباعة'],
+ footer:['Data is synced live across all devices · export a backup regularly','البيانات متزامنة مباشرة على كل الأجهزة · صدّر نسخة احتياطية دورياً'],
+ /* dynamic */
+ kpiLeaching:['Leaching now','قيد الاستخلاص'], kpiTonnage:['Ore in vats','الخام في الأحواض'],
+ kpiGoldCircuit:['Au in circuit','الذهب بالأحواض'], kpiDue:['Assays due','تحاليل مستحقة'],
+ kpiWarn:['Ending ≤7 days','ينتهي خلال ≤7 أيام'], kpiStock:['Stockpiles','رصيد المخازن'],
+ FILLING:['Filling','جاري التعبئة'], LEACHING:['Leaching','قيد الاستخلاص'],
+ RINSING:['Rinsing','تصفية المحلول'], DISCHARGING:['Discharging','تفريغ المخلفات'],
+ CLOSED:['Closed','منتهية'], IDLE:['Idle · empty','فارغ'],
+ hauls:['hauls','نقلة'], tons:['t','طن'], grams:['g','جم'], days:['d','يوم'],
+ startFilling:['Start filling','بدء التعبئة'], markFull:['Vat is full → survey','الحوض ممتلئ → مساحة'],
+ startLeach:['Start leaching','بدء التشغيل'], endLeach:['Stop leaching','إيقاف التشغيل'],
+ doneRinse:['Rinsing done','انتهت التصفية'], doneDischarge:['Discharge done → close','انتهى التفريغ → إغلاق'],
+ addTail:['Head / tail assay','تحليل Head / Tail'], details:['Details','تفاصيل'],
+ volume:['Survey volume','الحجم المساحي'], tonnage:['Tonnage','الطن'], avgGrade:['Avg grade','متوسط العيار'],
+ recovery:['Recovery','نسبة الاستخلاص'], expGold:['Expected Au','الذهب المتوقع'],
+ started:['Started','بدأ'], expEnd:['Expected end','النهاية المتوقعة'], ended:['Ended','انتهى'],
+ lastAssay:['Last assay','آخر تحليل'], perHaul:['per haul','لكل نقلة'], fill:['Fill','نسبة الامتلاء'],
+ dayRunning:['day running','يوم تشغيل'], noAssay:['no assay yet','لا توجد تحاليل'],
+ assayDue:['Assay due today','تحليل مستحق اليوم'], readyStop:['Two readings ≤ cutoff → ready to stop','قراءتان ≤ الحد → جاهز للإيقاف'],
+ warnEnd:['Cycle ends within a week','الدورة تنتهي خلال أسبوع'],
+ save:['Save','حفظ'], cancel:['Cancel','إلغاء'], del:['Delete','حذف'], date:['Date','التاريخ'],
+ area:['Area','المنطقة'], grade:['Class','التصنيف'], assayVal:['Assay g/t','العيار g/t'],
+ count:['Loads','عدد النقلات'], vat:['Vat','الحوض'], notes:['Notes','ملاحظات'],
+ settings:['Settings','الإعدادات'], sg:['Specific gravity','الكثافة SG'],
+ capacity:['Vat capacity (t)','سعة الحوض (طن)'], defRec:['Default recovery','الاستخلاص الافتراضي'],
+ cutoff:['Stop cutoff (ppm)','حد الإيقاف (ppm)'], interval:['Assay interval (days)','دورية التحليل (يوم)'],
+ avgCycle:['Average cycle (days)','متوسط الدورة (يوم)'], warnDays:['Warn before (days)','تحذير قبل (يوم)'],
+ exportJson:['Export backup','تصدير نسخة'], importJson:['Import backup','استيراد نسخة'],
+ resetAll:['Reset to seed data','استعادة البيانات الأصلية'],
+ confirmReset:['This erases everything and reloads the original site data. Continue?','سيتم مسح كل شيء واستعادة بيانات الموقع الأصلية. متابعة؟'],
+ head:['Head g/t','Head g/t'], tail:['Tail g/t','Tail g/t'],
+ noData:['Nothing recorded yet.','لا توجد بيانات بعد.'],
+ emptyHaul:['No hauls logged for this vat yet — add the first load.','لم تُسجل نقلات لهذا الحوض بعد — أضف أول نقلة.'],
+ duration:['Duration','المدة'], serial:['#','م'], status:['Status','الحالة'],
+ sources:['Sources','المصادر'], actualGold:['Actual Au','الذهب الفعلي'], variance:['Variance','الفرق'],
+ tonsLbl:['Tons','الطن'], gradeLbl:['Grade g/t','العيار g/t'], balance:['Balance','الرصيد'],
+ moveIn:['In','وارد'], moveOut:['Out','منصرف'], dest:['To / From','إلى / من'],
+ totalCalc:['Calculated total','الإجمالي المحسوب'], totalActual:['Recorded total','الإجمالي المسجل'],
+ openCycles:['Open cycles','دورات مفتوحة'], closedCycles:['Closed cycles','دورات منتهية'],
+ gradePending:['in lab','في المعمل'], surveyNote:['Volume from survey (m³)','الحجم من الرفع المساحي (m³)'],
+ haulVol:['Load volume','حجم النقلة'], newCycle:['Start new cycle','بدء دورة جديدة'],
+ confirmDel:['Delete this record?','حذف هذا السجل؟'],
+ pourNote:['Leave vat empty for plant-wide production','اتركه فارغاً للإنتاج الإجمالي'],
+ plantWide:['Plant total','إجمالي المصنع'],
+};
+let LANG = 0; // 0 = EN, 1 = AR
+const t = k => (I18N[k] ? I18N[k][LANG] : k);
+
+/* ══════════ SEED DATA (from Vat_Ore_Progres.xlsx + survey PDF) ══════════ */
+function seedDB(){
+  const C = (serial,vat,start,end,state,surveyM3,lines,opts={}) =>
+    Object.assign({id:'C'+serial,serial,vat,fillStart:opts.fillStart||null,start,end:end||null,
+      rinseEnd:opts.rinseEnd||null,dischargeEnd:opts.dischargeEnd||null,state,surveyM3,
+      sg:1.6,recovery:null,head:null,tail:null,lines,assays:[],notes:opts.notes||''},{});
+  /* legacy lines use m3 directly (recorded that way on site before load counting started) */
+  const L = (area,grade,assay,m3,hauls) => ({id:uid(),date:null,area,grade,assay,m3:m3??null,hauls:hauls??null});
+
+  const cycles = [
+    C(1,'V2','2026-05-06','2026-06-15','CLOSED',614,[
+      L('Abo Elmagd','Medium grade',0.44,414,26), L('Fine tail','Super high grade',3.0,200,13)]),
+    C(2,'V1','2026-06-05','2026-06-26','CLOSED',684,[
+      L('Adel East','High grade',1.58,360,22), L('Adel East','Super high grade',3.58,162,7),
+      L('Fine tail','Super high grade',3.2,162,9)]),
+    C(3,'V4','2026-06-05','2026-06-20','CLOSED',684,[
+      L('Adel East','High grade',1.58,360,20), L('Adel East','Super high grade',3.58,162,9),
+      L('Fine tail','Super high grade',3.2,162,9)]),
+    C(4,'V3','2026-06-10','2026-06-27','CLOSED',684,[
+      L('Adel East','High grade',1.58,630,35), L('Adel East','Super high grade',3.58,54,3)]),
+    C(5,'V2','2026-06-18','2026-07-05','CLOSED',684,[
+      L('Adel East','High grade',1.52,540,30), L('Fine tail','Super high grade',3.1,144,8)]),
+    C(6,'V4','2026-06-22','2026-07-10','CLOSED',921.4,[
+      L('Adel East','Super high grade',2.58,720,40), L('Adel East','High grade',1.52,140,8),
+      L('Fine tail','Super high grade',3.1,61.4,6)]),
+    C(7,'V1','2026-07-01','2026-07-24','CLOSED',814,[L('Adel East','Super high grade',3.2,814,45)]),
+    C(8,'V3','2026-07-05','2026-07-24','CLOSED',747,[
+      L('Adel East','Super high grade',3.2,713,40), L('Adel East','High grade',2.86,34,2)]),
+    C(9,'V2','2026-07-13',null,'LEACHING',804.47,[
+      L('Adel East','Super high grade',2.86,664,52), L('Adel East','High grade',2.32,12.77,1),
+      L('Adel East','High grade',1.72,127.7,10)]),
+    C(10,'V4','2026-07-18','2026-08-02','RINSING',890.92,[
+      L('Adel East','High grade',1.52,null,15), L('Adel East','High grade',1.72,null,26),
+      L('Adel East','Super high grade',2.32,null,15), L('Abo Elmagd','Low grade',0.75,null,5)],
+      {notes:'Survey: mean bottom 281.42 · mean top 283.40 · backfill column 1.98 m · area 449.96 m²'}),
+    C(11,'V3','2026-07-30',null,'LEACHING',843.7,[
+      L('Adel East','High grade',1.14,null,54), L('Adel East','Super high grade',2.32,null,1),
+      L('Abo Elmagd','Low grade',0.57,null,2)]),
+    C(12,'V1','2026-08-01',null,'LEACHING',855.5,[
+      L('Adel East & West','High grade',null,null,52)]),
+  ];
+
+  const stockpiles = [
+    {id:uid(),name:'Abo Elmagd ROM',nameAr:'أبو المجد خام',tons:190,grade:0.57,source:'Abo Elmagd',note:'',moves:[]},
+    {id:uid(),name:'Abo Elmagd Medium · belt 1',nameAr:'ميديم أبو المجد · سير 1',tons:315,grade:0.33,source:'Abo Elmagd',note:'',moves:[]},
+    {id:uid(),name:'Abo Elmagd Medium · belts 2·3·4·6',nameAr:'ميديم أبو المجد · سيور 2·3·4·6',tons:460,grade:0.44,source:'Abo Elmagd',note:'',moves:[]},
+    {id:uid(),name:'Screen 5 High grade (oversize)',nameAr:'غربال 5 هاي جريد',tons:460,grade:null,source:'Screen 5',note:'grade pending',moves:[]},
+  ];
+
+  const nodes = NODE_DEFS.map(d=>({...d, id:uid(), balance:0, moves:[]}));
+  return {
+    version:2,
+    settings:{sg:1.6, capacityTon:1500, defaultRecovery:0.75, cutoffPpm:0.4,
+              assayIntervalDays:2, avgCycleDays:18, warnDays:7, lang:0, logo:null},
+    cycles, stockpiles, nodes, pours:[], nextSerial:13
+  };
+}
+
+/* ══════════ STORAGE ══════════ */
+function uid(){ return 'x'+Math.random().toString(36).slice(2,9); }
+let DB = null;
+
+/* ── sync state ───────────────────────────────────────────────
+   The whole DB is one JSON document in `workspaces.doc`.
+   `REV` is the revision we last read; every write asserts it, so
+   two people editing at once cannot silently clobber each other. */
+let SB = null;          // supabase client
+let SESSION = null;     // supabase session
+let ROLE = 'viewer';    // 'admin' | 'editor' | 'viewer'
+let REV = 0;            // revision of the doc we currently hold
+let LAST_SYNCED = '';   // serialized doc as it exists on the server
+let pushTimer = null;
+let pushing = false;
+
+// ✅ الكود الجديد: السماح للـ admin والـ editor بالقدرة على التعديل
+const CAN_EDIT = () => ROLE === 'admin' || ROLE === 'editor';
+
+function setSyncDot(state, title){
+  const d = document.getElementById('syncDot'); if(!d) return;
+  d.className = 'sync-dot' + (state ? ' '+state : '');
+  d.title = title || 'Synced';
+}
+
+/* pull the shared document; falls back to the offline cache if the
+   network is down so the app still opens read-only */
+async function loadDB(){
+  try{
+    const {data, error} = await SB.from('workspaces')
+      .select('doc,rev').eq('id', WORKSPACE_ID).maybeSingle();
+    if(error) throw error;
+
+    if(data && data.doc){
+      DB = data.doc; REV = data.rev || 0;
+      LAST_SYNCED = JSON.stringify(DB);
+      migrate();
+      try{ localStorage.setItem(STORE_KEY, JSON.stringify(DB)); }catch(e){}
+      return;
+    }
+    /* first ever run — an admin seeds the workspace */
+    DB = seedDB();
+    if(CAN_EDIT()){
+      const {error:e2} = await SB.from('workspaces')
+        .insert({id:WORKSPACE_ID, doc:DB, rev:1, updated_by:SESSION.user.id});
+      if(e2) throw e2;
+      REV = 1; LAST_SYNCED = JSON.stringify(DB);
+    } else {
+      toast('Workspace is empty — an admin must open it first','warn');
+    }
+  }catch(err){
+    console.error('loadDB', err);
+    setSyncDot('error','Offline — showing cached copy');
+    let cached = null;
+    try{ cached = localStorage.getItem(STORE_KEY); }catch(e){}
+    DB = cached ? JSON.parse(cached) : seedDB();
+    REV = -1;                                    // unknown revision → refuse to write
+    LAST_SYNCED = JSON.stringify(DB);
+    migrate();
+    toast('Cannot reach the server — read-only cached data','warn');
+  }
+}
+/* v1 → v2 : vats renamed P→V, site workbook refreshed, circuit nodes added */
+function migrate(){
+  if((DB.version||1) >= 2) return;
+  const fresh = seedDB();
+  DB.cycles = fresh.cycles;                 // workbook is the source of truth
+  DB.nodes  = DB.nodes || fresh.nodes;
+  DB.pours  = (DB.pours||[]).map(p=>({...p, cycleId:null}));
+  DB.settings = Object.assign(fresh.settings, DB.settings||{}, {logo:(DB.settings||{}).logo||null});
+  DB.nextSerial = fresh.nextSerial;
+  DB.version = 2; saveDB();
+}
+function node(key){ return (DB.nodes||[]).find(n=>n.key===key) || null; }
+function nodeName(n){ return (LANG&&n.nameAr)? n.nameAr : n.name; }
+/* saveDB() is called at the end of every render. It is cheap and
+   idempotent: it caches locally, and schedules a debounced push only
+   when the document actually differs from what the server holds. */
+function saveDB(){
+  if(!DB) return;
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(DB)); }catch(e){}
+  if(!CAN_EDIT() || REV < 0) return;              // viewers and offline never push
+  if(JSON.stringify(DB) === LAST_SYNCED) return;  // nothing changed
+  setSyncDot('saving','Saving…');
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(pushDB, 700);
+}
+
+/* optimistic-concurrency write: only succeeds if nobody else has
+   written since we read. On conflict we pull the newer doc and
+   tell the user, rather than overwriting their work. */
+async function pushDB(){
+  if(pushing || !CAN_EDIT() || REV < 0) return;
+  const snapshot = JSON.stringify(DB);
+  if(snapshot === LAST_SYNCED){ setSyncDot('','Synced'); return; }
+  pushing = true;
+  try{
+    const {data, error} = await SB.from('workspaces')
+      .update({doc:JSON.parse(snapshot), rev:REV+1,
+               updated_at:new Date().toISOString(), updated_by:SESSION.user.id})
+      .eq('id', WORKSPACE_ID).eq('rev', REV)
+      .select('rev');
+    if(error) throw error;
+
+    if(!data || !data.length){                    // someone else got there first
+      pushing = false;
+      toast('Someone else saved first — reloading their changes','warn');
+      await pullDB(true);
+      return;
+    }
+    REV = data[0].rev; LAST_SYNCED = snapshot;
+    setSyncDot('','Synced');
+  }catch(err){
+    console.error('pushDB', err);
+    setSyncDot('error','Save failed');
+    toast('Save failed — export a backup','warn');
+  }finally{
+    pushing = false;
+    /* changes made while the request was in flight */
+    if(DB && JSON.stringify(DB) !== LAST_SYNCED && REV >= 0){
+      clearTimeout(pushTimer); pushTimer = setTimeout(pushDB, 700);
+    }
+  }
+}
+
+/* apply the server's version locally (realtime push, or conflict) */
+async function pullDB(force){
+  try{
+    const {data, error} = await SB.from('workspaces')
+      .select('doc,rev').eq('id', WORKSPACE_ID).maybeSingle();
+    if(error || !data) return;
+    if(!force && data.rev <= REV) return;
+    DB = data.doc; REV = data.rev;
+    LAST_SYNCED = JSON.stringify(DB);             // set BEFORE render so we don't echo it back
+    renderAll();
+    setSyncDot('','Synced');
+  }catch(err){ console.error('pullDB', err); }
+}
+
+/* live updates — other devices' saves land here within ~1s */
+function startRealtime(){
+  SB.channel('workspace-'+WORKSPACE_ID)
+    .on('postgres_changes',
+        {event:'UPDATE', schema:'public', table:'workspaces', filter:'id=eq.'+WORKSPACE_ID},
+        payload=>{
+          if(pushing) return;                     // our own write, echoed back
+          if(payload.new && payload.new.rev > REV){
+            DB = payload.new.doc; REV = payload.new.rev;
+            LAST_SYNCED = JSON.stringify(DB);
+            renderAll();
+            toast('Updated by another device','info');
+          }
+        })
+    .subscribe();
+}
+
+/* ══════════ DATE HELPERS ══════════ */
+const MS = 86400000;
+function today(){ const d=new Date(); d.setHours(0,0,0,0); return d; }
+function toISO(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function parseD(s){ if(!s) return null; const p=s.split('-'); return new Date(+p[0],+p[1]-1,+p[2]); }
+function dDiff(a,b){ return Math.round((b-a)/MS); }
+function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+function fmtD(s){ if(!s) return '—'; const d=parseD(s); return d.toLocaleDateString(LANG?'ar-EG':'en-GB',{day:'2-digit',month:'short',year:'2-digit'}); }
+const n1 = v => (v==null||isNaN(v))?'—':Number(v).toLocaleString(undefined,{maximumFractionDigits:1});
+const n0 = v => (v==null||isNaN(v))?'—':Math.round(v).toLocaleString();
+const n2 = v => (v==null||isNaN(v))?'—':Number(v).toFixed(2);
+
+/* ══════════ CORE CALCULATIONS ══════════ */
+/* load volume = survey volume ÷ total loads  (loads vary per vat, so it is derived) */
+function calcCycle(c){
+  const sg = c.sg || DB.settings.sg;
+  const rec = (c.recovery==null? DB.settings.defaultRecovery : c.recovery);
+  const totalHauls = c.lines.reduce((s,l)=>s+(l.hauls||0),0);
+  const fixedM3 = c.lines.reduce((s,l)=>s+(l.m3||0),0);
+  const openHauls = c.lines.reduce((s,l)=>s+((l.m3==null&&l.hauls)?l.hauls:0),0);
+  const survey = c.surveyM3 || fixedM3 || 0;
+  /* loads without a measured volume share whatever the survey leaves over */
+  const haulVol = openHauls ? Math.max(0,(survey - fixedM3))/openHauls
+                            : (totalHauls ? survey/totalHauls : 0);
+  let tons=0, gold=0, gradeWeight=0, pending=false;
+  const lines = c.lines.map(l=>{
+    const m3 = l.m3!=null ? l.m3 : (l.hauls||0)*haulVol;
+    const tn = m3*sg;
+    const g = (l.assay==null) ? null : tn*l.assay*rec;
+    if(l.assay==null) pending=true; else { gold+=g; gradeWeight+=tn*l.assay; }
+    tons+=tn;
+    return {...l, m3, tons:tn, gold:g};
+  });
+  return { lines, sg, rec, totalHauls, haulVol, survey, tons,
+           gold, avgGrade: tons? gradeWeight/tons : 0, pending,
+           fillPct: DB.settings.capacityTon ? tons/DB.settings.capacityTon*100 : 0 };
+}
+
+/* live cycle state (days, alerts) */
+function cycleStatus(c){
+  const T = today(), calc = calcCycle(c);
+  const st = parseD(c.start), en = parseD(c.end);
+  const out = {calc, alerts:[], daysRun:null, daysLeft:null, expEnd:null, lastAssay:null, assayDue:false, readyStop:false, level:'idle'};
+  if(c.state==='LEACHING' && st){
+    out.daysRun = dDiff(st,T);
+    out.expEnd = addDays(st, DB.settings.avgCycleDays);
+    out.daysLeft = dDiff(T, out.expEnd);
+    const A = [...(c.assays||[])].sort((a,b)=>a.date<b.date?-1:1);
+    if(A.length){
+      out.lastAssay = A[A.length-1];
+      const gap = dDiff(parseD(out.lastAssay.date), T);
+      if(gap >= DB.settings.assayIntervalDays){ out.assayDue = true; out.alerts.push({k:'assayDue',lv:'info'}); }
+      if(A.length>=2){
+        const a=A[A.length-1].ppm, b=A[A.length-2].ppm;
+        if(a<=DB.settings.cutoffPpm && b<=DB.settings.cutoffPpm){ out.readyStop=true; out.alerts.push({k:'readyStop',lv:'danger'}); }
+      }
+    } else { out.assayDue = out.daysRun >= DB.settings.assayIntervalDays; if(out.assayDue) out.alerts.push({k:'assayDue',lv:'info'}); }
+    if(out.daysLeft <= DB.settings.warnDays && !out.readyStop) out.alerts.push({k:'warnEnd',lv:'warn'});
+    out.level = out.readyStop ? 'danger' : (out.daysLeft<=DB.settings.warnDays ? 'warn' : 'safe');
+  } else if(c.state==='FILLING'){
+    out.level='info'; out.daysRun = c.fillStart? dDiff(parseD(c.fillStart),T) : null;
+  } else if(c.state==='RINSING' || c.state==='DISCHARGING'){
+    out.level='violet'; out.daysRun = en? dDiff(en,T) : null;
+  } else if(c.state==='CLOSED'){
+    out.level='idle';
+    if(st&&en) out.duration = dDiff(st,en);
+  }
+  return out;
+}
+function activeCycle(vat){ return DB.cycles.find(c=>c.vat===vat && c.state!=='CLOSED') || null; }
+function stockTotal(){ return DB.stockpiles.reduce((s,p)=>s+(p.tons||0),0); }
+
+/* ══════════ RENDER: shell ══════════ */
+function renderAll(){
+  renderKPIs(); renderAlerts(); renderDiagram(); renderVats();
+  renderHaulTable(); renderAssays(); renderStock(); renderGold(); renderHistory();
+  applyI18n();
+  document.getElementById('todayLabel').textContent = toISO(today());
+  saveDB();
+}
+
+const LVL = {safe:'c-safe',warn:'c-warn',danger:'c-danger',info:'c-info',idle:'c-idle',violet:'c-violet'};
+const LVLCOLOR = {safe:'#10b981',warn:'#f59e0b',danger:'#e85a4f',info:'#38bdf8',idle:'#64748b',violet:'#a78bfa'};
+
+/* ══════════ KPIs ══════════ */
+function renderKPIs(){
+  const leach = DB.cycles.filter(c=>c.state==='LEACHING');
+  let tons=0, gold=0, due=0, warn=0;
+  leach.forEach(c=>{ const s=cycleStatus(c); tons+=s.calc.tons; gold+=s.calc.gold;
+    if(s.assayDue) due++; if(s.daysLeft<=DB.settings.warnDays||s.readyStop) warn++; });
+  const cards = [
+    ['fa-fire-flame-curved','kpiLeaching', leach.length, '/ 4', 'amber'],
+    ['fa-weight-hanging','kpiTonnage', n0(tons), 't', 'slate'],
+    ['fa-coins','kpiGoldCircuit', n0(gold), 'g Au', 'gold'],
+    ['fa-flask-vial','kpiDue', due, '', 'sky'],
+    ['fa-triangle-exclamation','kpiWarn', warn, '', 'rose'],
+    ['fa-cubes-stacked','kpiStock', n0(stockTotal()), 't', 'emerald'],
+  ];
+  const tone = {amber:'text-amber-400 bg-amber-500/10', slate:'text-slate-200 bg-slate-500/10',
+    gold:'text-yellow-300 bg-yellow-500/10', sky:'text-sky-400 bg-sky-500/10',
+    rose:'text-rose-400 bg-rose-500/10', emerald:'text-emerald-400 bg-emerald-500/10'};
+  document.getElementById('hdrActiveCount').textContent = leach.length;
+  document.getElementById('kpiRibbon').innerHTML = cards.map(([ic,key,val,unit,c])=>`
+    <div class="glass-light rounded-xl p-3 hover-lift">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg ${tone[c]} flex items-center justify-center text-sm shrink-0"><i class="fa-solid ${ic}"></i></div>
+        <div class="min-w-0">
+          <div class="text-[9px] font-bold text-slate-400 uppercase tracking-wider truncate">${t(key)}</div>
+          <div class="text-lg font-black font-mono leading-tight ${tone[c].split(' ')[0]}">${val}<span class="text-[10px] text-slate-500 font-medium ms-1">${unit}</span></div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+/* ══════════ ALERT BAR ══════════ */
+function renderAlerts(){
+  const rows=[];
+  DB.cycles.filter(c=>c.state!=='CLOSED').forEach(c=>{
+    const s=cycleStatus(c);
+    s.alerts.forEach(a=>{
+      const style = a.lv==='danger' ? 'bg-rose-950/50 border-rose-500/40 text-rose-200'
+        : a.lv==='warn' ? 'bg-amber-950/40 border-amber-500/40 text-amber-200'
+        : 'bg-sky-950/40 border-sky-500/30 text-sky-200';
+      const icon = a.lv==='danger'?'fa-circle-exclamation':a.lv==='warn'?'fa-triangle-exclamation':'fa-flask-vial';
+      const extra = a.k==='warnEnd' ? ` · ${s.daysLeft} ${t('days')}` : (a.k==='assayDue'&&s.lastAssay? ` · ${t('lastAssay')} ${fmtD(s.lastAssay.date)} (${n2(s.lastAssay.ppm)} ppm)`:'');
+      rows.push(`<div class="flex items-center gap-2.5 px-3.5 py-2 rounded-xl border ${style} text-[11px] font-semibold">
+        <i class="fa-solid ${icon}"></i>
+        <span class="font-mono font-black">${c.vat}</span>
+        <span>${t(a.k)}${extra}</span>
+        <button class="ms-auto btn btn-ghost !py-1 !px-2 no-print" onclick="openVatDetail('${c.vat}')">${t('details')}</button>
+      </div>`);
+    });
+  });
+  document.getElementById('alertBar').innerHTML = rows.join('');
+}
+
+/* ══════════ FLOW DIAGRAM ══════════ */
+function vatFillRatio(c){                     /* what the solution/ore level shows */
+  if(!c) return 0;
+  if(c.state==='FILLING')     return Math.max(0,Math.min(1, calcCycle(c).fillPct/100));
+  if(c.state==='LEACHING')    return 1;       // full vat, under leach
+  if(c.state==='RINSING')     return 0.5;     // solution draining
+  return 0;                                   // discharging / empty
+}
+function renderDiagram(){
+  const box=(x,y,w,hh,label,sub,color,extra='')=>`
+    <g ${extra}>
+      <rect x="${x}" y="${y}" width="${w}" height="${hh}" rx="8" fill="#0d1726" stroke="${color}" stroke-width="1.4" opacity="0.95"/>
+      <text x="${x+w/2}" y="${y+(sub?hh/2-2:hh/2+4)}" text-anchor="middle" font-size="11" font-weight="700" fill="#e2e8f0">${label}</text>
+      ${sub?`<text x="${x+w/2}" y="${y+hh/2+12}" text-anchor="middle" font-size="8.5" fill="#8296ad">${sub}</text>`:''}
+    </g>`;
+  const head=(x,y,txt)=>`<text x="${x}" y="${y}" font-size="9" font-weight="800" letter-spacing="1.6" fill="#5d708a">${txt}</text>`;
+  const line=(d,color,cls='flowing',w=2)=>`<path d="${d}" fill="none" stroke="${color}" stroke-width="${w}" class="${cls}" opacity="0.75"/>`;
+  const bal=k=>{ const n=node(k); return n? `${n.balance} ${t('loads')}` : ''; };
+
+  const areas=['El Saad','Abo Elmagd','Adel East','Adel West','Samir East','Samir West'];
+  let svg=`<svg viewBox="0 0 1290 660" width="100%" style="height:auto" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="g" width="30" height="30" patternUnits="userSpaceOnUse"><path d="M30 0 L0 0 0 30" fill="none" stroke="rgba(255,255,255,.02)" stroke-width="0.5"/></pattern>
+    <linearGradient id="cr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f0d060"/><stop offset="1" stop-color="#b45309"/></linearGradient>
+  </defs>
+  <rect width="1290" height="660" fill="url(#g)"/>`;
+
+  svg+=head(20,24,'FIELD AREAS')+head(230,24,'HAULAGE DESTINATION')+head(420,24,'CRUSHING')
+      +head(570,24,'SCREENS')+head(730,24,'PRODUCT / STOCK')+head(1000,24,'PREP AREAS + VATS');
+
+  /* field areas + collector bus */
+  areas.forEach((a,i)=>{ svg+=box(20,40+i*42,150,32,a,null,'#38bdf8aa'); });
+  svg+=`<path d="M170 56 H200 V282 M170 98 H200 M170 140 H200 M170 182 H200 M170 224 H200 M170 266 H200" fill="none" stroke="#38bdf8" stroke-width="1.4" opacity="0.45"/>`;
+
+  /* haulage destinations — clickable load ledgers */
+  const dests=[['F1','Finger 1',48],['F2','Finger 2',92],['F3','Finger 3',136],
+               ['RAMP','Crusher ramp',196],['DIRECT','Direct to crusher',248]];
+  dests.forEach(([key,nm,y])=>{
+    svg+=box(230,y,130,36,nm,bal(key), key.startsWith('F')?'#10b981aa':'#f59e0baa',
+      `class="node-clickable" onclick="openNodeModal('${key}')"`);
+  });
+  svg+=line('M200 282 V66 H230','#38bdf8','flowing-slow',1.6)+line('M200 110 H230','#38bdf8','flowing-slow',1.6)
+     +line('M200 154 H230','#38bdf8','flowing-slow',1.6)+line('M200 214 H230','#38bdf8','flowing-slow',1.6)
+     +line('M200 266 H230','#38bdf8','flowing-slow',1.6);
+
+  /* crusher */
+  svg+=`<g><rect x="420" y="140" width="100" height="72" rx="10" fill="url(#cr)" opacity="0.92"/>
+    <text x="470" y="172" text-anchor="middle" font-size="12" font-weight="900" fill="#0b1220">CRUSHER</text>
+    <text x="470" y="188" text-anchor="middle" font-size="8" font-weight="700" fill="#3b2c05">primary</text></g>`;
+  svg+=line('M360 66 C395 66 395 150 420 160','#f59e0b')+line('M360 110 C395 110 398 158 420 168','#f59e0b')
+     +line('M360 154 C392 154 400 172 420 176','#f59e0b')+line('M360 214 C395 214 400 190 420 186','#f59e0b')
+     +line('M360 266 C395 266 405 210 420 196','#f59e0b');
+
+  /* screens */
+  const screens=[['screen 1',40],['screen 2',78],['screen 3',116],['screen 4',154],['screen 6',192]];
+  screens.forEach(([nm,y])=>{ svg+=box(570,y,110,28,nm,null,'#f59e0b88');
+    svg+=line(`M520 176 C548 176 548 ${y+14} 570 ${y+14}`,'#f59e0b','flowing',1.6); });
+  svg+=box(570,250,110,32,'screen 5','oversize','#e85a4f')
+     +line('M520 190 C548 200 548 262 570 266','#e85a4f','flowing',2);
+
+  /* crushed ore (clickable ledger) + stockpiles */
+  svg+=box(730,80,150,58,'Crushed ore',bal('CRUSHED')+' · screens 1·2·3·4·6','#f0d06099',
+    `class="node-clickable" onclick="openNodeModal('CRUSHED')"`);
+  screens.forEach(([,y])=>{ svg+=line(`M680 ${y+14} C706 ${y+14} 706 109 730 109`,'#f59e0b','flowing',1.4); });
+  svg+=box(730,240,150,52,'Screen 5 stockpile',null,'#e85a4faa',`class="node-clickable" onclick="switchTab('stock')"`)
+     +line('M680 266 H730','#e85a4f','flowing',2);
+  svg+=box(730,330,150,52,'Abo Elmagd stockpile',null,'#10b981aa',`class="node-clickable" onclick="switchTab('stock')"`);
+  svg+=`<path d="M805 292 C805 420 470 420 470 216" fill="none" stroke="#a78bfa" stroke-width="1.6" stroke-dasharray="5,6" opacity="0.65"/>
+        <text x="620" y="412" text-anchor="middle" font-size="8.5" font-weight="700" fill="#a78bfa">re-crush when needed</text>`;
+  const s5 = DB.stockpiles.find(p=>p.source==='Screen 5');
+  const abo = DB.stockpiles.filter(p=>p.source==='Abo Elmagd').reduce((s,p)=>s+p.tons,0);
+  svg+=`<text x="805" y="284" text-anchor="middle" font-size="9" font-weight="800" fill="#fca5a5">${n0(s5?s5.tons:0)} t</text>`
+      +`<text x="805" y="374" text-anchor="middle" font-size="9" font-weight="800" fill="#6ee7b7">${n0(abo)} t</text>`;
+
+  /* prep areas (separate, clickable) + vats · order 4·3 / 2·1 */
+  const geo={ V4:{px:1000,py:56,vx:1000,vy:110,prep:'PREP4'},
+              V3:{px:1130,py:56,vx:1130,vy:110,prep:'PREP3'},
+              V2:{px:1000,py:266,vx:1000,vy:320,prep:'PREP2'},
+              V1:{px:1130,py:266,vx:1130,vy:320,prep:'PREP1'} };
+  /* four feeds: crushed ore → each prep area */
+  svg+=line('M880 109 C930 109 960 76 1000 76','#f0d060','flowing',1.6)
+     +line('M880 109 C950 34 1060 26 1187 26 M1187 26 V56','#f0d060','flowing',1.6)
+     +line('M880 109 C920 130 940 286 1000 286','#f0d060','flowing',1.6)
+     +line('M880 109 C915 210 920 470 1060 470 M1060 470 H1265 M1265 470 V286 H1245','#f0d060','flowing',1.6);
+
+  VATS.forEach(v=>{
+    const g=geo[v], c=activeCycle(v), st=c?cycleStatus(c):null;
+    const col = st?LVLCOLOR[st.level]:'#64748b';
+    const label = c? t(c.state) : t('IDLE');
+    const ratio = vatFillRatio(c), W=115, H=96, fh=(H-14)*ratio;
+    const nd = node(g.prep);
+    /* prep box */
+    svg+=`<g class="node-clickable" onclick="openNodeModal('${g.prep}')">
+      <rect x="${g.px}" y="${g.py}" width="${W}" height="40" rx="8" fill="#0d1726" stroke="#f59e0b88" stroke-width="1.3"/>
+      <text x="${g.px+W/2}" y="${g.py+16}" text-anchor="middle" font-size="9.5" font-weight="700" fill="#c2a24a">Prep area ${v.slice(1)}</text>
+      <text x="${g.px+W/2}" y="${g.py+31}" text-anchor="middle" font-size="10" font-weight="800" font-family="JetBrains Mono, monospace" fill="${nd&&nd.balance?'#f0d060':'#5d708a'}">${nd?nd.balance:0} ${t('loads')}</text>
+    </g>`;
+    /* short link prep → vat (they are separate objects now) */
+    svg+=line(`M${g.px+W/2} ${g.py+40} V${g.vy}`,'#f59e0b','flowing',1.6);
+    /* vat */
+    svg+=`<g class="node-clickable" onclick="openVatDetail('${v}')">
+      <rect x="${g.vx}" y="${g.vy}" width="${W}" height="${H}" rx="10" fill="#0b111a" stroke="${col}" stroke-width="1.8"/>
+      ${fh>1?`<rect x="${g.vx+5}" y="${g.vy+H-5-fh}" width="${W-10}" height="${fh}" rx="6" fill="${col}" opacity="0.3"/>`:''}
+      <text x="${g.vx+W/2}" y="${g.vy+34}" text-anchor="middle" font-size="17" font-weight="900" fill="#fff" font-family="JetBrains Mono, monospace">Vat ${v.slice(1)}</text>
+      <text x="${g.vx+W/2}" y="${g.vy+52}" text-anchor="middle" font-size="9" font-weight="800" fill="${col}">${label}</text>
+      <text x="${g.vx+W/2}" y="${g.vy+68}" text-anchor="middle" font-size="9" fill="#94a3b8">${st? n0(st.calc.tons)+' t':'—'}</text>
+      <text x="${g.vx+W/2}" y="${g.vy+83}" text-anchor="middle" font-size="8.5" fill="#7b8ca3">${st&&st.daysRun!=null? st.daysRun+' '+t('days'):''}</text>
+      ${st&&st.level==='danger'?`<circle cx="${g.vx+W-11}" cy="${g.vy+11}" r="4.5" fill="#e85a4f"><animate attributeName="r" values="4.5;7;4.5" dur="1.2s" repeatCount="indefinite"/></circle>`:''}
+    </g>`;
+  });
+  svg+=`</svg>`;
+  document.getElementById('flowDiagram').innerHTML = svg;
+}
+
+/* ══════════ CIRCUIT NODE LEDGER (loads in / out) ══════════ */
+function nodeTotals(n){
+  const i=(n.moves||[]).filter(m=>m.dir==='in').reduce((s,m)=>s+m.loads,0);
+  const o=(n.moves||[]).filter(m=>m.dir==='out').reduce((s,m)=>s+m.loads,0);
+  return {in:i,out:o};
+}
+function openNodeModal(key){
+  const n=node(key); if(!n) return;
+  const T=nodeTotals(n);
+  const kpi=(l,v,tone)=>`<div class="bg-slate-950/70 rounded-lg p-2.5 border border-slate-800/40 text-center">
+      <div class="text-[8px] uppercase tracking-wider text-slate-500 font-bold">${l}</div>
+      <div class="text-base font-black font-mono ${tone}">${v}</div></div>`;
+  const rows=(n.moves||[]).slice().sort((a,b)=>b.date<a.date?-1:1);
+  modal(`${nodeName(n)} <span class="chip c-info ms-2">${t('nodeLedger')}</span>`,`
+    <div class="grid grid-cols-3 gap-2">
+      ${kpi(t('nodeIn'),T.in,'text-sky-300')}${kpi(t('nodeOut'),T.out,'text-amber-300')}
+      ${kpi(t('nodeBal'),n.balance,n.balance?'text-emerald-300':'text-slate-400')}
+    </div>
+    ${n.type==='prep'?`<p class="text-[10px] text-slate-500">${t('prepNote')}</p>`:''}
+    <div class="flex gap-2">
+      <button class="btn btn-sky flex-1 justify-center" onclick="closeModal();openNodeMove('${key}','in')"><i class="fa-solid fa-arrow-down"></i>${t('receive')}</button>
+      <button class="btn btn-ghost flex-1 justify-center" onclick="closeModal();openNodeMove('${key}','out')"><i class="fa-solid fa-arrow-up"></i>${t('sendOut')}</button>
+    </div>
+    <div class="overflow-x-auto rounded-xl border border-slate-800/50"><table class="data">
+      <thead><tr><th>${t('date')}</th><th>${t('status')}</th><th>${t('loads')}</th><th>${t('fromTo')}</th><th>${t('notes')}</th><th></th></tr></thead>
+      <tbody>${rows.length?rows.map(m=>`<tr><td class="font-mono">${fmtD(m.date)}</td>
+        <td><span class="chip ${m.dir==='in'?'c-safe':'c-warn'}">${m.dir==='in'?t('nodeIn'):t('nodeOut')}</span></td>
+        <td class="font-mono font-bold">${m.loads}</td><td>${m.other||'—'}</td><td class="text-slate-500">${m.note||''}</td>
+        <td class="no-print"><button class="text-slate-500 hover:text-rose-400" data-edit onclick="delNodeMove('${key}','${m.id}')"><i class="fa-solid fa-trash-can"></i></button></td></tr>`).join('')
+        :`<tr><td colspan="6" class="text-center text-slate-500 py-5">${t('noData')}</td></tr>`}</tbody></table></div>`,
+    null, {wide:true});
+}
+function openNodeMove(key,dir){
+  const n=node(key);
+  const others=[...(DB.nodes||[]).filter(x=>x.key!==key).map(x=>[x.key,nodeName(x)]),
+                ...VATS.map(v=>['VAT:'+v,'Vat '+v.slice(1)]),
+                ['FIELD','Field / mine area'],['STOCK','Stockpile']];
+  modal(`${nodeName(n)} · ${dir==='in'?t('receive'):t('sendOut')}`,`
+    ${fld('nDate',t('date'),'date',toISO(today()))}
+    ${fld('nLoads',t('loads'),'number','','min="1" step="1"')}
+    ${sel('nOther',t('fromTo'),others, dir==='out'&&n.vat?('VAT:'+n.vat):others[0][0])}
+    ${fld('nNote',t('notes'),'text','')}`,
+    ()=>{ const q=parseInt(V('nLoads')); if(!q||q<1){ toast(t('loads'),'warn'); return false; }
+      const oKey=V('nOther'); const oLabel=(others.find(o=>o[0]===oKey)||['',''])[1];
+      n.moves=n.moves||[]; n.moves.push({id:uid(),date:V('nDate'),dir,loads:q,other:oLabel,note:V('nNote')});
+      n.balance = Math.max(0, (n.balance||0) + (dir==='in'? q : -q));
+      /* a transfer between two tracked nodes updates both sides */
+      const peer=(DB.nodes||[]).find(x=>x.key===oKey);
+      if(peer){ peer.moves=peer.moves||[];
+        peer.moves.push({id:uid(),date:V('nDate'),dir:dir==='in'?'out':'in',loads:q,other:nodeName(n),note:t('auto')||''});
+        peer.balance = Math.max(0,(peer.balance||0) + (dir==='in'? -q : q)); }
+      toast(`${nodeName(n)}: ${dir==='in'?'+':'−'}${q} ${t('loads')}`); });
+}
+function delNodeMove(key,id){
+  if(!confirm(t('confirmDel'))) return;
+  const n=node(key); const m=(n.moves||[]).find(x=>x.id===id); if(!m) return;
+  n.balance = Math.max(0,(n.balance||0) + (m.dir==='in'? -m.loads : m.loads));
+  n.moves=n.moves.filter(x=>x.id!==id); saveDB(); renderAll(); openNodeModal(key);
+}
+
+/* ══════════ VAT CARDS ══════════ */
+function renderVats(){
+  document.getElementById('vatGrid').innerHTML = VATS.map(v=>{
+    const c = activeCycle(v);
+    if(!c){
+      return `<div class="glass-light rounded-2xl p-4 border border-slate-800/50 flex flex-col items-center justify-center text-center gap-2.5 min-h-[220px]">
+        <div class="w-12 h-12 rounded-2xl bg-slate-800/50 flex items-center justify-center text-slate-500 text-xl font-black font-mono">${v}</div>
+        <div class="text-xs font-bold text-slate-400">${t('IDLE')}</div>
+        <button class="btn btn-gold" onclick="startCycle('${v}')"><i class="fa-solid fa-play"></i>${t('newCycle')}</button>
+      </div>`;
+    }
+    const s = cycleStatus(c), k = s.calc;
+    const col = LVLCOLOR[s.level];
+    const cls = s.level==='danger' ? 'pond-danger' : '';
+    const prog = c.state==='FILLING' ? Math.min(100,k.fillPct)
+      : c.state==='LEACHING' ? Math.min(100, (s.daysRun/DB.settings.avgCycleDays)*100) : 100;
+    const cell=(lbl,val,tone='text-slate-200')=>`<div class="bg-slate-950/70 rounded-lg p-1.5 border border-slate-800/40">
+      <div class="text-[8px] font-bold text-slate-500 uppercase tracking-wider">${lbl}</div>
+      <div class="text-[11px] font-bold font-mono ${tone}">${val}</div></div>`;
+    const actions = {
+      FILLING:`<button class="btn btn-sky" data-edit onclick="openHaulModal('${c.id}')"><i class="fa-solid fa-truck"></i>${t('logHauls')}</button>
+               <button class="btn btn-gold" onclick="openSurveyModal('${c.id}')"><i class="fa-solid fa-ruler-combined"></i>${t('markFull')}</button>`,
+      LEACHING:`<button class="btn btn-sky" data-edit onclick="openAssayModal('${c.id}')"><i class="fa-solid fa-flask-vial"></i>${t('addAssay')}</button>
+                <button class="btn btn-red" onclick="endLeach('${c.id}')"><i class="fa-solid fa-stop"></i>${t('endLeach')}</button>`,
+      RINSING:`<button class="btn btn-emerald" data-edit onclick="advance('${c.id}','DISCHARGING')"><i class="fa-solid fa-check"></i>${t('doneRinse')}</button>`,
+      DISCHARGING:`<button class="btn btn-ghost" data-edit onclick="openTailModal('${c.id}')"><i class="fa-solid fa-vial"></i>${t('addTail')}</button>
+                   <button class="btn btn-emerald" data-edit onclick="closeCycle('${c.id}')"><i class="fa-solid fa-flag-checkered"></i>${t('doneDischarge')}</button>`,
+    }[c.state] || '';
+    const srcRows = k.lines.map(l=>`<div class="flex items-center justify-between gap-2 text-[10px] py-0.5">
+        <span class="text-slate-400 truncate">${l.area} · <span class="text-slate-500">${l.grade}</span></span>
+        <span class="font-mono text-slate-300 shrink-0">${l.hauls? l.hauls+' '+t('hauls') : n0(l.m3)+' m³'} · ${l.assay==null?`<span class="text-amber-400">${t('gradePending')}</span>`:n2(l.assay)}</span>
+      </div>`).join('');
+    return `<div class="glass-light rounded-2xl p-4 border ${cls} hover-lift" style="border-color:${col}55">
+      <div class="flex items-start justify-between gap-2 mb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center font-black font-mono text-base" style="background:${col}1f;color:${col};border:1px solid ${col}55">${v}</div>
+          <div>
+            <div class="text-sm font-extrabold text-slate-100">Vat ${v.slice(1)} <span class="text-[10px] text-slate-500 font-mono">#${c.serial}</span></div>
+            <div class="chip ${LVL[s.level]} mt-0.5 inline-block">${t(c.state)}</div>
+          </div>
+        </div>
+        <div class="text-end">
+          <div class="text-[9px] text-slate-500 uppercase tracking-wider font-bold">${c.state==='LEACHING'?t('expGold'):t('fill')}</div>
+          <div class="text-base font-black font-mono" style="color:${col}">${c.state==='LEACHING'? n0(k.gold)+' g' : n1(k.fillPct)+'%'}</div>
+        </div>
+      </div>
+
+      <div class="h-1.5 rounded-full bg-slate-950/80 overflow-hidden mb-3">
+        <div class="h-full rounded-full transition-all duration-700" style="width:${prog}%;background:linear-gradient(90deg,${col}55,${col})"></div>
+      </div>
+
+      <div class="grid grid-cols-4 gap-1.5 mb-2.5">
+        ${cell(t('volume'), n1(k.survey)+' m³')}
+        ${cell(t('tonnage'), n0(k.tons)+' t')}
+        ${cell(t('avgGrade'), n2(k.avgGrade), 'text-amber-300')}
+        ${cell(t('recovery'), Math.round(k.rec*100)+'%')}
+        ${cell(t('hauls'), k.totalHauls? k.totalHauls : '—')}
+        ${cell(t('haulVol'), k.haulVol? n1(k.haulVol)+' m³':'—')}
+        ${cell(t('started'), fmtD(c.start))}
+        ${cell(c.state==='LEACHING'?t('expEnd'):t('ended'), c.state==='LEACHING'? fmtD(toISO(s.expEnd)) : fmtD(c.end))}
+      </div>
+
+      ${c.state==='LEACHING'?`<div class="flex items-center gap-2 mb-2.5 text-[10px]">
+        <span class="chip ${s.daysLeft<=DB.settings.warnDays?'c-warn':'c-safe'}">${s.daysRun} ${t('dayRunning')}</span>
+        <span class="chip c-info">${t('lastAssay')}: ${s.lastAssay? n2(s.lastAssay.ppm)+' ppm · '+fmtD(s.lastAssay.date) : t('noAssay')}</span>
+        ${s.readyStop?`<span class="chip c-danger">${t('readyStop')}</span>`:''}
+      </div>`:''}
+
+      <div class="bg-slate-950/50 rounded-lg p-2 border border-slate-800/40 mb-3">
+        <div class="text-[8px] font-bold text-slate-500 uppercase tracking-wider mb-1">${t('sources')}</div>
+        ${srcRows || `<div class="text-[10px] text-slate-500">${t('emptyHaul')}</div>`}
+      </div>
+
+      <div class="flex flex-wrap gap-2 no-print">${actions}
+        <button class="btn btn-ghost ms-auto" onclick="openVatDetail('${v}')"><i class="fa-solid fa-list-ul"></i>${t('details')}</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ══════════ HAUL TABLE ══════════ */
+function allLines(){
+  const out=[];
+  DB.cycles.forEach(c=>{ const k=calcCycle(c);
+    k.lines.forEach(l=>out.push({...l, vat:c.vat, cycleId:c.id, serial:c.serial, state:c.state})); });
+  return out.sort((a,b)=>(b.date||'0')<(a.date||'0')?-1:1);
+}
+function renderHaulTable(){
+  const fv=document.getElementById('haulFilterVat'), fa=document.getElementById('haulFilterArea');
+  if(fv.options.length<=1) VATS.forEach(v=>fv.add(new Option(v,v)));
+  if(fa.options.length<=1) [...new Set(allLines().map(l=>l.area))].forEach(a=>fa.add(new Option(a,a)));
+  const rows = allLines().filter(l=>(fv.value==='ALL'||l.vat===fv.value)&&(fa.value==='ALL'||l.area===fa.value));
+  const el=document.getElementById('haulTable');
+  el.innerHTML = `<thead><tr>
+    <th>${t('date')}</th><th>${t('vat')}</th><th>${t('serial')}</th><th>${t('area')}</th><th>${t('grade')}</th>
+    <th>${t('count')}</th><th>m³</th><th>${t('tonsLbl')}</th><th>${t('assayVal')}</th><th>Au g</th><th></th></tr></thead>
+    <tbody>${rows.length?rows.map(l=>`<tr>
+      <td class="font-mono">${l.date?fmtD(l.date):'—'}</td>
+      <td class="font-mono font-bold text-amber-300">${l.vat}</td>
+      <td class="text-slate-500">#${l.serial}</td>
+      <td>${l.area}</td><td class="text-slate-400">${l.grade}</td>
+      <td class="font-mono">${l.hauls??'—'}</td>
+      <td class="font-mono">${n1(l.m3)}</td>
+      <td class="font-mono">${n0(l.tons)}</td>
+      <td class="font-mono text-amber-300">${l.assay==null?t('gradePending'):n2(l.assay)}</td>
+      <td class="font-mono text-yellow-300">${l.gold==null?'—':n0(l.gold)}</td>
+      <td class="no-print"><button class="text-slate-500 hover:text-rose-400" data-edit onclick="delLine('${l.cycleId}','${l.id}')"><i class="fa-solid fa-trash-can"></i></button></td>
+    </tr>`).join(''):`<tr><td colspan="11" class="text-center text-slate-500 py-6">${t('noData')}</td></tr>`}</tbody>`;
+}
+
+/* ══════════ ASSAY CHARTS ══════════ */
+function sparkline(assays,cutoff){
+  const W=460,H=150,P=28;
+  if(!assays.length) return `<div class="text-[11px] text-slate-500 py-8 text-center">${t('noAssay')}</div>`;
+  const xs=assays.map(a=>parseD(a.date).getTime());
+  const ys=assays.map(a=>a.ppm);
+  const minX=Math.min(...xs),maxX=Math.max(...xs)||1;
+  const maxY=Math.max(...ys,cutoff*1.6), minY=0;
+  const px=v=>P+((v-minX)/((maxX-minX)||1))*(W-P*2);
+  const py=v=>H-P-((v-minY)/((maxY-minY)||1))*(H-P*1.6);
+  const pts=assays.map(a=>`${px(parseD(a.date).getTime())},${py(a.ppm)}`).join(' ');
+  const cy=py(cutoff);
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="height:auto">
+    <line x1="${P}" y1="${cy}" x2="${W-P}" y2="${cy}" stroke="#e85a4f" stroke-width="1.2" stroke-dasharray="4,4" opacity="0.8"/>
+    <text x="${W-P}" y="${cy-5}" text-anchor="end" font-size="8" fill="#f87171">cutoff ${cutoff} ppm</text>
+    <polyline points="${pts}" fill="none" stroke="#d4af37" stroke-width="2"/>
+    ${assays.map(a=>`<g><circle cx="${px(parseD(a.date).getTime())}" cy="${py(a.ppm)}" r="3.4" fill="${a.ppm<=cutoff?'#e85a4f':'#f0d060'}"/>
+      <text x="${px(parseD(a.date).getTime())}" y="${py(a.ppm)-8}" text-anchor="middle" font-size="8" fill="#cbd5e1">${n2(a.ppm)}</text>
+      <text x="${px(parseD(a.date).getTime())}" y="${H-8}" text-anchor="middle" font-size="7.5" fill="#64748b">${a.date.slice(5)}</text></g>`).join('')}
+  </svg>`;
+}
+function renderAssays(){
+  const list = DB.cycles.filter(c=>c.state!=='CLOSED'||(c.assays&&c.assays.length));
+  document.getElementById('assayCharts').innerHTML = list.length? list.map(c=>{
+    const A=[...(c.assays||[])].sort((a,b)=>a.date<b.date?-1:1);
+    const s=cycleStatus(c);
+    return `<div class="glass-light rounded-xl p-3 border border-slate-800/50">
+      <div class="flex items-center justify-between mb-1.5">
+        <div class="text-xs font-bold text-slate-200"><span class="font-mono text-amber-300">${c.vat}</span> · #${c.serial} <span class="chip ${LVL[s.level]} ms-1">${t(c.state)}</span></div>
+        <button class="btn btn-ghost !py-1" data-edit onclick="openAssayModal('${c.id}')"><i class="fa-solid fa-plus"></i></button>
+      </div>
+      ${sparkline(A, DB.settings.cutoffPpm)}
+      ${A.length?`<div class="flex flex-wrap gap-1 mt-1">${A.slice(-6).map(a=>`<span class="chip ${a.ppm<=DB.settings.cutoffPpm?'c-danger':'c-safe'}">${fmtD(a.date)} · ${n2(a.ppm)}
+        <i class="fa-solid fa-xmark ms-1 cursor-pointer opacity-60" data-edit onclick="delAssay('${c.id}','${a.id}')"></i></span>`).join('')}</div>`:''}
+    </div>`;
+  }).join('') : `<div class="text-slate-500 text-xs py-6 text-center">${t('noData')}</div>`;
+}
+
+/* ══════════ STOCKPILES ══════════ */
+function renderStock(){
+  document.getElementById('stockGrid').innerHTML = DB.stockpiles.map(p=>`
+    <div class="glass-light rounded-xl p-3.5 border border-slate-800/50 hover-lift">
+      <div class="flex items-start justify-between gap-2">
+        <div class="text-xs font-bold text-slate-100 leading-snug">${LANG&&p.nameAr?p.nameAr:p.name}</div>
+        <button class="text-slate-500 hover:text-amber-400 no-print" data-edit onclick="openStockModal('edit','${p.id}')"><i class="fa-solid fa-pen-to-square text-[11px]"></i></button>
+      </div>
+      <div class="mt-2.5 flex items-end justify-between">
+        <div><div class="text-[8px] uppercase tracking-wider text-slate-500 font-bold">${t('balance')}</div>
+          <div class="text-xl font-black font-mono text-emerald-300">${n0(p.tons)}<span class="text-[10px] text-slate-500 ms-1">t</span></div></div>
+        <div class="text-end"><div class="text-[8px] uppercase tracking-wider text-slate-500 font-bold">${t('gradeLbl')}</div>
+          <div class="text-sm font-bold font-mono ${p.grade==null?'text-amber-400':'text-amber-300'}">${p.grade==null?t('gradePending'):n2(p.grade)}</div></div>
+      </div>
+      <div class="mt-2 text-[9px] text-slate-500 font-mono">${p.source||''} ${p.grade!=null?`· ${n0(p.tons*p.grade)} g Au`:''}</div>
+    </div>`).join('');
+  const moves=[]; DB.stockpiles.forEach(p=>(p.moves||[]).forEach(m=>moves.push({...m,pile:p.name})));
+  moves.sort((a,b)=>b.date<a.date?-1:1);
+  document.getElementById('moveTable').innerHTML=`<thead><tr><th>${t('date')}</th><th>Pile</th><th>${t('status')}</th><th>${t('tonsLbl')}</th><th>${t('dest')}</th><th>${t('notes')}</th></tr></thead>
+   <tbody>${moves.length?moves.map(m=>`<tr><td class="font-mono">${fmtD(m.date)}</td><td>${m.pile}</td>
+     <td><span class="chip ${m.dir==='in'?'c-safe':'c-warn'}">${m.dir==='in'?t('moveIn'):t('moveOut')}</span></td>
+     <td class="font-mono">${n1(m.tons)}</td><td>${m.dest||'—'}</td><td class="text-slate-500">${m.note||''}</td></tr>`).join('')
+     :`<tr><td colspan="6" class="text-center text-slate-500 py-6">${t('noData')}</td></tr>`}</tbody>`;
+}
+
+/* ══════════ GOLD ══════════ */
+function renderGold(){
+  const rows = DB.cycles.map(c=>({c, k:calcCycle(c)}));
+  const calcTotal = rows.reduce((s,r)=>s+r.k.gold,0);
+  const actualTotal = DB.pours.reduce((s,p)=>s+p.grams,0);
+  const closed = rows.filter(r=>r.c.state==='CLOSED');
+  const closedCalc = closed.reduce((s,r)=>s+r.k.gold,0);
+  const box=(lbl,val,unit,tone)=>`<div class="glass-light rounded-xl p-3">
+     <div class="text-[9px] font-bold uppercase tracking-wider text-slate-500">${lbl}</div>
+     <div class="text-lg font-black font-mono ${tone}">${val}<span class="text-[10px] text-slate-500 ms-1">${unit}</span></div></div>`;
+  document.getElementById('goldSummary').innerHTML =
+    box(t('totalCalc'), n0(calcTotal),'g','text-yellow-300')+
+    box(t('totalActual'), n0(actualTotal),'g','text-emerald-300')+
+    box(t('variance'), actualTotal? n1((actualTotal-calcTotal)/calcTotal*100):'—','%', actualTotal>=calcTotal?'text-emerald-300':'text-rose-300')+
+    box(t('closedCycles'), closed.length+' / '+rows.length, '', 'text-slate-200');
+  document.getElementById('goldCycleTable').innerHTML=`<thead><tr><th>${t('serial')}</th><th>${t('vat')}</th><th>${t('tonnage')}</th><th>${t('avgGrade')}</th><th>${t('recovery')}</th><th>Au g</th><th>${t('actualGold')}</th></tr></thead>
+    <tbody>${rows.slice().reverse().map(({c,k})=>{
+      const act = DB.pours.filter(p=>p.cycleId===c.id).reduce((s,p)=>s+p.grams,0);
+      return `<tr><td class="text-slate-500">#${c.serial}</td><td class="font-mono font-bold text-amber-300">${c.vat}</td>
+      <td class="font-mono">${n0(k.tons)}</td><td class="font-mono">${n2(k.avgGrade)}</td><td class="font-mono">${Math.round(k.rec*100)}%</td>
+      <td class="font-mono text-yellow-300">${n0(k.gold)}${k.pending?' <span class="text-[9px] text-amber-500">+lab</span>':''}</td>
+      <td class="font-mono text-emerald-300">${act?n0(act):'—'}</td></tr>`;}).join('')}</tbody>`;
+  document.getElementById('pourTable').innerHTML=`<thead><tr><th>${t('date')}</th><th>${t('vat')}</th><th>Au g</th><th>${t('notes')}</th><th></th></tr></thead>
+    <tbody>${DB.pours.length?DB.pours.slice().sort((a,b)=>b.date<a.date?-1:1).map(p=>{
+      const c=DB.cycles.find(x=>x.id===p.cycleId);
+      return `<tr><td class="font-mono">${fmtD(p.date)}</td><td class="font-mono">${c?c.vat+' #'+c.serial:t('plantWide')}</td>
+      <td class="font-mono text-emerald-300 font-bold">${n1(p.grams)}</td><td class="text-slate-500">${p.note||''}</td>
+      <td class="no-print"><button class="text-slate-500 hover:text-rose-400" data-edit onclick="delPour('${p.id}')"><i class="fa-solid fa-trash-can"></i></button></td></tr>`;}).join('')
+      :`<tr><td colspan="5" class="text-center text-slate-500 py-6">${t('noData')}</td></tr>`}</tbody>`;
+}
+
+/* ══════════ HISTORY ══════════ */
+function renderHistory(){
+  const fv=document.getElementById('histFilterVat');
+  if(fv.options.length<=1) VATS.forEach(v=>fv.add(new Option(v,v)));
+  const rows = DB.cycles.filter(c=>fv.value==='ALL'||c.vat===fv.value)
+                        .map(c=>({c,k:calcCycle(c),s:cycleStatus(c)}));
+  /* bar chart: gold per cycle */
+  const W=1100,H=170,P=30, max=Math.max(...rows.map(r=>r.k.gold),1);
+  const bw=(W-P*2)/Math.max(rows.length,1);
+  document.getElementById('histChart').innerHTML = rows.length? `<svg viewBox="0 0 ${W} ${H}" width="100%" style="height:auto">
+    ${rows.map((r,i)=>{const h=(r.k.gold/max)*(H-P*1.9); const x=P+i*bw+bw*0.18; const w=bw*0.64;
+      const col = r.c.state==='CLOSED'?'#d4af37':'#38bdf8';
+      return `<g><rect x="${x}" y="${H-P-h}" width="${w}" height="${h}" rx="4" fill="${col}" opacity="0.75"/>
+        <text x="${x+w/2}" y="${H-P-h-6}" text-anchor="middle" font-size="9" font-weight="700" fill="#e2e8f0">${n0(r.k.gold)}</text>
+        <text x="${x+w/2}" y="${H-P+13}" text-anchor="middle" font-size="9" font-weight="800" fill="#94a3b8">${r.c.vat}</text>
+        <text x="${x+w/2}" y="${H-P+24}" text-anchor="middle" font-size="7.5" fill="#64748b">#${r.c.serial}</text></g>`;}).join('')}
+    <line x1="${P}" y1="${H-P}" x2="${W-P}" y2="${H-P}" stroke="#1e2d42" stroke-width="1"/>
+    <text x="${P}" y="18" font-size="9" font-weight="800" letter-spacing="1.4" fill="#5d708a">EXPECTED Au PER CYCLE (g)</text>
+  </svg>`:'';
+  document.getElementById('histTable').innerHTML=`<thead><tr>
+    <th>${t('serial')}</th><th>${t('vat')}</th><th>${t('started')}</th><th>${t('ended')}</th><th>${t('duration')}</th>
+    <th>m³</th><th>${t('tonnage')}</th><th>${t('count')}</th><th>${t('avgGrade')}</th><th>Au g</th><th>${t('status')}</th><th></th></tr></thead>
+    <tbody>${rows.slice().reverse().map(({c,k,s})=>{
+      const dur = (c.start&&c.end)? dDiff(parseD(c.start),parseD(c.end)) : (s.daysRun??null);
+      return `<tr>
+      <td class="text-slate-500">#${c.serial}</td><td class="font-mono font-bold text-amber-300">${c.vat}</td>
+      <td class="font-mono">${fmtD(c.start)}</td><td class="font-mono">${fmtD(c.end)}</td>
+      <td class="font-mono ${dur>DB.settings.avgCycleDays?'text-amber-300':'text-slate-300'}">${dur!=null?dur+' '+t('days'):'—'}</td>
+      <td class="font-mono">${n1(k.survey)}</td><td class="font-mono">${n0(k.tons)}</td>
+      <td class="font-mono">${k.totalHauls||'—'}</td><td class="font-mono">${n2(k.avgGrade)}</td>
+      <td class="font-mono text-yellow-300">${n0(k.gold)}</td>
+      <td><span class="chip ${LVL[s.level]}">${t(c.state)}</span></td>
+      <td class="no-print"><button class="text-slate-500 hover:text-amber-400" onclick="openCycleDetail('${c.id}')"><i class="fa-solid fa-eye"></i></button></td></tr>`;}).join('')}</tbody>`;
+}
+
+/* ══════════ MODAL FRAMEWORK ══════════ */
+function modal(title, body, onSave, opts={}){
+  const root=document.getElementById('modalRoot');
+  if(!CAN_EDIT()) onSave = null;        // viewers never get a Save button
+  root.innerHTML=`<div class="fixed inset-0 z-50 modal-overlay flex items-center justify-center p-4" onclick="if(event.target===this)closeModal()">
+    <div class="glass rounded-2xl w-full ${opts.wide?'max-w-3xl':'max-w-md'} p-5 border border-slate-700/60 shadow-2xl max-h-[92vh] overflow-y-auto" style="animation:toastIn .3s ease">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-sm font-extrabold text-slate-100">${title}</h3>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div id="modalBody" class="space-y-3">${body}</div>
+      ${onSave?`<div class="mt-5">
+        <p id="confirmHint" class="hidden text-[10px] font-bold text-amber-300 mb-2 flex items-center gap-1.5">
+          <i class="fa-solid fa-circle-exclamation"></i>${t('reviewHint')}</p>
+        <div class="flex gap-2">
+          <button class="btn btn-gold flex-1 justify-center" id="modalSave"><i class="fa-solid fa-check"></i>${t('save')}</button>
+          <button class="btn btn-ghost justify-center" onclick="closeModal()">${t('cancel')}</button></div></div>`:''}
+    </div></div>`;
+  if(onSave){
+    const btn=document.getElementById('modalSave'), hint=document.getElementById('confirmHint');
+    const disarm=()=>{ btn.dataset.armed=''; hint.classList.add('hidden');
+      btn.className='btn btn-gold flex-1 justify-center';
+      btn.innerHTML='<i class="fa-solid fa-check"></i>'+t('save'); };
+    document.getElementById('modalBody').addEventListener('input',disarm);
+    btn.onclick=()=>{
+      if(btn.dataset.armed!=='1'){          // step 1 — review
+        btn.dataset.armed='1'; hint.classList.remove('hidden');
+        btn.className='btn btn-emerald flex-1 justify-center';
+        btn.innerHTML='<i class="fa-solid fa-circle-check"></i>'+t('confirmSave');
+        return;
+      }
+      if(onSave()!==false){ closeModal(); renderAll(); }   // step 2 — commit
+    };
+  }
+}
+function closeModal(){ document.getElementById('modalRoot').innerHTML=''; }
+function fld(id,label,type='text',val='',extra=''){ return `<div><label class="lbl">${label}</label>
+  <input id="${id}" type="${type}" value="${val??''}" class="fld" ${extra}></div>`; }
+function sel(id,label,options,val){ return `<div><label class="lbl">${label}</label><select id="${id}" class="fld">
+  ${options.map(o=>{const [v,l]=Array.isArray(o)?o:[o,o];return `<option value="${v}" ${v==val?'selected':''}>${l}</option>`;}).join('')}</select></div>`; }
+const V=id=>document.getElementById(id).value;
+const NV=id=>{const v=parseFloat(V(id)); return isNaN(v)?null:v;};
+
+function toast(msg,type='info'){
+  const c=document.getElementById('toastContainer'); const d=document.createElement('div');
+  const st=type==='warn'?'bg-amber-950/90 text-amber-200 border-amber-500/50':type==='error'?'bg-rose-950/90 text-rose-200 border-rose-500/50':'bg-slate-900/95 text-amber-200 border-amber-500/30';
+  d.className=`pointer-events-auto px-4 py-2.5 rounded-xl shadow-2xl text-[11px] font-bold flex items-center gap-2.5 border toast-enter ${st}`;
+  d.innerHTML=`<i class="fa-solid fa-circle-info"></i>${msg}`;
+  c.appendChild(d); setTimeout(()=>{d.className=d.className.replace('toast-enter','toast-exit');setTimeout(()=>d.remove(),320);},2800);
+}
+
+/* ══════════ ACTIONS ══════════ */
+function startCycle(vat){
+  const c={id:uid(),serial:DB.nextSerial++,vat,fillStart:toISO(today()),start:null,end:null,
+    rinseEnd:null,dischargeEnd:null,state:'FILLING',surveyM3:null,sg:DB.settings.sg,
+    recovery:null,head:null,tail:null,lines:[],assays:[],notes:''};
+  DB.cycles.push(c); renderAll(); toast(`${vat}: ${t('FILLING')}`);
+  setTimeout(()=>openHaulModal(c.id),60);
+}
+function openHaulModal(cycleId){
+  const open = DB.cycles.filter(c=>c.state==='FILLING');
+  const target = cycleId || (open[0]&&open[0].id) || '';
+  const tc = DB.cycles.find(x=>x.id===target);
+  const defNode = tc ? 'PREP'+tc.vat.slice(1) : '';
+  const opts = DB.cycles.filter(c=>c.state==='FILLING'||c.state==='LEACHING').map(c=>[c.id,`${c.vat} · #${c.serial} · ${t(c.state)}`]);
+  if(!opts.length){ modal(t('logHauls'), `<p class="text-xs text-slate-400">${t('noData')}</p>
+    ${sel('newVat',t('vat'),VATS,'P4')}`, ()=>{ startCycle(V('newVat')); return true; }); return; }
+  modal(t('logHauls'), `
+    ${sel('hCycle',t('vat'),opts,target)}
+    ${fld('hDate',t('date'),'date',toISO(today()))}
+    ${sel('hArea',t('area'),AREAS,'Adel East')}
+    ${sel('hGrade',t('grade'),GRADES,'High grade')}
+    ${sel('hNode',t('sourceNode'),[['',t('noSource')],...(DB.nodes||[]).map(n=>[n.key,`${nodeName(n)} (${n.balance})`])], defNode)}
+    <div class="grid grid-cols-2 gap-3">${fld('hCount',t('count'),'number','1','min="1" step="1"')}
+    ${fld('hAssay',t('assayVal'),'number','','step="0.01" placeholder="lab"')}</div>
+    <p class="text-[10px] text-slate-500">${t('surveyNote')} — ${t('haulVol')} = m³ ÷ ${t('count')}</p>`,
+    ()=>{
+      const c=DB.cycles.find(x=>x.id===V('hCycle')); if(!c) return false;
+      const cnt=parseInt(V('hCount')); if(!cnt||cnt<1){ toast(t('count'),'warn'); return false; }
+      if(!c.fillStart) c.fillStart=V('hDate');
+      c.lines.push({id:uid(),date:V('hDate'),area:V('hArea'),grade:V('hGrade'),assay:NV('hAssay'),m3:null,hauls:cnt});
+      const src=node(V('hNode'));
+      if(src){ src.moves=src.moves||[];
+        src.moves.push({id:uid(),date:V('hDate'),dir:'out',loads:cnt,other:'Vat '+c.vat.slice(1),note:V('hArea')+' · '+V('hGrade')});
+        src.balance=Math.max(0,(src.balance||0)-cnt); }
+      toast(`${c.vat}: +${cnt} ${t('hauls')}`);
+    });
+}
+function openSurveyModal(cycleId){
+  const c=DB.cycles.find(x=>x.id===cycleId); if(!c) return;
+  const k=calcCycle(c);
+  modal(t('markFull')+` · ${c.vat}`, `
+    ${fld('sVol',t('surveyNote'),'number',c.surveyM3??'','step="0.01"')}
+    <div class="grid grid-cols-2 gap-3">${fld('sSg',t('sg'),'number',c.sg||DB.settings.sg,'step="0.01"')}
+    ${fld('sStart',t('startLeach'),'date',toISO(today()))}</div>
+    <div class="bg-slate-950/70 rounded-xl p-3 text-[11px] text-slate-400 space-y-1">
+      <div>${t('count')}: <span class="font-mono text-slate-200">${k.totalHauls}</span></div>
+      <div id="sPreview" class="font-mono text-amber-300"></div></div>`,
+    ()=>{
+      const v=NV('sVol'); if(!v){ toast(t('volume'),'warn'); return false; }
+      c.surveyM3=v; c.sg=NV('sSg')||DB.settings.sg; c.start=V('sStart'); c.state='LEACHING';
+      toast(`${c.vat}: ${t('LEACHING')}`);
+    });
+  const upd=()=>{const v=NV('sVol')||0,sg=NV('sSg')||1.6,hv=k.totalHauls?v/k.totalHauls:0;
+    document.getElementById('sPreview').textContent=`${n0(v*sg)} t · ${n1(hv)} m³ ${t('perHaul')} · ${n1(v*sg/DB.settings.capacityTon*100)}% ${t('fill')}`;};
+  ['sVol','sSg'].forEach(i=>document.getElementById(i).addEventListener('input',upd)); upd();
+}
+function openAssayModal(cycleId){
+  const opts=DB.cycles.filter(c=>c.state==='LEACHING').map(c=>[c.id,`${c.vat} · #${c.serial}`]);
+  if(!opts.length){ toast(t('noData'),'warn'); return; }
+  modal(t('addAssay'), `${sel('aCycle',t('vat'),opts,cycleId||opts[0][0])}
+    ${fld('aDate',t('date'),'date',toISO(today()))}
+    ${fld('aPpm','Au ppm','number','','step="0.001"')}
+    <p class="text-[10px] text-slate-500">${t('readyStop')} (${DB.settings.cutoffPpm} ppm)</p>`,
+    ()=>{ const c=DB.cycles.find(x=>x.id===V('aCycle')); const p=NV('aPpm');
+      if(p==null){ toast('ppm','warn'); return false; }
+      c.assays=c.assays||[]; c.assays.push({id:uid(),date:V('aDate'),ppm:p});
+      const s=cycleStatus(c); if(s.readyStop) toast(`${c.vat}: ${t('readyStop')}`,'warn'); });
+}
+function endLeach(id){ const c=DB.cycles.find(x=>x.id===id); c.end=toISO(today()); c.state='RINSING';
+  renderAll(); toast(`${c.vat}: ${t('RINSING')}`); }
+function advance(id,state){ const c=DB.cycles.find(x=>x.id===id);
+  if(state==='DISCHARGING') c.rinseEnd=toISO(today());
+  c.state=state; renderAll(); toast(`${c.vat}: ${t(state)}`); }
+function openTailModal(id){
+  const c=DB.cycles.find(x=>x.id===id);
+  modal(t('addTail')+` · ${c.vat}`, `
+    <div class="grid grid-cols-2 gap-3">${fld('tHead',t('head'),'number',c.head??'','step="0.01"')}
+    ${fld('tTail',t('tail'),'number',c.tail??'','step="0.01"')}</div>
+    <div class="bg-slate-950/70 rounded-xl p-3 text-[11px]"><span class="text-slate-400">${t('recovery')}: </span>
+      <span id="recPrev" class="font-mono text-emerald-300 font-bold"></span></div>
+    <p class="text-[10px] text-slate-500">(Head − Tail) ÷ Head · H${c.vat.slice(1)} / T${c.vat.slice(1)}</p>`,
+    ()=>{ c.head=NV('tHead'); c.tail=NV('tTail');
+      c.recovery = (c.head&&c.tail!=null)? Math.max(0,(c.head-c.tail)/c.head) : null;
+      toast(`${c.vat}: ${t('recovery')} ${c.recovery!=null?Math.round(c.recovery*100)+'%':'—'}`); });
+  const upd=()=>{const h=NV('tHead'),tl=NV('tTail');
+    document.getElementById('recPrev').textContent = (h&&tl!=null)? Math.round((h-tl)/h*1000)/10+'%' : '—';};
+  ['tHead','tTail'].forEach(i=>document.getElementById(i).addEventListener('input',upd)); upd();
+}
+function closeCycle(id){ const c=DB.cycles.find(x=>x.id===id); c.dischargeEnd=toISO(today()); c.state='CLOSED';
+  renderAll(); toast(`${c.vat}: ${t('CLOSED')}`); }
+function delLine(cid,lid){ if(!confirm(t('confirmDel'))) return;
+  const c=DB.cycles.find(x=>x.id===cid); c.lines=c.lines.filter(l=>l.id!==lid); renderAll(); }
+function delAssay(cid,aid){ const c=DB.cycles.find(x=>x.id===cid); c.assays=c.assays.filter(a=>a.id!==aid); renderAll(); }
+function delPour(id){ if(!confirm(t('confirmDel'))) return; DB.pours=DB.pours.filter(p=>p.id!==id); renderAll(); }
+
+/* ══════════ DETAIL VIEWS ══════════ */
+function openVatDetail(vat){
+  const c = activeCycle(vat) || DB.cycles.filter(x=>x.vat===vat).slice(-1)[0];
+  if(c) openCycleDetail(c.id);
+}
+function openCycleDetail(id){
+  const c=DB.cycles.find(x=>x.id===id), k=calcCycle(c), s=cycleStatus(c);
+  const tl=[['fillStart',t('startFilling'),c.fillStart],['start',t('startLeach'),c.start],
+            ['end',t('endLeach'),c.end],['rinseEnd',t('doneRinse'),c.rinseEnd],['dischargeEnd',t('CLOSED'),c.dischargeEnd]];
+  modal(`${c.vat} · #${c.serial} <span class="chip ${LVL[s.level]} ms-2">${t(c.state)}</span>`,`
+    <div class="grid grid-cols-3 gap-2">
+      ${[[t('volume'),n1(k.survey)+' m³'],[t('tonnage'),n0(k.tons)+' t'],[t('fill'),n1(k.fillPct)+'%'],
+         [t('count'),k.totalHauls||'—'],[t('haulVol'),k.haulVol?n1(k.haulVol)+' m³':'—'],[t('avgGrade'),n2(k.avgGrade)],
+         [t('recovery'),Math.round(k.rec*100)+'%'],[t('expGold'),n0(k.gold)+' g'],
+         [t('duration'),(c.start&&c.end)?dDiff(parseD(c.start),parseD(c.end))+' '+t('days'):(s.daysRun!=null?s.daysRun+' '+t('days'):'—')]]
+        .map(([l,v])=>`<div class="bg-slate-950/70 rounded-lg p-2 border border-slate-800/40">
+          <div class="text-[8px] uppercase tracking-wider text-slate-500 font-bold">${l}</div>
+          <div class="text-xs font-bold font-mono text-slate-200">${v}</div></div>`).join('')}
+    </div>
+    <div class="flex flex-wrap gap-1.5">${tl.filter(x=>x[2]).map(x=>`<span class="chip c-idle">${x[1]}: ${fmtD(x[2])}</span>`).join('')}</div>
+    ${c.head||c.tail?`<div class="text-[11px] text-slate-400">Head ${n2(c.head)} · Tail ${n2(c.tail)} → ${t('recovery')} <span class="text-emerald-300 font-bold">${c.recovery!=null?Math.round(c.recovery*100)+'%':'—'}</span></div>`:''}
+    <div class="overflow-x-auto rounded-xl border border-slate-800/50"><table class="data">
+      <thead><tr><th>${t('date')}</th><th>${t('area')}</th><th>${t('grade')}</th><th>${t('count')}</th><th>m³</th><th>${t('tonsLbl')}</th><th>${t('assayVal')}</th><th>Au g</th><th></th></tr></thead>
+      <tbody>${k.lines.map(l=>`<tr><td class="font-mono">${l.date?fmtD(l.date):'—'}</td><td>${l.area}</td><td class="text-slate-400">${l.grade}</td>
+        <td class="font-mono">${l.hauls??'—'}</td><td class="font-mono">${n1(l.m3)}</td><td class="font-mono">${n0(l.tons)}</td>
+        <td class="font-mono text-amber-300">${l.assay==null?t('gradePending'):n2(l.assay)}</td>
+        <td class="font-mono text-yellow-300">${l.gold==null?'—':n0(l.gold)}</td>
+        <td class="no-print"><button class="text-slate-500 hover:text-rose-400" data-edit onclick="delLine('${c.id}','${l.id}');closeModal()"><i class="fa-solid fa-trash-can"></i></button></td></tr>`).join('')}</tbody></table></div>
+    ${(c.assays&&c.assays.length)?sparkline([...c.assays].sort((a,b)=>a.date<b.date?-1:1),DB.settings.cutoffPpm):''}
+    ${c.notes?`<p class="text-[10px] text-slate-500 font-mono">${c.notes}</p>`:''}
+    <div class="flex flex-wrap gap-2 no-print pt-1">
+      <button class="btn btn-sky" onclick="closeModal();openHaulModal('${c.id}')"><i class="fa-solid fa-truck"></i>${t('addEntry')}</button>
+      ${c.state==='LEACHING'?`<button class="btn btn-sky" onclick="closeModal();openAssayModal('${c.id}')"><i class="fa-solid fa-flask-vial"></i>${t('addAssay')}</button>`:''}
+      <button class="btn btn-ghost" onclick="closeModal();openTailModal('${c.id}')"><i class="fa-solid fa-vial"></i>${t('addTail')}</button>
+      <button class="btn btn-ghost" onclick="closeModal();openEditCycle('${c.id}')"><i class="fa-solid fa-pen"></i>${t('settings')}</button>
+    </div>`, null, {wide:true});
+}
+function openEditCycle(id){
+  const c=DB.cycles.find(x=>x.id===id);
+  modal(`${c.vat} · #${c.serial}`,`
+    ${sel('eState',t('status'),STATES.map(s=>[s,t(s)]),c.state)}
+    <div class="grid grid-cols-2 gap-3">${fld('eVol',t('volume'),'number',c.surveyM3??'','step="0.01"')}${fld('eSg',t('sg'),'number',c.sg,'step="0.01"')}</div>
+    <div class="grid grid-cols-2 gap-3">${fld('eFill',t('startFilling'),'date',c.fillStart||'')}${fld('eStart',t('startLeach'),'date',c.start||'')}</div>
+    <div class="grid grid-cols-2 gap-3">${fld('eEnd',t('endLeach'),'date',c.end||'')}${fld('eRec',t('recovery'),'number',c.recovery??'','step="0.01" placeholder="0.75"')}</div>
+    <div><label class="lbl">${t('notes')}</label><textarea id="eNotes" class="fld" rows="2">${c.notes||''}</textarea></div>
+    <button class="btn btn-red w-full justify-center" onclick="if(confirm('${t('confirmDel')}')){DB.cycles=DB.cycles.filter(x=>x.id!=='${c.id}');closeModal();renderAll();}"><i class="fa-solid fa-trash-can"></i>${t('del')}</button>`,
+    ()=>{ c.state=V('eState'); c.surveyM3=NV('eVol'); c.sg=NV('eSg')||1.6;
+      c.fillStart=V('eFill')||null; c.start=V('eStart')||null; c.end=V('eEnd')||null;
+      c.recovery=NV('eRec'); c.notes=V('eNotes'); });
+}
+
+/* ══════════ STOCKPILES / GOLD / SETTINGS MODALS ══════════ */
+function openStockModal(mode,id){
+  const p = mode==='edit'? DB.stockpiles.find(x=>x.id===id) : {name:'',nameAr:'',tons:0,grade:null,source:'',note:''};
+  modal(mode==='edit'?p.name:t('newPile'),`
+    ${fld('pName','Name',"text",p.name)}
+    ${fld('pNameAr','الاسم بالعربي',"text",p.nameAr||'')}
+    <div class="grid grid-cols-2 gap-3">${fld('pTons',t('tonsLbl'),'number',p.tons,'step="0.1"')}${fld('pGrade',t('gradeLbl'),'number',p.grade??'','step="0.01"')}</div>
+    ${fld('pSource',t('area'),'text',p.source||'')}
+    ${mode==='edit'?`<button class="btn btn-red w-full justify-center" onclick="if(confirm('${t('confirmDel')}')){DB.stockpiles=DB.stockpiles.filter(x=>x.id!=='${p.id}');closeModal();renderAll();}"><i class="fa-solid fa-trash-can"></i>${t('del')}</button>`:''}`,
+    ()=>{ const o={name:V('pName'),nameAr:V('pNameAr'),tons:NV('pTons')||0,grade:NV('pGrade'),source:V('pSource')};
+      if(mode==='edit') Object.assign(p,o); else DB.stockpiles.push({id:uid(),...o,moves:[]}); });
+}
+function openMoveModal(){
+  modal(t('movement'),`
+    ${sel('mPile','Pile',DB.stockpiles.map(p=>[p.id,p.name]))}
+    ${sel('mDir',t('status'),[['in',t('moveIn')],['out',t('moveOut')]],'out')}
+    <div class="grid grid-cols-2 gap-3">${fld('mDate',t('date'),'date',toISO(today()))}${fld('mTons',t('tonsLbl'),'number','','step="0.1"')}</div>
+    ${fld('mDest',t('dest'),'text','','placeholder="P3 / crusher / screen 5"')}
+    ${fld('mNote',t('notes'),'text','')}`,
+    ()=>{ const p=DB.stockpiles.find(x=>x.id===V('mPile')); const tn=NV('mTons');
+      if(!tn){ toast(t('tonsLbl'),'warn'); return false; }
+      p.moves=p.moves||[]; p.moves.push({id:uid(),date:V('mDate'),dir:V('mDir'),tons:tn,dest:V('mDest'),note:V('mNote')});
+      p.tons = Math.max(0, p.tons + (V('mDir')==='in'? tn : -tn)); });
+}
+function openPourModal(){
+  const opts=[['', t('plantWide')], ...DB.cycles.filter(c=>c.state!=='FILLING').slice(-8).reverse().map(c=>[c.id,`${c.vat} · #${c.serial}`])];
+  modal(t('addPour'),`
+    ${fld('gDate',t('date'),'date',toISO(today()))}
+    ${fld('gGrams','Au g','number','','step="0.01"')}
+    ${sel('gCycle',t('vat'),opts,'')}
+    ${fld('gNote',t('notes'),'text','')}
+    <p class="text-[10px] text-slate-500">${t('pourNote')}</p>`,
+    ()=>{ const g=NV('gGrams'); if(!g){ toast('Au g','warn'); return false; }
+      DB.pours.push({id:uid(),date:V('gDate'),grams:g,cycleId:V('gCycle')||null,note:V('gNote')}); });
+}
+function openSettings(){
+  const s=DB.settings;
+  modal(t('settings'),`
+    <div class="grid grid-cols-2 gap-3">
+      ${fld('stSg',t('sg'),'number',s.sg,'step="0.01"')}
+      ${fld('stCap',t('capacity'),'number',s.capacityTon,'step="10"')}
+      ${fld('stRec',t('defRec'),'number',s.defaultRecovery,'step="0.01"')}
+      ${fld('stCut',t('cutoff'),'number',s.cutoffPpm,'step="0.01"')}
+      ${fld('stInt',t('interval'),'number',s.assayIntervalDays,'step="1"')}
+      ${fld('stAvg',t('avgCycle'),'number',s.avgCycleDays,'step="1"')}
+      ${fld('stWarn',t('warnDays'),'number',s.warnDays,'step="1"')}
+    </div>`,
+    ()=>{ s.sg=NV('stSg')||1.6; s.capacityTon=NV('stCap')||1500; s.defaultRecovery=NV('stRec')||0.75;
+      s.cutoffPpm=NV('stCut')??0.4; s.assayIntervalDays=NV('stInt')||2; s.avgCycleDays=NV('stAvg')||18;
+      s.warnDays=NV('stWarn')||7; });
+}
+function openBackup(){
+  modal(t('backup'),`
+    <button class="btn btn-gold w-full justify-center" onclick="exportJSON()"><i class="fa-solid fa-download"></i>${t('exportJson')}</button>
+    <button class="btn btn-sky w-full justify-center" onclick="exportHTML()"><i class="fa-solid fa-file-export"></i>${t('exportHtml')}</button>
+    <label class="btn btn-ghost w-full justify-center cursor-pointer"><i class="fa-solid fa-upload"></i>${t('importJson')}
+      <input type="file" accept="application/json" class="hidden" onchange="importJSON(this)"></label>
+    <button class="btn btn-ghost w-full justify-center" onclick="exportCSV('cycles')"><i class="fa-solid fa-file-csv"></i>Cycles CSV</button>
+    <button class="btn btn-ghost w-full justify-center" onclick="exportCSV('hauls')"><i class="fa-solid fa-file-csv"></i>Hauls CSV</button>
+    <button class="btn btn-red w-full justify-center" onclick="resetWorkspace()"><i class="fa-solid fa-rotate-left"></i>${t('resetAll')}</button>`);
+}
+/* reset now clears the SHARED workspace for everyone, so it asks twice */
+function resetWorkspace(){
+  if(!confirm(t('confirmReset'))) return;
+  if(!confirm('This resets the workspace for EVERY user on EVERY device. Continue?')) return;
+  DB = seedDB();
+  try{ localStorage.removeItem(STORE_KEY); }catch(e){}
+  closeModal(); renderAll(); pushDB();
+  toast('Workspace reset','warn');
+}
+
+/* ══════════ EXPORT / IMPORT ══════════ */
+function download(name,content,type='application/json'){
+  const b=new Blob([content],{type}); const u=URL.createObjectURL(b);
+  const a=document.createElement('a'); a.href=u; a.download=name; a.click(); URL.revokeObjectURL(u);
+}
+function exportJSON(){ download(`vat-backup-${toISO(today())}.json`, JSON.stringify(DB,null,2)); toast('Backup saved'); }
+function exportHTML(){
+  if(!DB){ toast('No data to export','warn'); return; }
+  closeModal();
+
+  const safeDbJson = JSON.stringify(DB).replace(/<\/script/gi, '<\\/script');
+  const exportTimestamp = new Date().toLocaleString(LANG ? 'ar-EG' : 'en-GB', {
+    dateStyle: 'medium',
+    timeStyle: 'short'
+  });
+
+  const markerRegex = /\/\* __STANDALONE_MARKER_START__ \*\/[\s\S]*?\/\* __STANDALONE_MARKER_END__ \*\//;
+  const newMarkerBlock = `/* __STANDALONE_MARKER_START__ */
+const IS_STANDALONE = true;
+const EMBEDDED_DB   = ${safeDbJson};
+const EXPORTED_AT   = ${JSON.stringify(exportTimestamp)};
+/* __STANDALONE_MARKER_END__ */`;
+
+  let exportContent = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+  if(markerRegex.test(exportContent)){
+    exportContent = exportContent.replace(markerRegex, newMarkerBlock);
+  } else {
+    exportContent = exportContent.replace(
+      'const STORE_KEY',
+      `const IS_STANDALONE = true;\nconst EMBEDDED_DB = ${safeDbJson};\nconst EXPORTED_AT = ${JSON.stringify(exportTimestamp)};\nconst STORE_KEY`
+    );
+  }
+
+  exportContent = exportContent.replace(/<div id="modalSlot">[\s\S]*?<\/div>/i, '<div id="modalSlot"></div>');
+  exportContent = exportContent.replace(/<div id="authGate"[^>]*>/i, '<div id="authGate" class="hidden" style="display:none">');
+  exportContent = exportContent.replace(/<div class="max-w-\[1620px\] mx-auto space-y-3.5" id="appRoot"[^>]*>/i, '<div class="max-w-[1620px] mx-auto space-y-3.5" id="appRoot">');
+
+  const filename = `MGM_Control_Center_Viewer_${toISO(today())}.html`;
+  download(filename, exportContent, 'text/html;charset=utf-8');
+  toast(t('exportHtmlSuccess') || 'Standalone viewer HTML exported', 'info');
+}
+function importJSON(input){
+  const f=input.files[0]; if(!f) return; const r=new FileReader();
+  r.onload=()=>{ try{ const d=JSON.parse(r.result); if(!d.cycles) throw 0; DB=d; saveDB(); closeModal(); renderAll(); toast('Backup loaded'); }
+    catch(e){ toast('Invalid backup file','error'); } };
+  r.readAsText(f);
+}
+function exportCSV(kind){
+  let rows=[];
+  if(kind==='cycles'){
+    rows.push(['serial','vat','state','fill_start','leach_start','end','duration_d','survey_m3','sg','tons','loads','load_m3','avg_grade','recovery','au_g']);
+    DB.cycles.forEach(c=>{const k=calcCycle(c);
+      rows.push([c.serial,c.vat,c.state,c.fillStart||'',c.start||'',c.end||'',
+        (c.start&&c.end)?dDiff(parseD(c.start),parseD(c.end)):'',k.survey,k.sg,Math.round(k.tons),
+        k.totalHauls,k.haulVol.toFixed(2),k.avgGrade.toFixed(3),k.rec,Math.round(k.gold)]);});
+  } else {
+    rows.push(['date','vat','serial','area','class','loads','m3','tons','assay_gpt','au_g']);
+    allLines().forEach(l=>rows.push([l.date||'',l.vat,l.serial,l.area,l.grade,l.hauls??'',
+      (l.m3||0).toFixed(2),Math.round(l.tons),l.assay??'',l.gold==null?'':Math.round(l.gold)]));
+  }
+  download(`vat-${kind}-${toISO(today())}.csv`, rows.map(r=>r.join(',')).join('\n'),'text/csv');
+}
+
+/* ══════════ i18n APPLY ══════════ */
+function paintLogo(){
+  const slot=document.getElementById('logoSlot');
+  const img=slot.querySelector('img'), ic=slot.querySelector('i');
+  if(DB.settings.logo){
+    if(ic) ic.remove();
+    if(img) img.src=DB.settings.logo;
+    else slot.insertAdjacentHTML('afterbegin',`<img src="${DB.settings.logo}" alt="logo" class="w-full h-full object-cover">`);
+    slot.classList.remove('bg-gradient-to-br','from-amber-400','via-amber-500','to-yellow-700');
+    slot.classList.add('bg-slate-900','border','border-amber-500/40');
+  }
+}
+function applyI18n(){
+  paintLogo();
+  document.querySelectorAll('[data-i18n]').forEach(el=>{ el.textContent = t(el.dataset.i18n); });
+  document.documentElement.dir = LANG? 'rtl':'ltr';
+  document.documentElement.lang = LANG? 'ar':'en';
+  document.getElementById('langLabel').textContent = LANG? 'EN':'عربي';
+}
+function switchTab(name){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id==='panel-'+name));
+}
+/* ══════════ ROLE ENFORCEMENT (client side) ══════════
+   This is convenience only — it stops viewers from opening editors
+   and seeing dead buttons. The real boundary is the RLS policy on
+   the server, which rejects writes from anyone who is not an admin/editor. */
+const MUTATING_FNS = [
+  'startCycle','openHaulModal','openSurveyModal','openAssayModal','endLeach','advance',
+  'openTailModal','closeCycle','delLine','delAssay','delPour','openEditCycle',
+  'openStockModal','openMoveModal','openPourModal','openNodeMove','delNodeMove',
+  'openSettings','importJSON','resetWorkspace'
+];
+function guardMutations(){
+  MUTATING_FNS.forEach(name=>{
+    const fn = window[name];
+    if(typeof fn !== 'function') return;
+    window[name] = function(...args){
+      if(!CAN_EDIT()){ toast('Read-only access — ask an admin or editor to make this change','warn'); return; }
+      if(REV < 0){ toast('Offline — changes cannot be saved right now','warn'); return; }
+      return fn.apply(this, args);
+    };
+  });
+}
+
+function applyRoleUI(){
+  document.body.classList.toggle('role-viewer', !CAN_EDIT());
+  const chip = document.getElementById('userRole');
+  if (chip) {
+    chip.textContent = ROLE;
+    chip.className = 'role-chip ' + ROLE; // ✅ يُظهر الشارة بالتصميم والمسمى الصحيح (admin / editor / viewer)
+  }
+  const emailEl = document.getElementById('userEmail');
+  if (emailEl && SESSION && SESSION.user) emailEl.textContent = SESSION.user.email;
+}
+
+/* look up the signed-in user's role; unknown users are viewers */
+async function loadRole(){
+  try{
+    const {data, error} = await SB.from('profiles')
+      .select('role').eq('id', SESSION.user.id).maybeSingle();
+    if(error) throw error;
+    // ✅ يقرأ الرتبة الحقيقية من قاعدة البيانات دون تحويل الـ editor إلى viewer
+    ROLE = (data && data.role) ? data.role : 'viewer';
+  }catch(err){ console.error('loadRole', err); ROLE = 'viewer'; }
+}
+/* ══════════ INIT ══════════ */
+let BOOTED = false;
+
+function bindUI(){
+  setInterval(()=>{document.getElementById('liveClock').textContent=new Date().toLocaleTimeString('en-GB',{hour12:false});},1000);
+  document.querySelectorAll('.tab-btn').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
+  document.getElementById('btnLang').onclick=()=>{
+    LANG=LANG?0:1;
+    try{ localStorage.setItem(LANG_KEY, LANG); }catch(e){}   // per-device, not shared
+    renderAll();
+  };
+  document.getElementById('btnSettings').onclick=()=>openSettings();
+  const li=document.getElementById('logoInput');
+  li.onchange=()=>{ const f=li.files[0]; if(!f) return;
+    if(!CAN_EDIT()){ toast('Read-only access','warn'); li.value=''; return; }
+    const r=new FileReader();
+    r.onload=()=>{ DB.settings.logo=r.result; saveDB(); paintLogo(); toast('Logo updated'); };
+    r.readAsDataURL(f); };
+  document.getElementById('btnBackup').onclick=openBackup;
+  const expBtn=document.getElementById('btnExportHtml');
+  if(expBtn) expBtn.onclick=exportHTML;
+  document.getElementById('btnQuickHaul').onclick=()=>openHaulModal();
+  ['haulFilterVat','haulFilterArea'].forEach(i=>document.getElementById(i).onchange=renderHaulTable);
+  document.getElementById('histFilterVat').onchange=renderHistory;
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
+  document.getElementById('btnLogout').onclick=signOut;
+}
+
+async function bootApp(){
+  if(BOOTED) return;
+  BOOTED = true;
+  await loadRole();
+  await loadDB();
+  try{ LANG = +(localStorage.getItem(LANG_KEY) ?? (DB.settings.lang||0)) ? 1 : 0; }catch(e){ LANG = 0; }
+  document.getElementById('authGate').classList.add('hidden');
+  document.getElementById('appRoot').style.display = '';
+  guardMutations();
+  applyRoleUI();
+  bindUI();
+  renderAll();
+  if(REV >= 0) startRealtime();
+}
+
+/* ══════════ AUTHENTICATION ══════════ */
+function authError(msg){
+  const el = document.getElementById('authErr');
+  el.textContent = msg; el.classList.toggle('show', !!msg);
+}
+function authBusy(on){
+  const b = document.getElementById('authBtn');
+  b.disabled = on;
+  b.style.opacity = on ? .6 : 1;
+  document.getElementById('authBtnLabel').textContent = on ? 'Signing in…' : 'Sign in';
+}
+
+async function signOut(){
+  try{ await SB.auth.signOut(); }catch(e){}
+  location.reload();
+}
+
+document.addEventListener('DOMContentLoaded', async ()=>{
+  if(IS_STANDALONE && EMBEDDED_DB){
+    BOOTED = true;
+    DB = JSON.parse(JSON.stringify(EMBEDDED_DB));
+    ROLE = 'viewer';
+    REV = -1;
+    try{ LANG = +(localStorage.getItem(LANG_KEY) ?? (DB.settings?.lang||0)) ? 1 : 0; }catch(e){ LANG = 0; }
+    const authGate = document.getElementById('authGate');
+    if(authGate){ authGate.classList.add('hidden'); authGate.style.display = 'none'; }
+    const appRoot = document.getElementById('appRoot');
+    if(appRoot) appRoot.style.display = '';
+    const logoutBtn = document.getElementById('btnLogout');
+    if(logoutBtn) logoutBtn.style.display = 'none';
+    const settingsBtn = document.getElementById('btnSettings');
+    if(settingsBtn) settingsBtn.style.display = 'none';
+    guardMutations();
+    applyRoleUI();
+    bindUI();
+    renderAll();
+    const emailEl = document.getElementById('userEmail');
+    if(emailEl) emailEl.textContent = 'Viewer Snapshot';
+    const roleEl = document.getElementById('userRole');
+    if(roleEl){
+      roleEl.textContent = 'viewer';
+      roleEl.className = 'role-chip viewer';
+      roleEl.title = 'Standalone Viewer Snapshot' + (EXPORTED_AT ? ' · ' + EXPORTED_AT : '');
+    }
+    const syncDot = document.getElementById('syncDot');
+    if(syncDot) setSyncDot('', 'Standalone Viewer Snapshot (Read-Only)');
+    return;
+  }
+
+  if(SUPABASE_URL.includes('YOUR-PROJECT-REF')){
+    authError('Not configured yet — set SUPABASE_URL and SUPABASE_ANON_KEY in this file.');
+    return;
+  }
+  SB = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  document.getElementById('authForm').addEventListener('submit', async e=>{
+    e.preventDefault();
+    authError(''); authBusy(true);
+    const email = document.getElementById('authEmail').value.trim();
+    const password = document.getElementById('authPass').value;
+    const {data, error} = await SB.auth.signInWithPassword({email, password});
+    authBusy(false);
+    if(error){ authError(error.message || 'Sign-in failed'); return; }
+    SESSION = data.session;
+    document.getElementById('authPass').value = '';
+    bootApp();
+  });
+
+  /* already signed in from a previous visit? */
+  const {data:{session}} = await SB.auth.getSession();
+  if(session){ SESSION = session; bootApp(); }
+});
+
+</script>
+
+<!--
+═══════════════════════════════════════════════════════════════════════════
+  SUPABASE SETUP — do these once, in order. Full guide: SETUP.md
+═══════════════════════════════════════════════════════════════════════════
+
+STEP 1 — Create the project
+  supabase.com → New project. Then Project Settings → API and copy:
+    • Project URL      → paste into SUPABASE_URL      (top of the script above)
+    • anon public key  → paste into SUPABASE_ANON_KEY (top of the script above)
+  The anon key is meant to be public. RLS below is what protects the data.
+
+STEP 2 — Create the tables, roles and policies
+  SQL Editor → New query → paste ALL of the following → Run.
+
+  ---------------------------------------------------------------------
+  -- PROFILES: one row per user, holding their role
+  create table public.profiles (
+    id         uuid primary key references auth.users(id) on delete cascade,
+    email      text,
+    role       text not null default 'viewer' check (role in ('admin','viewer')),
+    created_at timestamptz default now()
+  );
+  alter table public.profiles enable row level security;
+
+  -- every new user starts as a viewer
+  create function public.handle_new_user() returns trigger
+  language plpgsql security definer set search_path = public as $$
+  begin
+    insert into public.profiles (id, email, role)
+    values (new.id, new.email, 'viewer')
+    on conflict (id) do nothing;
+    return new;
+  end; $$;
+
+  create trigger on_auth_user_created
+    after insert on auth.users
+    for each row execute function public.handle_new_user();
+
+  -- helper used by the policies (security definer avoids RLS recursion)
+  create function public.is_admin() returns boolean
+  language sql security definer stable set search_path = public as $$
+    select exists (
+      select 1 from public.profiles
+      where id = auth.uid() and role = 'admin'
+    );
+  $$;
+
+  -- a user may read their own profile, and nothing else.
+  -- there is deliberately NO update policy, so nobody can promote
+  -- themselves to admin from the browser.
+  create policy "read own profile" on public.profiles
+    for select to authenticated using (id = auth.uid());
+
+  ---------------------------------------------------------------------
+  -- WORKSPACES: the shared document every device reads and writes
+  create table public.workspaces (
+    id         text primary key,
+    doc        jsonb not null,
+    rev        integer not null default 0,
+    updated_at timestamptz default now(),
+    updated_by uuid references auth.users(id)
+  );
+  alter table public.workspaces enable row level security;
+
+  -- ANY signed-in user can read  → viewers see everything, live
+  create policy "authenticated read" on public.workspaces
+    for select to authenticated using (true);
+
+  -- ONLY admins can write        → viewers are read-only, enforced server-side
+  create policy "admins insert" on public.workspaces
+    for insert to authenticated with check (public.is_admin());
+
+  create policy "admins update" on public.workspaces
+    for update to authenticated
+    using (public.is_admin()) with check (public.is_admin());
+
+  -- no delete policy at all: the workspace cannot be deleted via the API
+
+  ---------------------------------------------------------------------
+  -- REALTIME: push every save to the other devices
+  alter publication supabase_realtime add table public.workspaces;
+  ---------------------------------------------------------------------
+
+STEP 3 — Turn off public sign-ups (important)
+  Authentication → Sign In / Providers → Email →
+  turn OFF "Allow new users to sign up".
+  Without this, anyone could create their own (viewer) account.
+
+STEP 4 — Create your users
+  Authentication → Users → Add user → "Create new user".
+  Enter their email and a password, and tick "Auto Confirm User".
+  Give each person their password directly; they can change it later.
+
+STEP 5 — Make someone an admin
+  Everyone starts as a viewer. Promote in SQL Editor:
+
+    update public.profiles set role = 'admin'
+    where email = 'you@company.com';
+
+  To demote later, set role = 'viewer' the same way.
+  Check who has what with:  select email, role from public.profiles;
+
+STEP 6 — Point Supabase at your live site
+  Authentication → URL Configuration → Site URL = your deployed URL
+  (for example https://mgm-control.pages.dev).
+
+STEP 7 — Bring your existing data across
+  On the device that has the real data, open the OLD file and use
+  Backup → Export JSON. Then sign in here as an admin and use
+  Backup → Import JSON. That becomes the shared workspace.
+
+═══════════════════════════════════════════════════════════════════════════
+  WHAT EACH ROLE CAN DO
+    admin   full access: add hauls, assays, cycles, stockpiles, gold,
+            settings, import backups, reset the workspace
+    viewer  read-only: sees every screen and every number, live, but all
+            editing controls are hidden and the server rejects any write
+═══════════════════════════════════════════════════════════════════════════
+-->
+</body>
+</html>
