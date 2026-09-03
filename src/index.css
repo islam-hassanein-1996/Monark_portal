@@ -16,21 +16,94 @@ body {
   background: var(--bg);
   color: var(--text);
   font: 15px/1.5 system-ui, -apple-system, Segoe UI, sans-serif;
+  min-height: 100vh;
+  width: 100%;
 }
 
 a { color: var(--accent); }
 
-header {
+.root-shell {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+header,
+.app-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 1rem;
-  padding: 0.75rem 1.25rem;
+  padding: 0.75rem 1rem;
   border-bottom: 1px solid var(--line);
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+@media (min-width: 640px) {
+  header,
+  .app-header {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  header,
+  .app-header {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
 }
 
 .brand { font-weight: 600; text-decoration: none; margin-right: auto; }
 
-main { padding: 1.25rem; max-width: 1100px; margin: 0 auto; }
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.user-email {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+@media (min-width: 640px) {
+  .user-email {
+    max-width: 320px;
+  }
+}
+
+main,
+.main-content {
+  width: 100%;
+  flex: 1;
+  min-height: calc(100vh - 3.5rem);
+  padding: 1.25rem 1rem;
+  margin: 0;
+}
+
+@media (min-width: 640px) {
+  main,
+  .main-content {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  main,
+  .main-content {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
 
 .muted { color: var(--muted); }
 .error { color: var(--error); }
@@ -43,6 +116,8 @@ main { padding: 1.25rem; max-width: 1100px; margin: 0 auto; }
   border: 1px solid var(--line);
   border-radius: 999px;
   color: var(--muted);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .card {
@@ -55,6 +130,7 @@ main { padding: 1.25rem; max-width: 1100px; margin: 0 auto; }
 .login {
   display: grid;
   gap: 0.4rem;
+  width: 100%;
   max-width: 22rem;
   margin: 4rem auto;
 }
@@ -88,7 +164,8 @@ button {
 
 button:disabled { opacity: 0.6; cursor: default; }
 
-header button { margin-top: 0; background: transparent; color: var(--text); font-weight: 400; }
+header button,
+.app-header button { margin-top: 0; background: transparent; color: var(--text); font-weight: 400; flex-shrink: 0; }
 
 .grid {
   list-style: none;
@@ -96,7 +173,31 @@ header button { margin-top: 0; background: transparent; color: var(--text); font
   padding: 0;
   display: grid;
   gap: 0.9rem;
-  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 768px) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (min-width: 1536px) {
+  .grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
 }
 
 .tile { display: grid; gap: 0.35rem; }
@@ -106,8 +207,10 @@ header button { margin-top: 0; background: transparent; color: var(--text); font
 
 .embed {
   width: 100%;
-  height: calc(100vh - 8rem);
+  height: calc(100vh - 6rem);
+  min-height: 500px;
   border: 1px solid var(--line);
   border-radius: 10px;
   background: #fff;
+  display: block;
 }

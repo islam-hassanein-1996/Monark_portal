@@ -146,7 +146,7 @@ body.role-viewer #logoSlot{cursor:default}
   </div>
 </div>
 
-<div class="max-w-[1620px] mx-auto space-y-3.5" id="appRoot" style="display:none">
+<div class="w-full px-4 sm:px-6 lg:px-8 space-y-3.5" id="appRoot" style="display:none">
 
 <!-- ══════ HEADER ══════ -->
 <header class="glass rounded-2xl p-3.5 flex flex-wrap items-center justify-between gap-3 shadow-2xl">
@@ -1517,7 +1517,7 @@ const EXPORTED_AT   = ${JSON.stringify(exportTimestamp)};
 
   exportContent = exportContent.replace(/<div id="modalSlot">[\s\S]*?<\/div>/i, '<div id="modalSlot"></div>');
   exportContent = exportContent.replace(/<div id="authGate"[^>]*>/i, '<div id="authGate" class="hidden" style="display:none">');
-  exportContent = exportContent.replace(/<div class="max-w-\[1620px\] mx-auto space-y-3.5" id="appRoot"[^>]*>/i, '<div class="max-w-[1620px] mx-auto space-y-3.5" id="appRoot">');
+  exportContent = exportContent.replace(/<div class="(?:max-w-\[1620px\]|w-full px-4 sm:px-6 lg:px-8) space-y-3\.5" id="appRoot"[^>]*>/i, '<div class="w-full px-4 sm:px-6 lg:px-8 space-y-3.5" id="appRoot">');
 
   const filename = `MGM_Control_Center_Viewer_${toISO(today())}.html`;
   download(filename, exportContent, 'text/html;charset=utf-8');
