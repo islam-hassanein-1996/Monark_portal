@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import migrationSql from '../../supabase/migrations/0002_role_based_rls.sql?raw'
 import { resolveTarget } from './portal'
 
 describe('resolveTarget', () => {
@@ -41,5 +42,14 @@ describe('resolveTarget', () => {
   it('blocks protocol-relative urls that would leave the origin', () => {
     expect(resolveTarget({ kind: 'static', url: '//evil.example.com' }).mode).toBe('blocked')
     expect(resolveTarget({ kind: 'redirect', url: '/\\evil.example.com' }).mode).toBe('blocked')
+  })
+})
+
+describe('role-based RLS migration', () => {
+  it('uses a direct scalar subquery instead of a security definer function call', () => {
+    expect(migrationSql).not.toContain('public.portal_role() = any')
+    expect(migrationSql).toContain(
+      '(select role from public.profiles where id = auth.uid()) = any (allowed_roles)'
+    )
   })
 })
