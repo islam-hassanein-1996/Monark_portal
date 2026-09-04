@@ -16,26 +16,15 @@ alter table public.portal_apps
 comment on column public.portal_apps.allowed_roles is
   'NULL = any signed-in user. Otherwise profiles.role must appear in this array.';
 
--- Reading profiles.role from inside a policy has to get past the "read own
--- profile" policy on public.profiles, so this follows the SECURITY DEFINER
--- pattern already used by is_admin() and can_edit().
-create or replace function public.portal_role()
-returns text
-language sql
-stable
-security definer
-set search_path = ''
-as $$
-  select p.role from public.profiles p where p.id = auth.uid()
-$$;
-
-revoke all on function public.portal_role() from public;
-grant execute on function public.portal_role() to authenticated;
+-- Clean up legacy security definer helper function to avoid optimization barrier.
+drop function if exists public.portal_role();
 
 -- 0001's interim policy let any signed-in user see every active app. Permissive
 -- policies OR together, so it has to go or it would override the role check below.
 drop policy if exists portal_apps_select_authenticated on public.portal_apps;
 
+-- Direct subquery allows Postgres planner to evaluate (select role from profiles)
+-- as an InitPlan once per query instead of invoking a SECURITY DEFINER function per row.
 drop policy if exists portal_apps_select_by_role on public.portal_apps;
 create policy portal_apps_select_by_role
   on public.portal_apps
@@ -47,7 +36,7 @@ create policy portal_apps_select_by_role
       allowed_roles is null
       -- A signed-in user with no profiles row yields NULL here and matches nothing,
       -- so a missing profile fails closed.
-      or public.portal_role() = any (allowed_roles)
+      or (select role from public.profiles where id = auth.uid()) = any (allowed_roles)
     )
   );
 
