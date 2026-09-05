@@ -94,6 +94,29 @@ export function Dashboard() {
   )
 }
 
+export function AppFrame({ app }: { app: PortalApp }) {
+  const target = resolveTarget(app)
+  if (target.mode === 'blocked') {
+    return <p role="alert" className="error">Blocked: {target.reason}</p>
+  }
+  if (target.mode === 'external') {
+    return (
+      <p>
+        <a href={target.href} target="_blank" rel="noopener noreferrer">Open {app.name}</a>
+      </p>
+    )
+  }
+
+  return (
+    <iframe
+      className="embed"
+      src={target.src}
+      title={app.name}
+      sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-downloads"
+    />
+  )
+}
+
 export function AppView() {
   const { slug = '' } = useParams()
   const [loaded, setLoaded] = useState<{ slug: string; app: PortalApp | null } | null>(null)
@@ -117,24 +140,5 @@ export function AppView() {
   // null covers both "no such slug" and "RLS hid this row" — the client cannot tell them apart.
   if (app === null) return <p role="alert" className="error">This application is not available for your account.</p>
 
-  const target = resolveTarget(app)
-  if (target.mode === 'blocked') {
-    return <p role="alert" className="error">Blocked: {target.reason}</p>
-  }
-  if (target.mode === 'external') {
-    return (
-      <p>
-        <a href={target.href} target="_blank" rel="noopener noreferrer">Open {app.name}</a>
-      </p>
-    )
-  }
-
-  return (
-    <iframe
-      className="embed"
-      src={target.src}
-      title={app.name}
-      sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
-    />
-  )
+  return <AppFrame app={app} />
 }
