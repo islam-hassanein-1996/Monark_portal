@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <style>
 :root{
   --bg-deep:#060b14; --bg-surface:#0c1522; --bg-card:#111d2e;
@@ -146,7 +147,7 @@ body.role-viewer #logoSlot{cursor:default}
   </div>
 </div>
 
-<div class="w-full px-4 sm:px-6 lg:px-8 space-y-3.5" id="appRoot" style="display:none">
+<div class="max-w-[1620px] mx-auto space-y-3.5" id="appRoot" style="display:none">
 
 <!-- ══════ HEADER ══════ -->
 <header class="glass rounded-2xl p-3.5 flex flex-wrap items-center justify-between gap-3 shadow-2xl">
@@ -681,7 +682,6 @@ const n2 = v => (v==null||isNaN(v))?'—':Number(v).toFixed(2);
 /* load volume = survey volume ÷ total loads  (loads vary per vat, so it is derived) */
 function calcCycle(c){
   const sg = c.sg || DB.settings.sg;
-  const rec = (c.recovery==null? DB.settings.defaultRecovery : c.recovery);
   const totalHauls = c.lines.reduce((s,l)=>s+(l.hauls||0),0);
   const fixedM3 = c.lines.reduce((s,l)=>s+(l.m3||0),0);
   const openHauls = c.lines.reduce((s,l)=>s+((l.m3==null&&l.hauls)?l.hauls:0),0);
@@ -689,17 +689,37 @@ function calcCycle(c){
   /* loads without a measured volume share whatever the survey leaves over */
   const haulVol = openHauls ? Math.max(0,(survey - fixedM3))/openHauls
                             : (totalHauls ? survey/totalHauls : 0);
-  let tons=0, gold=0, gradeWeight=0, pending=false;
-  const lines = c.lines.map(l=>{
+  let tons=0, gradeWeight=0, pending=false;
+  const rawLines = c.lines.map(l=>{
     const m3 = l.m3!=null ? l.m3 : (l.hauls||0)*haulVol;
     const tn = m3*sg;
-    const g = (l.assay==null) ? null : tn*l.assay*rec;
-    if(l.assay==null) pending=true; else { gold+=g; gradeWeight+=tn*l.assay; }
+    if(l.assay==null) pending=true; else gradeWeight+=tn*l.assay;
     tons+=tn;
-    return {...l, m3, tons:tn, gold:g};
+    return {...l, m3, tons:tn};
   });
-  return { lines, sg, rec, totalHauls, haulVol, survey, tons,
-           gold, avgGrade: tons? gradeWeight/tons : 0, pending,
+  const avgGrade = tons ? gradeWeight/tons : 0;
+  const effectiveHead = (c.head != null && c.head !== '') ? Number(c.head) : avgGrade;
+
+  let rec = DB.settings.defaultRecovery != null ? DB.settings.defaultRecovery : 0.75;
+  let recoveryPct = rec * 100;
+  if(c.recovery != null && c.recovery !== ''){
+    const r = Number(c.recovery);
+    rec = r > 1 ? r / 100 : r;
+    recoveryPct = rec * 100;
+  } else if(c.tail != null && effectiveHead > 0){
+    recoveryPct = ((effectiveHead - c.tail) / effectiveHead) * 100;
+    rec = Math.max(0, recoveryPct / 100);
+  }
+
+  let gold=0;
+  const lines = rawLines.map(l=>{
+    const g = (l.assay==null) ? null : l.tons*l.assay*rec;
+    if(g!=null) gold+=g;
+    return {...l, gold:g};
+  });
+
+  return { lines, sg, rec, recoveryPct, effectiveHead, totalHauls, haulVol, survey, tons,
+           gold, avgGrade, pending,
            fillPct: DB.settings.capacityTon ? tons/DB.settings.capacityTon*100 : 0 };
 }
 
@@ -987,6 +1007,7 @@ function renderVats(){
       </div>`;
     }
     const s = cycleStatus(c), k = s.calc;
+    const effectiveHead = c.head != null ? c.head : k.avgGrade;
     const col = LVLCOLOR[s.level];
     const cls = s.level==='danger' ? 'pond-danger' : '';
     const prog = c.state==='FILLING' ? Math.min(100,k.fillPct)
@@ -1036,6 +1057,12 @@ function renderVats(){
         ${cell(t('started'), fmtD(c.start))}
         ${cell(c.state==='LEACHING'?t('expEnd'):t('ended'), c.state==='LEACHING'? fmtD(toISO(s.expEnd)) : fmtD(c.end))}
       </div>
+
+      ${(effectiveHead || c.tail!=null || c.recovery!=null)?`<div class="flex items-center justify-between text-[10px] bg-slate-950/70 rounded-lg px-2.5 py-1.5 border border-slate-800/40 mb-2.5">
+        <span class="text-slate-400">${t('head')}: <span class="font-mono text-slate-200 font-bold">${effectiveHead ? n2(effectiveHead)+' g/t':'—'}</span></span>
+        <span class="text-slate-400">${t('tail')}: <span class="font-mono text-emerald-400 font-bold">${c.tail!=null?n2(c.tail)+' g/t':'—'}</span></span>
+        <span class="text-slate-400">${t('recovery')}: <span class="font-mono text-amber-300 font-bold">${k.rec!=null?Math.round(k.rec*100)+'%':'—'}</span></span>
+      </div>`:''}
 
       ${c.state==='LEACHING'?`<div class="flex items-center gap-2 mb-2.5 text-[10px]">
         <span class="chip ${s.daysLeft<=DB.settings.warnDays?'c-warn':'c-safe'}">${s.daysRun} ${t('dayRunning')}</span>
@@ -1198,20 +1225,63 @@ function renderHistory(){
     <line x1="${P}" y1="${H-P}" x2="${W-P}" y2="${H-P}" stroke="#1e2d42" stroke-width="1"/>
     <text x="${P}" y="18" font-size="9" font-weight="800" letter-spacing="1.4" fill="#5d708a">EXPECTED Au PER CYCLE (g)</text>
   </svg>`:'';
+  let totM3 = 0, totTons = 0, totHauls = 0, totGold = 0;
+  let headWeight = 0, tailWeight = 0, tailTons = 0;
+  rows.forEach(({c, k}) => {
+    const tn = k.tons || 0;
+    totM3 += (k.survey || 0);
+    totTons += tn;
+    totHauls += (k.totalHauls || 0);
+    totGold += (k.gold || 0);
+
+    const effHead = (c.head != null && c.head !== '') ? Number(c.head) : k.avgGrade;
+    if (effHead != null) headWeight += tn * effHead;
+
+    if (c.tail != null && c.tail !== '') {
+      tailWeight += tn * Number(c.tail);
+      tailTons += tn;
+    }
+  });
+
+  const weightedHead = totTons > 0 ? headWeight / totTons : 0;
+  const weightedTail = tailTons > 0 ? tailWeight / tailTons : null;
+  const overallRec = (weightedTail != null && weightedHead > 0)
+    ? Math.max(0, ((weightedHead - weightedTail) / weightedHead) * 100)
+    : null;
+
   document.getElementById('histTable').innerHTML=`<thead><tr>
     <th>${t('serial')}</th><th>${t('vat')}</th><th>${t('started')}</th><th>${t('ended')}</th><th>${t('duration')}</th>
-    <th>m³</th><th>${t('tonnage')}</th><th>${t('count')}</th><th>${t('avgGrade')}</th><th>Au g</th><th>${t('status')}</th><th></th></tr></thead>
+    <th>m³</th><th>${t('tonnage')}</th><th>${t('count')}</th><th>${t('head')}</th><th>${t('tail')}</th><th>${t('recovery')}</th><th>Au g</th><th>${t('status')}</th><th></th></tr></thead>
     <tbody>${rows.slice().reverse().map(({c,k,s})=>{
       const dur = (c.start&&c.end)? dDiff(parseD(c.start),parseD(c.end)) : (s.daysRun??null);
+      const effectiveHead = (c.head != null && c.head !== '') ? Number(c.head) : k.avgGrade;
       return `<tr>
       <td class="text-slate-500">#${c.serial}</td><td class="font-mono font-bold text-amber-300">${c.vat}</td>
       <td class="font-mono">${fmtD(c.start)}</td><td class="font-mono">${fmtD(c.end)}</td>
       <td class="font-mono ${dur>DB.settings.avgCycleDays?'text-amber-300':'text-slate-300'}">${dur!=null?dur+' '+t('days'):'—'}</td>
       <td class="font-mono">${n1(k.survey)}</td><td class="font-mono">${n0(k.tons)}</td>
-      <td class="font-mono">${k.totalHauls||'—'}</td><td class="font-mono">${n2(k.avgGrade)}</td>
+      <td class="font-mono">${k.totalHauls||'—'}</td>
+      <td class="font-mono text-amber-300 font-bold">${effectiveHead ? n2(effectiveHead) : '—'}</td>
+      <td class="font-mono ${c.tail!=null?'text-emerald-400 font-bold':'text-slate-500'}">${c.tail!=null?n2(c.tail):'—'}</td>
+      <td class="font-mono text-emerald-300 font-bold">${k.rec!=null?Math.round(k.rec*100)+'%':'—'}</td>
       <td class="font-mono text-yellow-300">${n0(k.gold)}</td>
       <td><span class="chip ${LVL[s.level]}">${t(c.state)}</span></td>
-      <td class="no-print"><button class="text-slate-500 hover:text-amber-400" onclick="openCycleDetail('${c.id}')"><i class="fa-solid fa-eye"></i></button></td></tr>`;}).join('')}</tbody>`;
+      <td class="no-print"><button class="text-slate-500 hover:text-amber-400" onclick="openCycleDetail('${c.id}')"><i class="fa-solid fa-eye"></i></button></td></tr>`;}).join('')}</tbody>
+    <tfoot class="border-t-2 border-amber-500/50 bg-slate-950/90 font-bold">
+      <tr class="border-t-2 border-amber-500/50 bg-slate-950/80">
+        <td class="font-extrabold text-amber-400 uppercase tracking-wider text-xs py-3">المجموع الكلي</td>
+        <td></td><td></td><td></td><td></td>
+        <td class="font-mono font-bold text-slate-200">${n1(totM3)}</td>
+        <td class="font-mono font-black text-white text-xs">${n0(totTons)}</td>
+        <td class="font-mono font-bold text-slate-300">${totHauls ? n0(totHauls) : '—'}</td>
+        <td class="font-mono font-bold text-amber-300">${weightedHead ? n2(weightedHead) : '—'}</td>
+        <td class="font-mono font-bold text-emerald-400">${weightedTail != null ? n2(weightedTail) : '—'}</td>
+        <td class="font-mono font-black text-emerald-300 text-xs">${overallRec != null ? (Math.round(overallRec*10)/10)+'%' : '—'}</td>
+        <td class="font-mono font-black text-amber-400 text-xs">${n0(totGold)}</td>
+        <td></td>
+        <td class="no-print"></td>
+      </tr>
+    </tfoot>`;
 }
 
 /* ══════════ MODAL FRAMEWORK ══════════ */
@@ -1367,6 +1437,7 @@ function openVatDetail(vat){
 }
 function openCycleDetail(id){
   const c=DB.cycles.find(x=>x.id===id), k=calcCycle(c), s=cycleStatus(c);
+  const effectiveHead = c.head != null ? c.head : k.avgGrade;
   const tl=[['fillStart',t('startFilling'),c.fillStart],['start',t('startLeach'),c.start],
             ['end',t('endLeach'),c.end],['rinseEnd',t('doneRinse'),c.rinseEnd],['dischargeEnd',t('CLOSED'),c.dischargeEnd]];
   modal(`${c.vat} · #${c.serial} <span class="chip ${LVL[s.level]} ms-2">${t(c.state)}</span>`,`
@@ -1380,7 +1451,22 @@ function openCycleDetail(id){
           <div class="text-xs font-bold font-mono text-slate-200">${v}</div></div>`).join('')}
     </div>
     <div class="flex flex-wrap gap-1.5">${tl.filter(x=>x[2]).map(x=>`<span class="chip c-idle">${x[1]}: ${fmtD(x[2])}</span>`).join('')}</div>
-    ${c.head||c.tail?`<div class="text-[11px] text-slate-400">Head ${n2(c.head)} · Tail ${n2(c.tail)} → ${t('recovery')} <span class="text-emerald-300 font-bold">${c.recovery!=null?Math.round(c.recovery*100)+'%':'—'}</span></div>`:''}
+    <div class="bg-slate-950/80 rounded-xl p-3 border border-slate-800/60 flex items-center justify-around text-center my-2">
+      <div>
+        <div class="text-[9px] uppercase tracking-wider text-slate-500 font-bold">${t('head')}</div>
+        <div class="text-sm font-bold font-mono text-slate-200">${effectiveHead ? n2(effectiveHead)+' g/t' : '—'}</div>
+      </div>
+      <div class="h-6 w-px bg-slate-800"></div>
+      <div>
+        <div class="text-[9px] uppercase tracking-wider text-slate-500 font-bold">${t('tail')}</div>
+        <div class="text-sm font-bold font-mono text-emerald-400">${c.tail!=null ? n2(c.tail)+' g/t' : '—'}</div>
+      </div>
+      <div class="h-6 w-px bg-slate-800"></div>
+      <div>
+        <div class="text-[9px] uppercase tracking-wider text-slate-500 font-bold">${t('recovery')}</div>
+        <div class="text-sm font-bold font-mono text-amber-300">${k.rec!=null ? Math.round(k.rec*100)+'%' : '—'}</div>
+      </div>
+    </div>
     <div class="overflow-x-auto rounded-xl border border-slate-800/50"><table class="data">
       <thead><tr><th>${t('date')}</th><th>${t('area')}</th><th>${t('grade')}</th><th>${t('count')}</th><th>m³</th><th>${t('tonsLbl')}</th><th>${t('assayVal')}</th><th>Au g</th><th></th></tr></thead>
       <tbody>${k.lines.map(l=>`<tr><td class="font-mono">${l.date?fmtD(l.date):'—'}</td><td>${l.area}</td><td class="text-slate-400">${l.grade}</td>
@@ -1403,12 +1489,15 @@ function openEditCycle(id){
     ${sel('eState',t('status'),STATES.map(s=>[s,t(s)]),c.state)}
     <div class="grid grid-cols-2 gap-3">${fld('eVol',t('volume'),'number',c.surveyM3??'','step="0.01"')}${fld('eSg',t('sg'),'number',c.sg,'step="0.01"')}</div>
     <div class="grid grid-cols-2 gap-3">${fld('eFill',t('startFilling'),'date',c.fillStart||'')}${fld('eStart',t('startLeach'),'date',c.start||'')}</div>
-    <div class="grid grid-cols-2 gap-3">${fld('eEnd',t('endLeach'),'date',c.end||'')}${fld('eRec',t('recovery'),'number',c.recovery??'','step="0.01" placeholder="0.75"')}</div>
+    <div class="grid grid-cols-2 gap-3">${fld('eEnd',t('endLeach'),'date',c.end||'')}${fld('eRec',t('recovery'),'number',c.recovery!=null?c.recovery:'','step="0.01" placeholder="0.75"')}</div>
+    <div class="grid grid-cols-2 gap-3">${fld('eHead',t('head'),'number',c.head??'','step="0.01"')}${fld('eTail',t('tail'),'number',c.tail??'','step="0.01"')}</div>
     <div><label class="lbl">${t('notes')}</label><textarea id="eNotes" class="fld" rows="2">${c.notes||''}</textarea></div>
     <button class="btn btn-red w-full justify-center" onclick="if(confirm('${t('confirmDel')}')){DB.cycles=DB.cycles.filter(x=>x.id!=='${c.id}');closeModal();renderAll();}"><i class="fa-solid fa-trash-can"></i>${t('del')}</button>`,
     ()=>{ c.state=V('eState'); c.surveyM3=NV('eVol'); c.sg=NV('eSg')||1.6;
       c.fillStart=V('eFill')||null; c.start=V('eStart')||null; c.end=V('eEnd')||null;
-      c.recovery=NV('eRec'); c.notes=V('eNotes'); });
+      c.recovery=NV('eRec'); c.head=NV('eHead'); c.tail=NV('eTail');
+      if(c.recovery==null && c.head && c.tail!=null) c.recovery = Math.max(0,(c.head-c.tail)/c.head);
+      c.notes=V('eNotes'); });
 }
 
 /* ══════════ STOCKPILES / GOLD / SETTINGS MODALS ══════════ */
@@ -1468,6 +1557,8 @@ function openBackup(){
     <button class="btn btn-sky w-full justify-center" onclick="exportHTML()"><i class="fa-solid fa-file-export"></i>${t('exportHtml')}</button>
     <label class="btn btn-ghost w-full justify-center cursor-pointer"><i class="fa-solid fa-upload"></i>${t('importJson')}
       <input type="file" accept="application/json" class="hidden" onchange="importJSON(this)"></label>
+    <label class="btn btn-ghost w-full justify-center cursor-pointer"><i class="fa-solid fa-file-excel"></i>Import Excel
+      <input type="file" accept=".xlsx,.xls" class="hidden" onchange="importExcel(this)"></label>
     <button class="btn btn-ghost w-full justify-center" onclick="exportCSV('cycles')"><i class="fa-solid fa-file-csv"></i>Cycles CSV</button>
     <button class="btn btn-ghost w-full justify-center" onclick="exportCSV('hauls')"><i class="fa-solid fa-file-csv"></i>Hauls CSV</button>
     <button class="btn btn-red w-full justify-center" onclick="resetWorkspace()"><i class="fa-solid fa-rotate-left"></i>${t('resetAll')}</button>`);
@@ -1517,7 +1608,7 @@ const EXPORTED_AT   = ${JSON.stringify(exportTimestamp)};
 
   exportContent = exportContent.replace(/<div id="modalSlot">[\s\S]*?<\/div>/i, '<div id="modalSlot"></div>');
   exportContent = exportContent.replace(/<div id="authGate"[^>]*>/i, '<div id="authGate" class="hidden" style="display:none">');
-  exportContent = exportContent.replace(/<div class="(?:max-w-\[1620px\]|w-full px-4 sm:px-6 lg:px-8) space-y-3\.5" id="appRoot"[^>]*>/i, '<div class="w-full px-4 sm:px-6 lg:px-8 space-y-3.5" id="appRoot">');
+  exportContent = exportContent.replace(/<div class="max-w-\[1620px\] mx-auto space-y-3.5" id="appRoot"[^>]*>/i, '<div class="max-w-[1620px] mx-auto space-y-3.5" id="appRoot">');
 
   const filename = `MGM_Control_Center_Viewer_${toISO(today())}.html`;
   download(filename, exportContent, 'text/html;charset=utf-8');
@@ -1528,6 +1619,143 @@ function importJSON(input){
   r.onload=()=>{ try{ const d=JSON.parse(r.result); if(!d.cycles) throw 0; DB=d; saveDB(); closeModal(); renderAll(); toast('Backup loaded'); }
     catch(e){ toast('Invalid backup file','error'); } };
   r.readAsText(f);
+}
+/* ══════════ EXCEL IMPORT (Vat Ore Progres.xlsx layout) ══════════
+   One cycle = a run of rows sharing one Serial (blank Serial = continuation row).
+   Blank Area on a continuation row means "same area as the row above". */
+function findExcelCol(headerRow,keywords,fallbackIdx){
+  const i=headerRow.findIndex(h=>h && keywords.some(k=>String(h).toLowerCase().trim().includes(k)));
+  return i>=0 ? i : fallbackIdx;
+}
+function parseExcelDate(val){
+  if(!val) return null;
+  if(val instanceof Date){
+    const y=val.getFullYear(), m=String(val.getMonth()+1).padStart(2,'0'), d=String(val.getDate()).padStart(2,'0');
+    return `${y}-${m}-${d}`;
+  }
+  if(typeof val==='string'){
+    const v=val.trim();
+    const parts=v.split(/[\/.]/);
+    if(parts.length===3 && parts[2].length===4) return `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+    if(v) return v.slice(0,10);
+  }
+  return null;
+}
+function normalizeVat(raw){
+  if(!raw) return null;
+  const str=String(raw).trim().toUpperCase();
+  const m=str.match(/\d+/);
+  return m ? ('V'+parseInt(m[0],10)) : (VATS.includes(str) ? str : null);
+}
+function cleanExcelNum(val){
+  if(val===null||val===undefined||val==='') return null;
+  const n=parseFloat(String(val).replace(/,/g,'').trim());
+  return isNaN(n) ? null : n;
+}
+function matchEnum(val,list){
+  if(val==null) return null;
+  const raw=String(val).trim();
+  if(!raw) return null;
+  return list.find(x=>x.toLowerCase()===raw.toLowerCase()) || raw;
+}
+const findCol = findExcelCol;
+const cleanNum = cleanExcelNum;
+async function importExcel(input){
+  const f=input.files[0]; if(!f) return;
+  try{
+    const buf=await f.arrayBuffer();
+    const wb=XLSX.read(buf,{type:'array',cellDates:true});
+    const sheetName=wb.SheetNames.find(n=>/vat|ore|sheet1/i.test(n)) || wb.SheetNames[0];
+    const rows=XLSX.utils.sheet_to_json(wb.Sheets[sheetName],{header:1,defval:null});
+    if(!rows || rows.length<2) throw new Error('Empty sheet');
+
+    const header=rows[0];
+    const col={
+      serial: findExcelCol(header,['serial'],0),
+      pad:    findExcelCol(header,['pad'],1),
+      start:  findExcelCol(header,['start'],2),
+      end:    findExcelCol(header,['end'],3),
+      area:   findExcelCol(header,['area'],4),
+      grade:  findExcelCol(header,['geo'],5),
+      hauls:  findExcelCol(header,['haul'],6),
+      m3:     findExcelCol(header,['m3','m³'],7),
+      assay:  findExcelCol(header,['ave','assay'],9),
+      tail:   findCol(rows[0], ['tail'], -1),
+    };
+
+    const groups=new Map();
+    let currentGroup=null, currentArea=null;
+    for(let i=1;i<rows.length;i++){
+      const row=rows[i], r=row;
+      if(!row || row.every(c=>c===null)) continue;
+
+      const rawSerial=row[col.serial];
+      if(rawSerial!=null && String(rawSerial).trim()!==''){
+        const serial=parseInt(rawSerial,10);
+        if(!isNaN(serial)){
+          if(!groups.has(serial)) groups.set(serial,{
+            serial, vat:normalizeVat(row[col.pad]),
+            start:parseExcelDate(row[col.start]), end:parseExcelDate(row[col.end]), lines:[]
+          });
+          const group=groups.get(serial);
+          group.tail = cleanNum(col.tail >= 0 ? row[col.tail] : null);
+          currentGroup=group; currentArea=null;
+        }
+      }
+      if(!currentGroup) continue;
+
+      if(row[col.area]!=null && String(row[col.area]).trim()!=='') currentArea=String(row[col.area]).trim();
+      const hauls=cleanExcelNum(row[col.hauls]), m3=cleanExcelNum(row[col.m3]);
+      if(!currentArea && hauls==null && m3==null) continue;
+
+      currentGroup.lines.push({
+        id:uid(), date:null,
+        area: matchEnum(currentArea,AREAS) || currentArea,
+        grade: matchEnum(row[col.grade],GRADES) || (row[col.grade]!=null ? String(row[col.grade]).trim() : ''),
+        assay: cleanExcelNum(row[col.assay]), m3, hauls
+      });
+    }
+    if(groups.size===0) throw new Error('No valid cycles found');
+
+    let created=0, updated=0; const skipped=[];
+    const tailRecorded=[];
+    groups.forEach(group=>{
+      if(!group.vat){ skipped.push(group.serial); return; }
+      if(group.tail !== null) tailRecorded.push({ serial: group.serial, vat: group.vat, tail: group.tail });
+      const existingCycle=DB.cycles.find(c=>c.serial===group.serial);
+      if(existingCycle){
+        existingCycle.vat=group.vat; existingCycle.start=group.start; existingCycle.end=group.end; existingCycle.lines=group.lines;
+        if(group.tail !== null) existingCycle.tail = group.tail;
+        updated++;
+      }else{
+        DB.cycles.push({
+          id:'C'+group.serial, serial:group.serial, vat:group.vat, fillStart:null,
+          start:group.start, end:group.end, rinseEnd:null, dischargeEnd:null,
+          state:'LEACHING', surveyM3:null, sg:DB.settings.sg, recovery:null,
+          head:null, tail:group.tail, lines:group.lines, assays:[], notes:''
+        });
+        created++;
+      }
+      DB.nextSerial=Math.max(Number(DB.nextSerial)||1, group.serial+1);
+    });
+    DB.cycles.sort((a,b)=>(a.serial||0)-(b.serial||0));
+
+    saveDB(); closeModal(); renderAll();
+    let msg=`Imported: ${created} new, ${updated} updated`;
+    if(tailRecorded.length){
+      const tailList = tailRecorded.map(x=>`#${x.serial} (${x.tail} g/t)`).join(', ');
+      msg+=`; Tail recorded for: ${tailList}`;
+      console.log(`[Excel Import] Tail assay values recorded for ${tailRecorded.length} cycle(s):`, tailRecorded);
+    } else {
+      console.warn(`[Excel Import] No tail assay values recorded. col.tail index: ${col.tail}. Header row:`, header);
+    }
+    if(skipped.length) msg+=`; skipped serial(s) ${skipped.join(',')} (unrecognized pad)`;
+    toast(msg);
+  }catch(err){
+    toast('Failed to import Excel: '+(err.message||'Invalid format'),'error');
+  }finally{
+    input.value='';
+  }
 }
 function exportCSV(kind){
   let rows=[];
@@ -1576,7 +1804,7 @@ const MUTATING_FNS = [
   'startCycle','openHaulModal','openSurveyModal','openAssayModal','endLeach','advance',
   'openTailModal','closeCycle','delLine','delAssay','delPour','openEditCycle',
   'openStockModal','openMoveModal','openPourModal','openNodeMove','delNodeMove',
-  'openSettings','importJSON','resetWorkspace'
+  'openSettings','importJSON','importExcel','resetWorkspace'
 ];
 function guardMutations(){
   MUTATING_FNS.forEach(name=>{
